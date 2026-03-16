@@ -28,7 +28,6 @@
       nativeBuildInputs = with pkgs; [
         pythonEnv
         playwright-driver.browsers
-        nodejs
       ];
 
       shellHook = ''
