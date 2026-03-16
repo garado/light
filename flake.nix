@@ -8,13 +8,13 @@
     pkgs = nixpkgs.legacyPackages.${system};
     pythonEnv = pkgs.python312.withPackages (p: with p; [
       playwright
-      typer
+      click
       rich
     ]);
     lp3music = pkgs.writeShellScriptBin "lp3music" ''
       PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \
       PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
-      ${pythonEnv}/bin/python ${./lp3_music.py} "$@"
+      ${pythonEnv}/bin/python ${./light.py} "$@"
     '';
   in {
     packages.${system}.default = lp3music;
