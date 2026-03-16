@@ -1,5 +1,6 @@
 import os
 import click
+from mutagen.easyid3 import EasyID3
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
@@ -110,13 +111,24 @@ def music():
 
 @music.command()
 @with_common_options
-@click.argument('songs', nargs=-1, required=True)
-@click.option('--allow-duplicates', is_flag=True, help='Skip removing existing tracks before upload')
-def upload(songs, allow_duplicates, email, password, device_id, no_headless):
+@click.argument('songs',
+                nargs=-1,
+                required=True)
+@click.option('--allow-duplicates',
+              is_flag=True,
+              help='Skip removing existing tracks before upload')
+@click.option('--match-title-by', '-m',
+              type=click.Choice(['filename', 'metadata']),
+              default='metadata',
+              help='Match existing tracks by filename or metadata title tag (for overwriting existing tracks)')
+def upload(songs, allow_duplicates, match_title_by, email, password, device_id, no_headless):
     """Upload songs to Light Phone."""
     _email = resolve(email, "LIGHT_EMAIL")
     _password = resolve(password, "LIGHT_PASSWORD")
     _device_id = resolve(device_id, "LIGHT_DEVICE_ID")
+
+    if allow_duplicates and match_title_by:
+        raise click.UsageError("--match-title-by cannot be used with --allow-duplicates")
 
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
         with sync_playwright() as playwright:
@@ -127,7 +139,10 @@ def upload(songs, allow_duplicates, email, password, device_id, no_headless):
                 navigate_to_music_from_dash_root(page, _device_id)
 
                 if not allow_duplicates:
-                    titles = [os.path.splitext(os.path.basename(s))[0] for s in songs]
+                    if match_title_by == 'metadata':
+                        titles = [EasyID3(s)['title'][0] for s in songs]
+                    else:
+                        titles = [os.path.splitext(os.path.basename(s))[0] for s in songs]
                     progress.update(task, description="Removing existing tracks...")
                     delete_titles(page, titles, progress, task)
                     page.go_back()
