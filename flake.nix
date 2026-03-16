@@ -11,17 +11,17 @@
       click
       rich
     ]);
-    lp3music = pkgs.writeShellScriptBin "lp3music" ''
+    light = pkgs.writeShellScriptBin "light" ''
       PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \
       PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
       ${pythonEnv}/bin/python ${./light.py} "$@"
     '';
   in {
-    packages.${system}.default = lp3music;
+    packages.${system}.default = light;
 
     apps.${system}.default = {
       type = "app";
-      program = "${lp3music}/bin/lp3music";
+      program = "${light}/bin/light";
     };
 
     devShells.${system}.default = pkgs.mkShell {
