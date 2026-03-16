@@ -67,9 +67,37 @@ def make_page(playwright, headless: bool):
     return browser, browser.new_context().new_page()
 
 
+def delete_titles(page, titles: list[str]) -> None:
+    page.locator('a:has-text("Edit playlist")').click()
+    page.locator('.playlist-table-row').first.wait_for()
+    containers = page.locator('button.playlist-table-button').locator('xpath=..')
+
+    for title in titles:
+        targets = containers.filter(
+            has=page.locator(f'a .heading.playlist-table-song:has-text("{title}")')
+        ).all()
+
+        if not targets:
+            console.print(f"[yellow]Not found: {title}[/yellow]")
+            continue
+
+        for target in targets:
+            if title not in target.inner_html():
+                console.print(f"[red]Safety check failed for: {title}[/red]")
+                continue
+            with page.expect_response(lambda r: r.request.method == 'DELETE'):
+                target.locator('button.playlist-table-button').click()
+                page.wait_for_load_state('networkidle')
+        console.print(f"[green]Deleted: {title}[/green]")
+
+
 @app.command()
 def upload(
     songs: Annotated[list[str], typer.Argument(help="Audio file(s) to upload")],
+    overwrite_existing: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Overwrite existing tracks")
+    ] = True,
     email: EmailOpt = None,
     password: PasswordOpt = None,
     device_id: DeviceOpt = None,
@@ -87,8 +115,15 @@ def upload(
                 task = progress.add_task("Logging in...")
                 login(page, _email, _password)
 
-                progress.update(task, description=f"Uploading {len(songs)} song(s)...")
                 navigate_to_music(page, _device_id)
+
+                if overwrite_existing:
+                    titles = [os.path.splitext(os.path.basename(s))[0] for s in songs]
+                    progress.update(task, description="Removing existing tracks...")
+                    delete_titles(page, titles)
+                    page.locator('a:has-text("Music")').click()
+
+                progress.update(task, description=f"Uploading {len(songs)} song(s)...")
                 page.locator('a:has-text("Add songs")').click()
                 page.locator('input[type="file"]').set_input_files(songs)
 
@@ -127,29 +162,7 @@ def delete(
                 task = progress.add_task("Logging in...")
                 login(page, _email, _password)
                 navigate_to_music(page, _device_id)
-                page.locator('a:has-text("Edit playlist")').click()
-                page.locator('.playlist-table-row').first.wait_for()
-
-                containers = page.locator('button.playlist-table-button').locator('xpath=..')
-
-                for title in titles:
-                    progress.update(task, description=f"Deleting [bold]{title}[/bold]...")
-                    targets = containers.filter(
-                        has=page.locator(f'a .heading.playlist-table-song:has-text("{title}")')
-                    ).all()
-
-                    if not targets:
-                        console.print(f"[yellow]Not found: {title}[/yellow]")
-                        continue
-
-                    for target in targets:
-                        if title not in target.inner_html():
-                            console.print(f"[red]Safety check failed for: {title}[/red]")
-                            continue
-                        with page.expect_response(lambda r: r.request.method == 'DELETE'):
-                            target.locator('button.playlist-table-button').click()
-                            page.wait_for_load_state('networkidle')
-                    console.print(f"[green]Deleted: {title}[/green]")
+                delete_titles(page, titles)
             except PlaywrightTimeoutError as e:
                 console.print(f"[red]Timed out: {e}[/red]")
                 raise typer.Exit(1)
