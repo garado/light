@@ -11,7 +11,19 @@
       typer
       rich
     ]);
+    lp3music = pkgs.writeShellScriptBin "lp3music" ''
+      PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \
+      PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
+      ${pythonEnv}/bin/python ${./lp3_music.py} "$@"
+    '';
   in {
+    packages.${system}.default = lp3music;
+
+    apps.${system}.default = {
+      type = "app";
+      program = "${lp3music}/bin/lp3music";
+    };
+
     devShells.${system}.default = pkgs.mkShell {
       nativeBuildInputs = with pkgs; [
         pythonEnv
