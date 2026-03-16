@@ -1,7 +1,7 @@
 
 # Unofficial Light Phone API
 
-Unofficial API for interfacing with Light devices. This uses browser automation (Playwright) to automate things.
+Unofficial API for interfacing with Light devices. This uses browser automation (Playwright) under the hood.
 
 ## Installation
 
@@ -22,7 +22,7 @@ light music upload song.mp3
 light --email=/run/secrets/light_email --password=/run/secrets/light_password \
 --device-id=/run/secrets/light_device_id music upload song.mp3
 
-3. Command line plaintext (not recommended!)
+3. Command line (not recommended)
 TODO implement this
 light --email=your@email.com --password=password --device-id=1234567890  music upload song.mp3
 ```
