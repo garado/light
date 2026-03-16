@@ -43,7 +43,8 @@ def login(page, email: str, password: str) -> None:
         raise SystemExit(1)
 
 
-def navigate_to_music(page, phone: str) -> None:
+def navigate_to_music_from_dash_root(page, phone: str) -> None:
+    """Navigate to the Music dashboard menu from the root dashboard page."""
     page.locator('a[href="/devices"]').click()
     page.locator('li').filter(has_text=format_phone(phone)).click()
     page.locator('li').filter(has_text='Toolbox').click()
@@ -55,12 +56,14 @@ def make_page(playwright, headless: bool):
     return browser, browser.new_context().new_page()
 
 
-def delete_titles(page, titles: list[str]) -> None:
+def delete_titles(page, titles: list[str], progress=None, task=None) -> None:
     page.locator('a:has-text("Edit playlist")').click()
     page.locator('.playlist-table-row').first.wait_for()
     containers = page.locator('button.playlist-table-button').locator('xpath=..')
 
     for title in titles:
+        if progress and task is not None:
+            progress.update(task, description=f"Removing [bold]{title}[/bold]...")
         targets = containers.filter(
             has=page.locator(f'a .heading.playlist-table-song:has-text("{title}")')
         ).all()
@@ -87,7 +90,8 @@ common_options = [
 ]
 
 def with_common_options(f):
-    for option in reversed(common_options):
+    """Decorator factory"""
+    for option in common_options:
         f = option(f)
     return f
 
@@ -101,8 +105,8 @@ def cli():
 @cli.command()
 @with_common_options
 @click.argument('songs', nargs=-1, required=True)
-@click.option('--no-overwrite', is_flag=True, help='Skip removing existing tracks before upload')
-def upload(songs, no_overwrite, email, password, device_id, no_headless):
+@click.option('--allow-duplicates', is_flag=True, help='Skip removing existing tracks before upload')
+def upload(songs, allow_duplicates, email, password, device_id, no_headless):
     """Upload songs to Light Phone."""
     _email = resolve(email, "LIGHT_EMAIL")
     _password = resolve(password, "LIGHT_PASSWORD")
@@ -114,13 +118,13 @@ def upload(songs, no_overwrite, email, password, device_id, no_headless):
             try:
                 task = progress.add_task("Logging in...")
                 login(page, _email, _password)
-                navigate_to_music(page, _device_id)
+                navigate_to_music_from_dash_root(page, _device_id)
 
-                if not no_overwrite:
+                if not allow_duplicates:
                     titles = [os.path.splitext(os.path.basename(s))[0] for s in songs]
                     progress.update(task, description="Removing existing tracks...")
-                    delete_titles(page, titles)
-                    page.locator('a:has-text("Music")').click()
+                    delete_titles(page, titles, progress, task)
+                    page.go_back()
 
                 progress.update(task, description=f"Uploading {len(songs)} song(s)...")
                 page.locator('a:has-text("Add songs")').click()
@@ -155,7 +159,7 @@ def delete(titles, email, password, device_id, no_headless):
             try:
                 task = progress.add_task("Logging in...")
                 login(page, _email, _password)
-                navigate_to_music(page, _device_id)
+                navigate_to_music_from_dash_root(page, _device_id)
                 delete_titles(page, list(titles))
             except PlaywrightTimeoutError as e:
                 console.print(f"[red]Timed out: {e}[/red]")
@@ -182,7 +186,7 @@ def clear(email, password, device_id, no_headless, yes):
             try:
                 task = progress.add_task("Logging in...")
                 login(page, _email, _password)
-                navigate_to_music(page, _device_id)
+                navigate_to_music_from_dash_root(page, _device_id)
                 page.locator('.playlist-table-row').first.wait_for()
 
                 progress.update(task, description="Clearing songs...")
