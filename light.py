@@ -102,7 +102,13 @@ def cli():
     pass
 
 
-@cli.command()
+@cli.group()
+def music():
+    """Manage your music library."""
+    pass
+
+
+@music.command()
 @with_common_options
 @click.argument('songs', nargs=-1, required=True)
 @click.option('--allow-duplicates', is_flag=True, help='Skip removing existing tracks before upload')
@@ -144,7 +150,7 @@ def upload(songs, allow_duplicates, email, password, device_id, no_headless):
     console.print(f"[green]Uploaded {len(songs)} song(s). It may take some time to process.[/green]")
 
 
-@cli.command()
+@music.command()
 @with_common_options
 @click.argument('titles', nargs=-1, required=True)
 def delete(titles, email, password, device_id, no_headless):
@@ -159,6 +165,7 @@ def delete(titles, email, password, device_id, no_headless):
             try:
                 task = progress.add_task("Logging in...")
                 login(page, _email, _password)
+                task = progress.update(task, description="Deleting tracks...")
                 navigate_to_music_from_dash_root(page, _device_id)
                 delete_titles(page, list(titles))
             except PlaywrightTimeoutError as e:
@@ -168,7 +175,7 @@ def delete(titles, email, password, device_id, no_headless):
                 browser.close()
 
 
-@cli.command()
+@music.command()
 @with_common_options
 @click.option('-y', '--yes', is_flag=True, help='Skip confirmation')
 def clear(email, password, device_id, no_headless, yes):
