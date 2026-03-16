@@ -14,17 +14,17 @@ The script needs your Light email, password, and phone number to authenticate in
 Three options:
 
 ```sh
-1. Environment variable
-# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_DEVICE_ID
-light music upload song.mp3
+# 1. Environment variable
+# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_DEVICE_ID are set (see .env.example)
+light <command>
 
-2. Secrets file
+# 2. Secrets file
 light --email=/run/secrets/light_email --password=/run/secrets/light_password \
---device-id=/run/secrets/light_device_id music upload song.mp3
+--device-id=/run/secrets/light_device_id <command>
 
-3. Command line (not recommended)
-TODO implement this
-light --email=your@email.com --password=password --device-id=1234567890  music upload song.mp3
+# 3. Command line (not recommended)
+# TODO implement this
+light --email=your@email.com --password=password --device-id=1234567890 <command>
 ```
 
 ### Music
