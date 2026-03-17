@@ -1,15 +1,17 @@
 
-# Unofficial Light Phone API
+# Unofficial Light Phone CLI/API
 
-Unofficial API for interfacing with Light devices. This uses browser automation (Playwright) under the hood.
+Unofficial API for interfacing with Light devices.
+
+This uses a combination of browser automation (Playwright) and reverse-engineered Light API endpoints.
 
 ## Installation
 
 TODO
 
-## Usage
+## CLI usage
 
-The script needs your Light email, password, and phone number to authenticate into the Light dashboard and do its thing.
+The CLI needs your Light email, password, and phone number to authenticate into the Light dashboard and do its thing.
 
 Three options:
 
@@ -35,8 +37,14 @@ Supported features:
 - Deleting tracks
 
 ```sh
-# Upload tracks (overwriting existing matching tracks)
-light music upload song1.mp3 song2.mp3 song3.mp3
+# Upload tracks (overwrite existing matching tracks; match on file title metadata)
+light music upload song1.mp3 song2.mp3 song3.mp3 --match-by-title metadata
+light music upload song1.mp3 song2.mp3 song3.mp3 -m metadata
+light music upload song1.mp3 song2.mp3 song3.mp3 # it's the default if --match-by-title isn't specified
+
+# Upload tracks (overwrite existing matching tracks; match on filename)
+light music upload song1.mp3 song2.mp3 song3.mp3 --match-by-title filename
+light music upload song1.mp3 song2.mp3 song3.mp3 -m filename
 
 # Upload tracks (don't overwrite)
 light music upload --allow-duplicates song1.mp3 song2.mp3 song3.mp3
@@ -46,6 +54,10 @@ light music delete song.mp3
 
 # Clear all tracks
 light music clear
+
+# Sort tracks by title!
+light music sort title --asc
+light music sort title --desc
 
 # Sort tracks by artist
 light music sort artist --asc
