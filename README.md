@@ -46,6 +46,10 @@ light music delete song.mp3
 
 # Clear all tracks
 light music clear
+
+# Sort tracks by artist
+light music sort artist --asc
+light music sort artist --desc
 ```
 
 ### Notes

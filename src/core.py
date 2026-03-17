@@ -165,6 +165,32 @@ class Light:
 
         self.page.get_by_text("All Uploads complete.").wait_for(timeout=300000) # 5 min
 
+    def _get_artist_sort_state(self) -> str | None:
+        if self.page.locator('img[alt="tracks-sorted-by-artist-name-ascending"]').count() > 0:
+            return "ascending"
+        if self.page.locator('img[alt="tracks-sorted-by-artist-name-descending"]').count() > 0:
+            return "descending"
+        return None
+
+    def sort_tracks_by_artist(self, descending: bool):
+        """Sort tracks on device by artist.
+
+        Args:
+            descending: True to sort by descending; False for ascending.
+        """
+        self._nav_to_music_edit()
+        target = "descending" if descending else "ascending"
+
+        # sort toggle order is: None -> Descending -> Ascending 
+        attempts = 0
+        while self._get_artist_sort_state() != target and attempts < 2:
+            self.page.locator(f'div.playlist-table-artist[role="button"]').click()
+            self.page.wait_for_load_state("networkidle")
+            self.page.wait_for_timeout(300)
+            attempts += 1
+
+        if self._get_artist_sort_state() != target:
+            raise RuntimeError(f"Could not sort by artist {target}")
 
 def with_light(f):
     """Decorator to initialize a Light/Playwright context"""
