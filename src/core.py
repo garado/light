@@ -26,17 +26,35 @@ class Light:
         self.phone: str = phone or self._resolve(phone_file, "LIGHT_PHONE_NUMBER")
         self.device_id: str = device_id or self._resolve(device_id_file, "LIGHT_DEVICE_ID")
         self._api_token: str | None = None
+        self._device_tool_id: str | None = None
 
     def __enter__(self):
         self._playwright = sync_playwright().start()
         self._browser = self._playwright.firefox.launch(headless=self.headless)
         self.page = self._browser.new_context().new_page()
         self.login()
+        self._fetch_device_tool_id()
         return self
 
     def __exit__(self, *_):
         self._browser.close()
         self._playwright.stop()
+
+    def _fetch_device_tool_id(self):
+        """Navigate to music edit page once to grab dynamic config values.
+
+        TODO not sure what this actually does
+        """
+        with self.page.expect_response(
+            lambda r: "/api/playlists" in r.url and r.request.method == "GET"
+        ) as playlists_resp:
+            with self.page.expect_response(
+                lambda r: "playlist_items" in r.url and r.request.method == "GET"
+            ) as items_resp:
+                self._nav_to_music_edit()
+
+        self._device_tool_id = playlists_resp.value.url.split("device_tool_id=")[1].split("&")[0]
+
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str:
@@ -239,6 +257,8 @@ class Light:
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
         """
+        input()
+
         tracks = self._get_tracks()
         sorted_tracks = sorted(tracks, key=lambda t: t[1].casefold(), reverse=descending)
 
