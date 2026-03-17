@@ -143,29 +143,19 @@ class Light:
         """Delete tracks from device.
 
         Args:
-            titles: List of track titles (as they appear in the Light Dashboard) to delete
+            titles: List of track titles to delete.
         """
-        self._nav_to_music_edit()
+        tracks = self._get_tracks()
+        titles_set = set(titles)
 
-        containers = self.page.locator('button.playlist-table-button').locator('xpath=..')
-
-        for title in titles:
-            targets = containers.filter(
-                        has=self.page.locator(f'a .heading.playlist-table-song:has-text("{title}")')
-                      ).all()
-
-            if not targets:
-                console.print(f"[yellow]Not found: {title}[/yellow]")
+        for _, audio_id, title in tracks:
+            if title not in titles_set:
                 continue
-
-            for target in targets:
-                if title not in target.inner_html():
-                    console.print(f"[red]Safety check failed for: {title}[/red]")
-                    continue
-                with self.page.expect_response(lambda r: r.request.method == 'DELETE'):
-                    target.locator('button.playlist-table-button').click()
-                    self.page.wait_for_load_state('networkidle')
-
+            self.page.request.fetch(
+                f"https://production.lightphonecloud.com/api/audios/{audio_id}",
+                method="DELETE",
+                headers={"Authorization": self._api_token},
+            )
             console.print(f"[green]Deleted: {title}[/green]")
 
     def upload_tracks(self, files: list[str], allow_duplicates: bool = False, match_title_by: str = 'metadata') -> None:
@@ -180,16 +170,34 @@ class Light:
                 titles = [File(s)['title'][0] for s in files]
             else:
                 titles = [os.path.splitext(os.path.basename(s))[0] for s in files]
-
             self.delete_tracks(titles)
 
-        self._nav_to_music_upload()
-        self.page.locator('input[type="file"]').set_input_files(list(files))
+        for file_path in files:
+            response = self.page.request.fetch(
+                "https://production.lightphonecloud.com/api/audios",
+                method="POST",
+                headers={
+                    "Content-Type": "application/vnd.api+json",
+                    "Authorization": self._api_token,
+                },
+                data=json.dumps({"data": {"type": "audios", "attributes": {
+                    "filename": os.path.basename(file_path),
+                    "device_tool_id": self._device_tool_id,
+                }}})
+            )
 
-        with self.page.expect_response("**/audios"):
-            self.page.locator('button:has-text("upload songs")').click()
+            presigned_url = next(
+                i['attributes']['presigned_url']
+                for i in response.json()['included']
+                if i['type'] == 'files'
+            )
 
-        self.page.get_by_text("All Uploads complete.").wait_for(timeout=300000) # 5 min
+            self.page.request.fetch(
+                presigned_url,
+                method="PUT",
+                headers={"Content-Type": "audio/mpeg"},
+                data=open(file_path, 'rb').read()
+            )
 
     def _get_artist_sort_state(self) -> str | None:
         if self.page.locator('img[alt="tracks-sorted-by-artist-name-ascending"]').count() > 0:
@@ -229,9 +237,7 @@ class Light:
         ) as resp_info:
             self._nav_to_music_edit()
 
-        resp = resp_info.value
-        self._api_token = resp.request.headers.get('authorization')
-        body = resp.json()
+        body = resp_info.value.json()
 
         audio_titles = {
             item['id']: item['attributes']['title']
@@ -241,7 +247,7 @@ class Light:
 
         items = sorted(body['data'], key=lambda x: x['attributes']['position'])
         return [
-            (item['id'], audio_titles[item['relationships']['audio']['data']['id']])
+            (item['id'], item['relationships']['audio']['data']['id'], audio_titles[item['relationships']['audio']['data']['id']])
             for item in items
         ]
 
@@ -260,9 +266,9 @@ class Light:
         input()
 
         tracks = self._get_tracks()
-        sorted_tracks = sorted(tracks, key=lambda t: t[1].casefold(), reverse=descending)
+        sorted_tracks = sorted(tracks, key=lambda t: t[2].casefold(), reverse=descending)
 
-        for position, (playlist_item_id, _) in enumerate(sorted_tracks):
+        for position, (playlist_item_id, _, _) in enumerate(sorted_tracks):
             response = self.page.request.fetch(
                 f"https://production.lightphonecloud.com/api/playlist_items/{playlist_item_id}",
                 method="PATCH",
