@@ -15,7 +15,7 @@
     light = pkgs.writeShellScriptBin "light" ''
       PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \
       PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
-      ${pythonEnv}/bin/python ${./light.py} "$@"
+      ${pythonEnv}/bin/python ${./src}/cli.py "$@"
     '';
   in {
     packages.${system}.default = light;
