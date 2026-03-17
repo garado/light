@@ -25,6 +25,7 @@ class Light:
         self.password: str = password or self._resolve(password_file, "LIGHT_PASSWORD")
         self.phone: str = phone or self._resolve(phone_file, "LIGHT_PHONE_NUMBER")
         self.device_id: str = device_id or self._resolve(device_id_file, "LIGHT_DEVICE_ID")
+        self._api_token: str | None = None
 
     def __enter__(self):
         self._playwright = sync_playwright().start()
@@ -69,23 +70,29 @@ class Light:
         return f"+1 {digits[0:3]} {digits[3:6]} {digits[6:10]}"
 
     def login(self) -> None:
-        """Authenticate into the Light dashboard."""
+        """Authenticate into the Light dashboard and grab auth tokens."""
+        if self._api_token is not None:
+            return  # auth is already cached
+
         self.page.goto(BASE_URL)
         self.page.wait_for_load_state("networkidle")
-
-        if "/login" not in self.page.url:
-            return  # credentials are already cached
 
         self.page.locator('input[name*="email"]').fill(self.email)
         self.page.locator('input[name*="password"]').fill(self.password)
 
-        with self.page.expect_navigation():
-            self.page.locator('label:has-text("Log in")').click()
+        with self.page.expect_response(lambda r: "lightphonecloud.com" in r.url) as resp_info:
+            with self.page.expect_navigation():
+                self.page.locator('label:has-text("Log in")').click()
+
         self.page.wait_for_load_state("networkidle")
 
         if "/login" in self.page.url:
             console.print("[red]Login failed — check your credentials.[/red]")
             raise SystemExit(1)
+
+        body = resp_info.value.json()
+        token = next(i['attributes']['token'] for i in body['included'] if i['type'] == 'tokens')
+        self._api_token = f"Bearer {token}"
 
     def _nav_to_dash_root(self) -> None:
         """Navigate to the root dashboard menu."""
