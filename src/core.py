@@ -282,8 +282,6 @@ class Light:
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
         """
-        input()
-
         tracks = self._get_tracks()
         sorted_tracks = sorted(tracks, key=lambda t: t[2].casefold(), reverse=descending)
 
