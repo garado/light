@@ -1,5 +1,6 @@
 
 import os
+import json
 import functools
 from mutagen import File
 from rich.console import Console
@@ -27,7 +28,7 @@ class Light:
 
     def __enter__(self):
         self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(headless=self.headless)
+        self._browser = self._playwright.firefox.launch(headless=self.headless)
         self.page = self._browser.new_context().new_page()
         self.login()
         return self
@@ -193,66 +194,40 @@ class Light:
             raise RuntimeError(f"Could not sort by artist {target}")
 
     def _get_tracks(self) -> list[tuple[str, str]]:
-        """Fetch all tracks from the 'Music->Edit Playlist' page.
+        """Fetch all tracks via the API response when navigating to the edit page.
 
         Returns:
-            List of (playlist_item_id, title) pairs in the current playlist order.
+            List of (playlist_item_id, title) pairs in current playlist order.
         """
-        self._nav_to_music_edit()
-        self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        self.page.wait_for_timeout(500)
-        self.page.evaluate("window.scrollTo(0, 0)")
-        self.page.wait_for_timeout(500)
-        rows = self.page.locator('div.js-draggableObject').all()
-        result = []
-        for row in rows:
-            href = row.locator('a.playlist-table-row').get_attribute('href')
-            playlist_item_id = href.rstrip('/').split('/')[-1]
-            title = row.locator('.playlist-table-song').inner_text().strip()
-            result.append((playlist_item_id, title))
-        return result
+        with self.page.expect_response(
+            lambda r: "playlist_items" in r.url and r.request.method == "GET"
+        ) as resp_info:
+            self._nav_to_music_edit()
 
-    def _execute_sort(self, sorted_tracks: list[tuple[str, str]]) -> None:
-        for _, title in reversed(sorted_tracks):
-            # Target the specific row
-            source = self.page.locator("div.js-draggableObject", has_text=title).first
-            target = self.page.locator("div.js-draggableObject").first
+        resp = resp_info.value
+        self._api_token = resp.request.headers.get('authorization')
+        body = resp.json()
 
-            # Elements must be in view for drag to work
-            source.scroll_into_view_if_needed()
+        audio_titles = {
+            item['id']: item['attributes']['title']
+            for item in body.get('included', [])
+            if item['type'] == 'audios'
+        }
 
-            # Manual drag sequence
-            source.hover()
-            self.page.mouse.down()
-
-            # 'Steps' simulates a smoother movement that JS listeners often require
-            target.hover()
-            self.page.wait_for_timeout(200)
-            self.page.mouse.move(
-                    target.bounding_box()['x'], 
-                    target.bounding_box()['y'], 
-                    steps=10
-                    )
-
-            self.page.mouse.up()
+        items = sorted(body['data'], key=lambda x: x['attributes']['position'])
+        return [
+            (item['id'], audio_titles[item['relationships']['audio']['data']['id']])
+            for item in items
+        ]
 
     def sort_tracks_by_title(self, descending: bool):
         """Sort tracks on device by title.
 
-        As you might know, the dashboard doesn't allow automatic sorting by title.
-        The user needs to manually drag-and-drop to put things in alphabetical title order,
-        which makes scripting it a lot more challenging that sort_traks_by_artist.
-
-        Strategy:
-        1. First scrape all existing tracks and map track titles to their top-level js-draggableObject Ember ID
-        2. Sort them
-        3. Take the LAST sorted track; drag it to the top
-           Take the SECOND TO LAST sorted track; drag it to the top
-           ...
-           Eventually they will all be sorted but the sort happens in reverse.
+        The dashboard has no native sort-by-title, so we intercept the playlist_items
+        API response on page load to get all track IDs, then PATCH each position directly.
 
         Args:
-            descending: True to sort by descending; False for ascending.
+            descending: True to sort descending; False for ascending.
 
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
@@ -260,18 +235,16 @@ class Light:
         tracks = self._get_tracks()
         sorted_tracks = sorted(tracks, key=lambda t: t[1].casefold(), reverse=descending)
 
-        # sigh
-        self.page.evaluate("document.body.style.zoom = '25%'")
-        tag = self.page.add_style_tag(content="""
-            .playlist-table-button { visibility: hidden; }
-            .playlist-table-song   { height: 10px !important; overflow: hidden; }
-            .playlist-table-artist { height: 10px !important; overflow: hidden; }
-        """)
-        self.page.wait_for_timeout(300)
-        # sigh
+        for position, (playlist_item_id, _) in enumerate(sorted_tracks):
+            response = self.page.request.fetch(
+                f"https://production.lightphonecloud.com/api/playlist_items/{playlist_item_id}",
+                method="PATCH",
+                headers={"Content-Type": "application/vnd.api+json", "Authorization": self._api_token},
+                data=json.dumps({
+                    "data": {"id": playlist_item_id, "type": "playlist_items", "attributes": {"position": position}}
+                })
+            )
 
-        self._execute_sort(sorted_tracks)
-        tag.evaluate("el => el.remove()")
 
 def with_light(f):
     """Decorator to initialize a Light/Playwright context"""
