@@ -54,6 +54,9 @@ class Light:
                 self._nav_to_music_edit()
 
         self._device_tool_id = playlists_resp.value.url.split("device_tool_id=")[1].split("&")[0]
+        playlists_body = playlists_resp.value.json()
+        data = playlists_body['data']
+        self._playlist_id = (data if isinstance(data, dict) else data[0])['id']
 
 
     @staticmethod
@@ -134,6 +137,11 @@ class Light:
         self.page.locator('a:has-text("Edit playlist")').click()
         self.page.locator('.playlist-table-row').first.wait_for()  # ensure page has loaded
 
+    def _check_response(self, response, context: str = "") -> None:
+        print(response)
+        if not response.ok:
+            raise RuntimeError(f"{context}: {response.status} {response.text()}")
+
     def _nav_to_music_upload(self) -> None:
         """Navigate to 'Music->Add Songs' tab."""
         self._nav_to_music_root()
@@ -151,10 +159,13 @@ class Light:
         for _, audio_id, title in tracks:
             if title not in titles_set:
                 continue
-            self.page.request.fetch(
-                f"https://production.lightphonecloud.com/api/audios/{audio_id}",
-                method="DELETE",
-                headers={"Authorization": self._api_token},
+            self._check_response(
+                self.page.request.fetch(
+                    f"https://production.lightphonecloud.com/api/audios/{audio_id}",
+                    method="DELETE",
+                    headers={"Authorization": self._api_token},
+                ),
+                f"delete {title}"
             )
             console.print(f"[green]Deleted: {title}[/green]")
 
@@ -173,7 +184,7 @@ class Light:
             self.delete_tracks(titles)
 
         for file_path in files:
-            response = self.page.request.fetch(
+            create_resp = self.page.request.fetch(
                 "https://production.lightphonecloud.com/api/audios",
                 method="POST",
                 headers={
@@ -185,18 +196,22 @@ class Light:
                     "device_tool_id": self._device_tool_id,
                 }}})
             )
+            self._check_response(create_resp, f"create audio record for {os.path.basename(file_path)}")
 
             presigned_url = next(
                 i['attributes']['presigned_url']
-                for i in response.json()['included']
+                for i in create_resp.json()['included']
                 if i['type'] == 'files'
             )
 
-            self.page.request.fetch(
-                presigned_url,
-                method="PUT",
-                headers={"Content-Type": "audio/mpeg"},
-                data=open(file_path, 'rb').read()
+            self._check_response(
+                self.page.request.fetch(
+                    presigned_url,
+                    method="PUT",
+                    headers={"Content-Type": "audio/mpeg"},
+                    data=open(file_path, 'rb').read()
+                ),
+                f"upload file {os.path.basename(file_path)}"
             )
 
     def _get_artist_sort_state(self) -> str | None:
@@ -208,6 +223,10 @@ class Light:
 
     def sort_tracks_by_artist(self, descending: bool):
         """Sort tracks on device by artist.
+
+        TODO: Fix request-based execution.
+        When I tried it, the request was successful, but the sort mode didn't change.
+        Back to browser automation for now.
 
         Args:
             descending: True to sort by descending; False for ascending.
@@ -269,13 +288,16 @@ class Light:
         sorted_tracks = sorted(tracks, key=lambda t: t[2].casefold(), reverse=descending)
 
         for position, (playlist_item_id, _, _) in enumerate(sorted_tracks):
-            response = self.page.request.fetch(
-                f"https://production.lightphonecloud.com/api/playlist_items/{playlist_item_id}",
-                method="PATCH",
-                headers={"Content-Type": "application/vnd.api+json", "Authorization": self._api_token},
-                data=json.dumps({
-                    "data": {"id": playlist_item_id, "type": "playlist_items", "attributes": {"position": position}}
-                })
+            self._check_response(
+                self.page.request.fetch(
+                    f"https://production.lightphonecloud.com/api/playlist_items/{playlist_item_id}",
+                    method="PATCH",
+                    headers={"Content-Type": "application/vnd.api+json", "Authorization": self._api_token},
+                    data=json.dumps({
+                        "data": {"id": playlist_item_id, "type": "playlist_items", "attributes": {"position": position}}
+                    })
+                ),
+                f"sort by title position {position}"
             )
 
 
