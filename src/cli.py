@@ -58,7 +58,7 @@ def delete(light, songs, **kwargs):
 @music.command()
 @with_common_options
 @with_light
-@click.argument('field', type=click.Choice(['artist', 'title']))
+@click.argument('field', type=click.Choice(['artist', 'title', 'none']))
 @click.option('--asc', 'order', flag_value='ascending', default=True)
 @click.option('--desc', 'order', flag_value='descending', help='Sort descending')
 def sort(light, field, order, **kwargs):
@@ -67,6 +67,8 @@ def sort(light, field, order, **kwargs):
 
         if field == "artist":
             light.sort_tracks_by_artist(descending=(order == 'descending'))
+        elif field == "title":
+            light.sort_tracks_by_title(descending=(order == 'descending'))
 
         progress.update(task, description="Done.")                                                                                                    
 
