@@ -1,8 +1,10 @@
 import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 from core import Light, with_light
 from music import SortMode
+from tui import LightConfig, run_tui
 
 console = Console()
 
@@ -124,9 +126,41 @@ def update(light: Light, title, new_title, artist, **kwargs):
             return
 
         for track in matches:
-            light.music.update_track_metadata(track.audio_id, title=new_title, artist=artist)
+            light.music.update_track_metadata(
+                track.audio_id, title=new_title, artist=artist
+            )
 
         progress.update(task, description="Done.")
+
+
+@music.command()
+@with_common_options
+@with_light
+def list(light: Light, **kwargs):
+    """List all tracks on device."""
+    tracks = light.music.get_tracks()
+    table = Table(show_header=True)
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Title")
+    table.add_column("Artist")
+    for i, track in enumerate(tracks, 1):
+        table.add_row(str(i), track.title, track.artist)
+    console.print(table)
+
+
+@cli.command()
+@click.option("--email-file", default=None)
+@click.option("--password-file", default=None)
+@click.option("--device-id-file", default=None)
+@click.option("--no-headless", is_flag=True)
+def tui(email_file, password_file, device_id_file, no_headless):
+    """Launch the interactive TUI."""
+    run_tui(LightConfig(
+        email_file=email_file,
+        password_file=password_file,
+        phone_file=device_id_file,
+        headless=not no_headless,
+    ))
 
 
 if __name__ == "__main__":

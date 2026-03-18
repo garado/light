@@ -57,6 +57,8 @@ class Light:
         self._browser = self._playwright.firefox.launch(headless=self.headless)
         self._page = self._browser.new_context().new_page()
 
+        console.print("[green]Authenticating...[/green]")
+
         if self._load_cache() and self._validate_cache():
             console.print("[green]Using cached session.[/green]")
         else:
@@ -67,6 +69,8 @@ class Light:
         from music import LightMusic
 
         self.music = LightMusic(self)
+        
+        console.print("[green]Authentication complete.[/green]")
 
         return self
 
