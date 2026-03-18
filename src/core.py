@@ -40,6 +40,7 @@ class Light:
         self._api_token: str | None = None
         self._device_tool_id: str | None = None
         self._playlist_id: str | None = None
+        self._podcast_device_tool_id: str | None = None
 
         self._playwright: Playwright
         self._browser: Browser
@@ -47,9 +48,11 @@ class Light:
 
         # namespaced modules
         self.music: "LightMusic"
+        self.podcast: "LightPodcasts"
 
         if TYPE_CHECKING:
             from music import LightMusic
+            from podcast import LightPodcasts
 
     def __enter__(self) -> "Light":
         """Start Playwright context and grab auth stuff."""
@@ -67,9 +70,11 @@ class Light:
             self._save_cache()
 
         from music import LightMusic
+        from podcast import LightPodcasts
 
         self.music = LightMusic(self)
-        
+        self.podcast = LightPodcasts(self)
+
         console.print("[green]Authentication complete.[/green]")
 
         return self
@@ -122,6 +127,7 @@ class Light:
             self._api_token = data["api_token"]
             self._device_tool_id = data["device_tool_id"]
             self._playlist_id = data["playlist_id"]
+            self._podcast_device_tool_id = data.get("podcast_device_tool_id")
             return True
         except (KeyError, json.JSONDecodeError):
             return False
@@ -135,6 +141,7 @@ class Light:
                     "api_token": self._api_token,
                     "device_tool_id": self._device_tool_id,
                     "playlist_id": self._playlist_id,
+                    "podcast_device_tool_id": self._podcast_device_tool_id,
                 }),
             )
         except keyring.errors.NoKeyringError:
@@ -248,6 +255,24 @@ class Light:
         self._page.locator("li").filter(has_text=self._format_phone(self.phone)).click()
         self._page.locator("li").filter(has_text="Toolbox").click()
         self._page.locator("li").filter(has_text="Music").click()
+
+    def _nav_to_podcasts_root(self) -> None:
+        """Navigate to the podcasts tool page."""
+        self._nav_to_dash_root()
+        self._page.locator('a[href="/devices"]').click()
+        self._page.locator("li").filter(has_text=self._format_phone(self.phone)).click()
+        self._page.locator("li").filter(has_text="Toolbox").click()
+        self._page.locator("li").filter(has_text="Podcasts").click()
+
+    def _fetch_podcast_device_tool_id(self) -> None:
+        """Navigate to podcasts page to capture the podcast device_tool_id."""
+        with self._page.expect_response(
+            lambda r: "/api/followed_podcasts" in r.url and r.request.method == "GET"
+        ) as resp:
+            self._nav_to_podcasts_root()
+
+        url = resp.value.url
+        self._podcast_device_tool_id = url.split("device_tool_id=")[1].split("&")[0]
 
     def nav_to_music_edit(self) -> None:
         """Navigate to 'Music->Edit Playlists' tab."""

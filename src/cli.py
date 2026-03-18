@@ -37,6 +37,43 @@ def music():
     pass
 
 
+@cli.group()
+def podcast():
+    """Manage Light podcasts."""
+    pass
+
+
+@podcast.command()
+@with_common_options
+@with_light
+@click.argument("rss_feed_url")
+def add(light: Light, rss_feed_url, **kwargs):
+    """Subscribe to a podcast by RSS feed URL."""
+    with Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), console=console
+    ) as progress:
+        task = progress.add_task("Adding podcast...")
+        p = light.podcast.add_podcast(rss_feed_url)
+        progress.update(task, description="Done.")
+    console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
+    if p.publisher:
+        console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+
+
+@podcast.command()
+@with_common_options
+@with_light
+@click.argument("title")
+def delete(light: Light, title, **kwargs):
+    """Unfollow a podcast by title."""
+    with Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), console=console
+    ) as progress:
+        task = progress.add_task("Deleting podcast...")
+        light.podcast.delete_podcast_by_title(title)
+        progress.update(task, description="Done.")
+
+
 @music.command()
 @with_common_options
 @with_light
