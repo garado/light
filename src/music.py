@@ -327,6 +327,37 @@ class LightMusic:
             f"[green]It may take some time to process and appear on your device.[/green]"
         )
 
+    def update_track_metadata(
+        self, audio_id: str, title: str | None = None, artist: str | None = None
+    ):
+        """Update metadata (title, artist) for a track.
+
+        Args:
+            audio_id: The audio_id for the track to edit.
+            title: The new title, or None for no changes.
+            artist: The new artist, or None for no changes.
+        """
+        attrs = {}
+        if title is not None:
+            attrs["title"] = title
+        if artist is not None:
+            attrs["artist"] = artist
+
+        resp = self._l._request(
+            f"{API_BASE}/api/audios/{audio_id}",
+            method="PATCH",
+            data={
+                "data": {
+                    "id": audio_id,
+                    "type": "playlist_items",
+                    "attributes": attrs,
+                }
+            },
+        )
+
+        self._l._check_response(resp)
+        console.print(f"[green]Update metadata successfully.[/green]")
+
     def _sort_by_title(self, descending: bool = False) -> None:
         """Sort tracks on device by title.
 
