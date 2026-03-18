@@ -46,12 +46,13 @@ def music():
     type=click.Choice(["filename", "metadata"]),
     default="metadata",
 )
-def upload(light, songs, allow_duplicates, match_title_by, **kwargs):
+def upload(light: Light, songs, allow_duplicates, match_title_by, **kwargs):
+    """Upload audio files to device."""
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
         task = progress.add_task("Uploading...")
-        light.upload_tracks(
+        light.music.upload_tracks(
             list(songs),
             allow_duplicates=allow_duplicates,
             match_title_by=match_title_by,
@@ -63,12 +64,13 @@ def upload(light, songs, allow_duplicates, match_title_by, **kwargs):
 @with_common_options
 @with_light
 @click.argument("songs", nargs=-1, required=True)
-def delete(light, songs, **kwargs):
+def delete(light: Light, songs, **kwargs):
+    """Delete tracks by title."""
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
         task = progress.add_task("Deleting...")
-        light.delete_tracks(list(songs))
+        light.music.delete_tracks_by_title(list(songs))
         progress.update(task, description="Done.")
 
 
@@ -79,6 +81,7 @@ def delete(light, songs, **kwargs):
 @click.option("--asc", "order", flag_value="ascending", default=True)
 @click.option("--desc", "order", flag_value="descending", help="Sort descending")
 def sort(light: Light, field, order, **kwargs):
+    """Sort tracks by artist, title, or reset to manual order."""
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -100,14 +103,30 @@ def sort(light: Light, field, order, **kwargs):
         progress.update(task, description="Done.")
 
 
-@cli.command()
+@music.command()
 @with_common_options
 @with_light
-def test(light: Light, **kwargs):
-    # track = "/home/alexis/Music/Library/Linkin Park/From Zero (2024)/10 IGYEIH.mp3"
-    # light.music.upload_tracks([track], allow_duplicates=False)
+@click.argument("title")
+@click.option("--new-title", default=None, help="New track title")
+@click.option("--artist", default=None, help="New artist name")
+def update(light: Light, title, new_title, artist, **kwargs):
+    """Update metadata for a track matching TITLE."""
+    with Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), console=console
+    ) as progress:
+        task = progress.add_task("Updating...")
 
-    print(light.music.set_sort_mode(SortMode.TITLE_ASC))
+        tracks = light.music.get_tracks()
+        matches = [t for t in tracks if t.title == title]
+
+        if not matches:
+            console.print(f"[yellow]No track found with title: {title}[/yellow]")
+            return
+
+        for track in matches:
+            light.music.update_track_metadata(track.audio_id, title=new_title, artist=artist)
+
+        progress.update(task, description="Done.")
 
 
 if __name__ == "__main__":
