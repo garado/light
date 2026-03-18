@@ -11,6 +11,7 @@
       click
       rich
       mutagen
+      keyring
     ]);
     light = pkgs.writeShellScriptBin "light" ''
       PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \

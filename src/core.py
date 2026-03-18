@@ -3,12 +3,15 @@ import json
 import functools
 from typing import TYPE_CHECKING, Any, Callable, final
 
+import keyring
 from rich.console import Console
 from playwright.sync_api import APIResponse, Browser, Page, Playwright, sync_playwright
 
 console = Console()
 
 BASE_URL = "https://dashboard.thelightphone.com"
+KEYRING_SERVICE = "unofficial-light-api"
+KEYRING_USER = "session"
 
 
 @final
@@ -53,10 +56,16 @@ class Light:
         self._playwright = sync_playwright().start()
         self._browser = self._playwright.firefox.launch(headless=self.headless)
         self._page = self._browser.new_context().new_page()
-        self.login()
-        self._fetch_device_tool_id()
+
+        if self._load_cache() and self._validate_cache():
+            console.print("[green]Using cached session.[/green]")
+        else:
+            self.login()
+            self._fetch_device_tool_id()
+            self._save_cache()
 
         from music import LightMusic
+
         self.music = LightMusic(self)
 
         return self
@@ -96,6 +105,46 @@ class Light:
             data=json.dumps(data) if data is not None else None,
             timeout=timeout,
         )
+
+    def _load_cache(self) -> bool:
+        try:
+            raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
+        except keyring.errors.NoKeyringError:
+            return False
+        if raw is None:
+            return False
+        try:
+            data = json.loads(raw)
+            self._api_token = data["api_token"]
+            self._device_tool_id = data["device_tool_id"]
+            self._playlist_id = data["playlist_id"]
+            return True
+        except (KeyError, json.JSONDecodeError):
+            return False
+
+    def _save_cache(self) -> None:
+        try:
+            keyring.set_password(
+                KEYRING_SERVICE,
+                KEYRING_USER,
+                json.dumps({
+                    "api_token": self._api_token,
+                    "device_tool_id": self._device_tool_id,
+                    "playlist_id": self._playlist_id,
+                }),
+            )
+        except keyring.errors.NoKeyringError:
+            pass
+
+    def _validate_cache(self) -> bool:
+        # dummy api call
+        resp = self._request(
+            f"https://production.lightphonecloud.com/api/playlists"
+            f"?playlist_ids={self._playlist_id}"
+            f"&device_tool_id={self._device_tool_id}",
+            method="GET",
+        )
+        return resp.ok
 
     def _fetch_device_tool_id(self) -> None:
         """Navigate to music edit page once to grab dynamic config values.
