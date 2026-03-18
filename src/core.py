@@ -1,84 +1,145 @@
-
 import os
 import json
 import functools
-from mutagen import File
+from typing import TYPE_CHECKING, Any, Callable, final
+
 from rich.console import Console
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import APIResponse, Browser, Page, Playwright, sync_playwright
 
 console = Console()
 
 BASE_URL = "https://dashboard.thelightphone.com"
 
+
+@final
 class Light:
     """Methods for interfacing with Light devices."""
 
-    def __init__(self,
-                 headless=True,
-                 email=None, email_file=None,
-                 password=None, password_file=None,
-                 phone=None, phone_file=None,
-                 device_id=None, device_id_file=None):
-
-        self.headless = headless
+    def __init__(
+        self,
+        headless: bool = True,
+        email: str | None = None,
+        email_file: str | None = None,
+        password: str | None = None,
+        password_file: str | None = None,
+        phone: str | None = None,
+        phone_file: str | None = None,
+        device_id: str | None = None,
+        device_id_file: str | None = None,
+    ) -> None:
+        self.headless: bool = headless
         self.email: str = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str = password or self._resolve(password_file, "LIGHT_PASSWORD")
         self.phone: str = phone or self._resolve(phone_file, "LIGHT_PHONE_NUMBER")
-        self.device_id: str = device_id or self._resolve(device_id_file, "LIGHT_DEVICE_ID")
+        self.device_id: str = device_id or self._resolve(
+            device_id_file, "LIGHT_DEVICE_ID"
+        )
         self._api_token: str | None = None
         self._device_tool_id: str | None = None
+        self._playlist_id: str | None = None
 
-    def __enter__(self):
+        self._playwright: Playwright
+        self._browser: Browser
+        self._page: Page
+
+        # namespaced modules
+        self.music: "LightMusic"
+
+        if TYPE_CHECKING:
+            from music import LightMusic
+
+    def __enter__(self) -> "Light":
+        """Start Playwright context and grab auth stuff."""
         self._playwright = sync_playwright().start()
         self._browser = self._playwright.firefox.launch(headless=self.headless)
-        self.page = self._browser.new_context().new_page()
+        self._page = self._browser.new_context().new_page()
         self.login()
         self._fetch_device_tool_id()
+
+        from music import LightMusic
+        self.music = LightMusic(self)
+
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_: object) -> None:
+        """Stop Playwright context."""
         self._browser.close()
         self._playwright.stop()
 
-    def _fetch_device_tool_id(self):
+    def _request(
+        self,
+        url: str,
+        method: str = "GET",
+        data: dict[str, Any] | None = None,
+        timeout: int = 30_000,
+    ) -> APIResponse:
+        """Make an authenticated request to the Light API.
+
+        Args:
+            url: URL of API endpoint.
+            method: HTTP method.
+            data: Request payload.
+            timeout: Timeout in milliseconds.
+        """
+        headers: dict[str, str] = {
+            "Authorization": self._api_token or "",
+            "Accept": "application/vnd.api+json",
+        }
+
+        if data is not None:
+            headers["Content-Type"] = "application/vnd.api+json"
+
+        return self._page.request.fetch(
+            url,
+            method=method,
+            headers=headers,
+            data=json.dumps(data) if data is not None else None,
+            timeout=timeout,
+        )
+
+    def _fetch_device_tool_id(self) -> None:
         """Navigate to music edit page once to grab dynamic config values.
 
-        TODO not sure what this actually does
+        TODO Not sure what device_tool_id actually does.
         """
-        with self.page.expect_response(
+        with self._page.expect_response(
             lambda r: "/api/playlists" in r.url and r.request.method == "GET"
         ) as playlists_resp:
-            with self.page.expect_response(
+            with self._page.expect_response(
                 lambda r: "playlist_items" in r.url and r.request.method == "GET"
-            ) as items_resp:
-                self._nav_to_music_edit()
+            ):
+                self.nav_to_music_edit()
 
-        self._device_tool_id = playlists_resp.value.url.split("device_tool_id=")[1].split("&")[0]
-        playlists_body = playlists_resp.value.json()
-        data = playlists_body['data']
-        self._playlist_id = (data if isinstance(data, dict) else data[0])['id']
-
+        self._device_tool_id = playlists_resp.value.url.split("device_tool_id=")[
+            1
+        ].split("&")[0]
+        playlists_body: dict[str, Any] = playlists_resp.value.json()
+        data: dict[str, Any] | list[dict[str, Any]] = playlists_body["data"]
+        self._playlist_id = (data if isinstance(data, dict) else data[0])["id"]
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str:
-        """Determine secret.
+        """Resolve a secret from a file or environment variable.
 
         Args:
-            filepath:
-            env_key:
+            filepath: Path to file containing the secret.
+            env_key: Environment variable name.
 
         Returns:
             Value of secret.
         """
         if filepath:
             try:
-                return open(filepath).read().strip()
+                with open(filepath) as f:
+                    return f.read().strip()
             except OSError as e:
                 console.print(f"[red]Could not read {filepath}: {e}[/red]")
                 raise SystemExit(1)
         if value := os.environ.get(env_key):
             return value
-        console.print(f"[red]Must provide --{env_key.removeprefix('LIGHT_').lower().replace('_', '-')} or set {env_key}[/red]")
+        console.print(
+            f"[red]Must provide --{env_key.removeprefix('LIGHT_').lower().replace('_', '-')} or set {env_key}[/red]"
+        )
         raise SystemExit(1)
 
     @staticmethod
@@ -87,7 +148,7 @@ class Light:
 
         Example: 1234567890 -> +1 123 456 7890 (very Americentric :P)
         """
-        digits = ''.join(c for c in number if c.isdigit())[-10:]
+        digits: str = "".join(c for c in number if c.isdigit())[-10:]
         return f"+1 {digits[0:3]} {digits[3:6]} {digits[6:10]}"
 
     def login(self) -> None:
@@ -95,215 +156,77 @@ class Light:
         if self._api_token is not None:
             return  # auth is already cached
 
-        self.page.goto(BASE_URL)
-        self.page.wait_for_load_state("networkidle")
+        self._page.goto(BASE_URL)
+        self._page.wait_for_load_state("networkidle")
 
-        self.page.locator('input[name*="email"]').fill(self.email)
-        self.page.locator('input[name*="password"]').fill(self.password)
+        self._page.locator('input[name*="email"]').fill(self.email)
+        self._page.locator('input[name*="password"]').fill(self.password)
 
-        with self.page.expect_response(lambda r: "lightphonecloud.com" in r.url) as resp_info:
-            with self.page.expect_navigation():
-                self.page.locator('label:has-text("Log in")').click()
+        with self._page.expect_response(
+            lambda r: "lightphonecloud.com" in r.url
+        ) as resp_info:
+            with self._page.expect_navigation():
+                self._page.locator('label:has-text("Log in")').click()
 
-        self.page.wait_for_load_state("networkidle")
+        self._page.wait_for_load_state("networkidle")
 
-        if "/login" in self.page.url:
+        if "/login" in self._page.url:
             console.print("[red]Login failed — check your credentials.[/red]")
             raise SystemExit(1)
 
-        body = resp_info.value.json()
-        token = next(i['attributes']['token'] for i in body['included'] if i['type'] == 'tokens')
+        body: dict[str, Any] = resp_info.value.json()
+        token: str = next(
+            i["attributes"]["token"] for i in body["included"] if i["type"] == "tokens"
+        )
         self._api_token = f"Bearer {token}"
 
     def _nav_to_dash_root(self) -> None:
         """Navigate to the root dashboard menu."""
-        self.page.goto(BASE_URL)
-        self.page.wait_for_load_state("networkidle")
+        self._page.goto(BASE_URL)
+        self._page.wait_for_load_state("networkidle")
 
-        if "/login" in self.page.url:
+        if "/login" in self._page.url:
             self.login()
 
     def _nav_to_music_root(self) -> None:
         """Navigate to the root music menu."""
         self._nav_to_dash_root()
-        self.page.locator('a[href="/devices"]').click()
-        self.page.locator('li').filter(has_text=self._format_phone(self.phone)).click()
-        self.page.locator('li').filter(has_text='Toolbox').click()
-        self.page.locator('li').filter(has_text='Music').click()
+        self._page.locator('a[href="/devices"]').click()
+        self._page.locator("li").filter(has_text=self._format_phone(self.phone)).click()
+        self._page.locator("li").filter(has_text="Toolbox").click()
+        self._page.locator("li").filter(has_text="Music").click()
 
-    def _nav_to_music_edit(self) -> None:
+    def nav_to_music_edit(self) -> None:
         """Navigate to 'Music->Edit Playlists' tab."""
         self._nav_to_music_root()
-        self.page.locator('a:has-text("Edit playlist")').click()
-        self.page.locator('.playlist-table-row').first.wait_for()  # ensure page has loaded
+        self._page.locator('a:has-text("Edit playlist")').click()
+        self._page.locator(
+            ".playlist-table-row"
+        ).first.wait_for()  # ensure page has loaded
 
-    def _check_response(self, response, context: str = "") -> None:
-        print(response)
+    def _check_response(self, response: APIResponse, context: str = "") -> None:
         if not response.ok:
             raise RuntimeError(f"{context}: {response.status} {response.text()}")
 
-    def _nav_to_music_upload(self) -> None:
-        """Navigate to 'Music->Add Songs' tab."""
-        self._nav_to_music_root()
-        self.page.locator('a:has-text("Add songs")').click()
 
-    def delete_tracks(self, titles: list[str]) -> None:
-        """Delete tracks from device.
+def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to initialize a Light/Playwright context."""
 
-        Args:
-            titles: List of track titles to delete.
-        """
-        tracks = self._get_tracks()
-        titles_set = set(titles)
-
-        for _, audio_id, title in tracks:
-            if title not in titles_set:
-                continue
-            self._check_response(
-                self.page.request.fetch(
-                    f"https://production.lightphonecloud.com/api/audios/{audio_id}",
-                    method="DELETE",
-                    headers={"Authorization": self._api_token},
-                ),
-                f"delete {title}"
-            )
-            console.print(f"[green]Deleted: {title}[/green]")
-
-    def upload_tracks(self, files: list[str], allow_duplicates: bool = False, match_title_by: str = 'metadata') -> None:
-        """Upload tracks to device.
-
-        Args:
-            files: List of paths to audio files to upload.
-            allow_duplicates: False (default) to overwrite existing matching tracks; True otherwise.
-        """
-        if not allow_duplicates:
-            if match_title_by == 'metadata':
-                titles = [File(s)['title'][0] for s in files]
-            else:
-                titles = [os.path.splitext(os.path.basename(s))[0] for s in files]
-            self.delete_tracks(titles)
-
-        for file_path in files:
-            create_resp = self.page.request.fetch(
-                "https://production.lightphonecloud.com/api/audios",
-                method="POST",
-                headers={
-                    "Content-Type": "application/vnd.api+json",
-                    "Authorization": self._api_token,
-                },
-                data=json.dumps({"data": {"type": "audios", "attributes": {
-                    "filename": os.path.basename(file_path),
-                    "device_tool_id": self._device_tool_id,
-                }}})
-            )
-            self._check_response(create_resp, f"create audio record for {os.path.basename(file_path)}")
-
-            presigned_url = next(
-                i['attributes']['presigned_url']
-                for i in create_resp.json()['included']
-                if i['type'] == 'files'
-            )
-
-            self._check_response(
-                self.page.request.fetch(
-                    presigned_url,
-                    method="PUT",
-                    headers={"Content-Type": "audio/mpeg"},
-                    data=open(file_path, 'rb').read()
-                ),
-                f"upload file {os.path.basename(file_path)}"
-            )
-
-    def _get_artist_sort_state(self) -> str | None:
-        if self.page.locator('img[alt="tracks-sorted-by-artist-name-ascending"]').count() > 0:
-            return "ascending"
-        if self.page.locator('img[alt="tracks-sorted-by-artist-name-descending"]').count() > 0:
-            return "descending"
-        return None
-
-    def sort_tracks_by_artist(self, descending: bool):
-        """Sort tracks on device by artist.
-
-        TODO: Fix request-based execution.
-        When I tried it, the request was successful, but the sort mode didn't change.
-        Back to browser automation for now.
-
-        Args:
-            descending: True to sort by descending; False for ascending.
-        """
-        self._nav_to_music_edit()
-        target = "descending" if descending else "ascending"
-
-        # sort toggle order is: None -> Descending -> Ascending 
-        attempts = 0
-        while self._get_artist_sort_state() != target and attempts < 2:
-            self.page.locator(f'div.playlist-table-artist[role="button"]').click()
-            self.page.wait_for_load_state("networkidle")
-            self.page.wait_for_timeout(300)
-            attempts += 1
-
-        if self._get_artist_sort_state() != target:
-            raise RuntimeError(f"Could not sort by artist {target}")
-
-    def _get_tracks(self) -> list[tuple[str, str]]:
-        """Fetch all tracks via the API response when navigating to the edit page.
-
-        Returns:
-            List of (playlist_item_id, title) pairs in current playlist order.
-        """
-        with self.page.expect_response(
-            lambda r: "playlist_items" in r.url and r.request.method == "GET"
-        ) as resp_info:
-            self._nav_to_music_edit()
-
-        body = resp_info.value.json()
-
-        audio_titles = {
-            item['id']: item['attributes']['title']
-            for item in body.get('included', [])
-            if item['type'] == 'audios'
-        }
-
-        items = sorted(body['data'], key=lambda x: x['attributes']['position'])
-        return [
-            (item['id'], item['relationships']['audio']['data']['id'], audio_titles[item['relationships']['audio']['data']['id']])
-            for item in items
-        ]
-
-    def sort_tracks_by_title(self, descending: bool):
-        """Sort tracks on device by title.
-
-        The dashboard has no native sort-by-title, so we intercept the playlist_items
-        API response on page load to get all track IDs, then PATCH each position directly.
-
-        Args:
-            descending: True to sort descending; False for ascending.
-
-        Note:
-            @light - i am begging you... please allow sorting by title. crying emoji
-        """
-        tracks = self._get_tracks()
-        sorted_tracks = sorted(tracks, key=lambda t: t[2].casefold(), reverse=descending)
-
-        for position, (playlist_item_id, _, _) in enumerate(sorted_tracks):
-            self._check_response(
-                self.page.request.fetch(
-                    f"https://production.lightphonecloud.com/api/playlist_items/{playlist_item_id}",
-                    method="PATCH",
-                    headers={"Content-Type": "application/vnd.api+json", "Authorization": self._api_token},
-                    data=json.dumps({
-                        "data": {"id": playlist_item_id, "type": "playlist_items", "attributes": {"position": position}}
-                    })
-                ),
-                f"sort by title position {position}"
-            )
-
-
-def with_light(f):
-    """Decorator to initialize a Light/Playwright context"""
     @functools.wraps(f)
-    def wrapper(*args, email=None, password=None, device_id=None, no_headless=False, **kwargs):
-        with Light(email_file=email, password_file=password,
-                   phone_file=device_id, headless=not no_headless) as light:
+    def wrapper(
+        *args: Any,
+        email: str | None = None,
+        password: str | None = None,
+        device_id: str | None = None,
+        no_headless: bool = False,
+        **kwargs: Any,
+    ) -> Any:
+        with Light(
+            email_file=email,
+            password_file=password,
+            phone_file=device_id,
+            headless=not no_headless,
+        ) as light:
             return f(light, *args, **kwargs)
+
     return wrapper

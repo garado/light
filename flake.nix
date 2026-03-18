@@ -29,11 +29,13 @@
       nativeBuildInputs = with pkgs; [
         pythonEnv
         playwright-driver.browsers
+        pyright
       ];
 
       shellHook = ''
         export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
         export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
+        ln -sfn ${pythonEnv} .venv
       '';
     };
   };
