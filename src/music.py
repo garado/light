@@ -370,16 +370,19 @@ class LightMusic:
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
         """
-        self._init_tracks()
+        tracks: list[LightTrack] = self.get_tracks()
+        sorted_tracks: list[LightTrack] = sorted(
+            tracks, key=lambda t: t.title.casefold(), reverse=descending
+        )
 
         # our custom sort is a subset of rank
         self.set_sort_mode(SortMode.RANK)
 
-        sorted_tracks: list[LightTrack] = sorted(
-            self._tracks, key=lambda t: t.title.casefold(), reverse=descending
-        )
+        original_positions: dict[str, int] = {t.audio_id: i for i, t in enumerate(tracks)}
 
-        for position, track in enumerate(sorted_tracks):
+        for new_position, track in enumerate(sorted_tracks):
+            if original_positions[track.audio_id] == new_position:
+                continue
             self._l._check_response(
                 self._l._request(
                     f"{API_BASE}/api/playlist_items/{track.playlist_item_id}",
@@ -388,9 +391,9 @@ class LightMusic:
                         "data": {
                             "id": track.playlist_item_id,
                             "type": "playlist_items",
-                            "attributes": {"position": position},
+                            "attributes": {"position": new_position},
                         }
                     },
                 ),
-                f"sort by title position {position}",
+                f"sort by title position {new_position}",
             )
