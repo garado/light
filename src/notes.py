@@ -48,21 +48,22 @@ class LightNotes:
             presigned_url=included["attributes"]["presigned_url"],
         )
 
-    def get_note_content(self, note: "LightNote") -> bytes:
+    def get_note_content(self, note: LightNote) -> bytes:
         """Fetch the content of a note as raw bytes.
 
         Fetches a fresh presigned GET URL each time (they expire).
-        For text notes, decode the result; for audio, write directly.
         """
         resp = self._l._request(
             f"{API_BASE}/api/notes/{note.id}/generate_presigned_get_url",
         )
+
         self._l._check_response(resp, f"presigned get url for {note.id}")
         presigned_get_url = resp.json()["presigned_get_url"]
 
         content_resp = self._l._page.request.fetch(
             presigned_get_url, headers={}, method="GET"
         )
+
         return content_resp.body()
 
     def get_notes(self) -> list["LightNote"]:
@@ -121,7 +122,9 @@ class LightNotes:
 
             console.print(f"[green]Saved:[/green] {path}")
 
-    def create_text_note(self, title: str, content: str, content_is_path: bool = False) -> None:
+    def create_text_note(
+        self, title: str, content: str, content_is_path: bool = False
+    ) -> None:
         """Create a new text note.
 
         Args:
