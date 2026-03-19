@@ -2,6 +2,7 @@ import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+
 from core import Light, with_light
 from music import SortMode
 from tui import LightConfig, run_tui
@@ -223,6 +224,38 @@ def download(light: Light, path: str, **kwargs):
     ) as progress:
         task = progress.add_task("Downloading notes...")
         light.notes.download_notes(path)
+        progress.update(task, description="Done.")
+
+
+@notes.command()
+@with_common_options
+@with_light
+@click.argument("title")
+@click.argument("content", default=None, required=False)
+@click.option(
+    "--file",
+    "-f",
+    "content_file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Read new note content from file.",
+)
+def add(
+    light: Light, title: str, content: str | None, content_file: str | None, **kwargs
+):
+    """Add a text note. Provide CONTENT inline or via --file."""
+    if content is None and content_file is None:
+        raise click.UsageError("Provide CONTENT or --file.")
+    if content is not None and content_file is not None:
+        raise click.UsageError("CONTENT and --file are mutually exclusive.")
+    with Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), console=console
+    ) as progress:
+        task = progress.add_task("Adding note...")
+        if content_file:
+            light.notes.create_text_note(title, content_file, content_is_path=True)
+        else:
+            light.notes.create_text_note(title, content)
         progress.update(task, description="Done.")
 
 

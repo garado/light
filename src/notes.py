@@ -1,9 +1,11 @@
 """Notes management for Light devices."""
 
-from dataclasses import dataclass
 import os
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from rich.console import Console
+
+from core import BASE_URL
 
 if TYPE_CHECKING:
     from core import Light
@@ -128,6 +130,47 @@ class LightNotes:
 
             console.print(f"[green]Saved:[/green] {path}")
 
-    def create_text_note(self, title: str, content: str):
-        """Create new text note."""
-        pass
+    def create_text_note(self, title: str, content: str, content_is_path: bool = False):
+        """Create new text note.
+
+        Args:
+            title: The title of the note to create.
+            content: Note content.
+            content_is_path: True if `content` is a filepath to read from.
+                             False if `content` is a raw string.
+        """
+        device_tool_id = self._ensure_device_tool_id()
+
+        # POST to create the note
+        resp = self._l._request(
+            f"{API_BASE}/api/notes",
+            method="POST",
+            data={
+                "data": {
+                    "attributes": {
+                        "device_tool_id": device_tool_id,
+                        "filename": "note.txt",
+                        "title": title,
+                    },
+                    "type": "notes",
+                }
+            },
+        )
+        self._l._check_response(resp, "creating note")
+
+        json = resp.json()
+        presigned_url = json["included"][0]["attributes"]["presigned_url"]
+
+        if content_is_path:
+            with open(content) as f:
+                _content = f.read()
+        else:
+            _content = content
+
+        # PUT the contents of the note
+        resp = self._l._page.request.fetch(
+            presigned_url,
+            headers={},
+            method="PUT",
+            data=_content,
+        )
