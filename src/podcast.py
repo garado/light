@@ -1,6 +1,7 @@
 """Podcast management for Light devices."""
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from rich.console import Console
 
 if TYPE_CHECKING:

@@ -185,6 +185,33 @@ def list(light: Light, **kwargs):
     console.print(table)
 
 
+@cli.group()
+def notes():
+    """Manage Light notes."""
+    pass
+
+
+@notes.command()
+@with_common_options
+@with_light
+def list(light: Light, **kwargs):
+    """List all notes on device."""
+    with Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), console=console
+    ) as progress:
+        task = progress.add_task("Fetching notes...")
+        all_notes = light.notes.get_notes()
+        progress.update(task, description="Done.")
+    for i, note in enumerate(all_notes, 1):
+        if note.note_type == "audio":
+            preview = f"[dim](audio)[/dim] {note.title}"
+        elif note.content and note.content.strip():
+            preview = note.content.splitlines()[0]
+        else:
+            preview = "[dim](empty)[/dim]"
+        console.print(f"[dim]{i}.[/dim] {preview}")
+
+
 @cli.command()
 @click.option("--email-file", default=None)
 @click.option("--password-file", default=None)

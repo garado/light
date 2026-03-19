@@ -41,6 +41,7 @@ class Light:
         self._device_tool_id: str | None = None
         self._playlist_id: str | None = None
         self._podcast_device_tool_id: str | None = None
+        self._notes_device_tool_id: str | None = None
 
         self._playwright: Playwright
         self._browser: Browser
@@ -49,10 +50,12 @@ class Light:
         # namespaced modules
         self.music: "LightMusic"
         self.podcast: "LightPodcasts"
+        self.notes: "LightNotes"
 
         if TYPE_CHECKING:
             from music import LightMusic
             from podcast import LightPodcasts
+            from notes import LightNotes
 
     def __enter__(self) -> "Light":
         """Start Playwright context and grab auth stuff."""
@@ -71,9 +74,11 @@ class Light:
 
         from music import LightMusic
         from podcast import LightPodcasts
+        from notes import LightNotes
 
         self.music = LightMusic(self)
         self.podcast = LightPodcasts(self)
+        self.notes = LightNotes(self)
 
         console.print("[green]Authentication complete.[/green]")
 
@@ -128,6 +133,7 @@ class Light:
             self._device_tool_id = data["device_tool_id"]
             self._playlist_id = data["playlist_id"]
             self._podcast_device_tool_id = data.get("podcast_device_tool_id")
+            self._notes_device_tool_id = data.get("notes_device_tool_id")
             return True
         except (KeyError, json.JSONDecodeError):
             return False
@@ -137,12 +143,15 @@ class Light:
             keyring.set_password(
                 KEYRING_SERVICE,
                 KEYRING_USER,
-                json.dumps({
-                    "api_token": self._api_token,
-                    "device_tool_id": self._device_tool_id,
-                    "playlist_id": self._playlist_id,
-                    "podcast_device_tool_id": self._podcast_device_tool_id,
-                }),
+                json.dumps(
+                    {
+                        "api_token": self._api_token,
+                        "device_tool_id": self._device_tool_id,
+                        "playlist_id": self._playlist_id,
+                        "podcast_device_tool_id": self._podcast_device_tool_id,
+                        "notes_device_tool_id": self._notes_device_tool_id,
+                    }
+                ),
             )
         except keyring.errors.NoKeyringError:
             pass
@@ -263,6 +272,25 @@ class Light:
         self._page.locator("li").filter(has_text=self._format_phone(self.phone)).click()
         self._page.locator("li").filter(has_text="Toolbox").click()
         self._page.locator("li").filter(has_text="Podcasts").click()
+
+    def _nav_to_notes_root(self) -> None:
+        """Navigate to the notes tool page."""
+        self._nav_to_dash_root()
+        self._page.locator('a[href="/devices"]').click()
+        self._page.locator("li").filter(has_text=self._format_phone(self.phone)).click()
+        self._page.locator("li").filter(has_text="Toolbox").click()
+        self._page.locator("li").filter(has_text="Notes").click()
+        self._page.locator("li").filter(has_text="View Notes").click()
+
+    def _fetch_notes_device_tool_id(self) -> None:
+        """Navigate to notes page to capture the notes device_tool_id."""
+        with self._page.expect_response(
+            lambda r: "/api/notes" in r.url and r.request.method == "GET"
+        ) as resp:
+            self._nav_to_notes_root()
+
+        url = resp.value.url
+        self._notes_device_tool_id = url.split("device_tool_id=")[1].split("&")[0]
 
     def _fetch_podcast_device_tool_id(self) -> None:
         """Navigate to podcasts page to capture the podcast device_tool_id."""
