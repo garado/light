@@ -1,11 +1,11 @@
 """Notes management for Light devices."""
 
 import os
+from collections import Counter
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from rich.console import Console
 
-from core import BASE_URL
+from rich.console import Console
 
 if TYPE_CHECKING:
     from core import Light
@@ -18,10 +18,9 @@ NOTES_BASE = "light-two-api-production.nyc3.digitaloceanspaces.com"
 
 @dataclass
 class LightNote:
-    id: str  # for making call to get presigned GET url
-    file_id: str  # for making call to fetch content
-    presigned_url: str  # ???
-    presigned_get_url: str  # ???
+    id: str
+    file_id: str
+    presigned_url: str  # PUT URL for uploading content
     note_type: str
     title: str
     updated_at: str
@@ -38,108 +37,69 @@ class LightNotes:
         assert self._l._notes_device_tool_id is not None
         return self._l._notes_device_tool_id
 
-    def get_notes(self) -> list[LightNote]:
+    def _note_from_data(self, data: dict, included: dict) -> "LightNote":
+        """Build a LightNote from a data item and its included file entry."""
+        return LightNote(
+            id=data["id"],
+            file_id=data["attributes"]["file_id"],
+            note_type=data["attributes"]["note_type"],
+            title=data["attributes"]["title"],
+            updated_at=data["attributes"]["updated_at"],
+            presigned_url=included["attributes"]["presigned_url"],
+        )
+
+    def get_note_content(self, note: "LightNote") -> bytes:
+        """Fetch the content of a note as raw bytes.
+
+        Fetches a fresh presigned GET URL each time (they expire).
+        For text notes, decode the result; for audio, write directly.
+        """
+        resp = self._l._request(
+            f"{API_BASE}/api/notes/{note.id}/generate_presigned_get_url",
+        )
+        self._l._check_response(resp, f"presigned get url for {note.id}")
+        presigned_get_url = resp.json()["presigned_get_url"]
+
+        content_resp = self._l._page.request.fetch(
+            presigned_get_url, headers={}, method="GET"
+        )
+        return content_resp.body()
+
+    def get_notes(self) -> list["LightNote"]:
         """Fetch metadata for all notes."""
         device_tool_id = self._ensure_device_tool_id()
 
         resp = self._l._request(
             f"{API_BASE}/api/notes?device_tool_id={device_tool_id}",
         )
-
         self._l._check_response(resp, "list notes")
 
         json = resp.json()
         assert len(json["data"]) == len(json["included"])
-        notes_count = len(json["data"])
 
-        print(f"{notes_count} notes")
+        return [
+            self._note_from_data(data, included)
+            for data, included in zip(json["data"], json["included"])
+        ]
 
-        notes = []
-
-        for i in range(notes_count):
-            id = json["data"][i]["id"]
-            file_id = json["data"][i]["attributes"]["file_id"]
-            note_type = json["data"][i]["attributes"]["note_type"]
-            title = json["data"][i]["attributes"]["title"]
-            updated_at = json["data"][i]["attributes"]["updated_at"]
-
-            presigned_url = json["included"][i]["attributes"]["presigned_url"]
-
-            # presigned get url is a separate call
-            resp = self._l._request(
-                f"{API_BASE}/api/notes/{id}/generate_presigned_get_url",
-            )
-            self._l._check_response(resp, "presigned get url")
-            presigned_get_url = resp.json()["presigned_get_url"]
-
-            note = LightNote(
-                id=id,
-                file_id=file_id,
-                note_type=note_type,
-                title=title,
-                updated_at=updated_at,
-                presigned_url=presigned_url,
-                presigned_get_url=presigned_get_url,
-            )
-
-            notes.append(note)
-
-        return notes
-
-    def get_note_metadata(self, file_id: str) -> LightNote:
-        """Fetch metadata for a single note.
-
-        Args:
-            file_id: The file ID of the note to check.
-        """
+    def get_note_metadata(self, note_id: str) -> "LightNote":
+        """Fetch metadata for a single note."""
         self._ensure_device_tool_id()
 
-        resp = self._l._request(
-            f"{API_BASE}/api/notes/{file_id}",
-            method="GET",
-        )
-        self._l._check_response(resp, f"fetching note {file_id}")
+        resp = self._l._request(f"{API_BASE}/api/notes/{note_id}", method="GET")
+        self._l._check_response(resp, f"fetching note {note_id}")
 
         json = resp.json()
-        id = json["data"]["id"]
-        file_id = json["data"]["attributes"]["file_id"]
-        note_type = json["data"]["attributes"]["note_type"]
-        title = json["data"]["attributes"]["title"]
-        updated_at = json["data"]["attributes"]["updated_at"]
+        return self._note_from_data(json["data"], json["included"][0])
 
-        presigned_url = json["included"][0]["attributes"]["presigned_url"]
+    def download_notes(self, dest: str) -> None:
+        """Download all notes to dest directory.
 
-        # presigned get url is a separate call
-        resp = self._l._request(
-            f"{API_BASE}/api/notes/{id}/generate_presigned_get_url",
-        )
-        self._l._check_response(resp, f"presigned get url for {file_id}")
-        presigned_get_url = resp.json()["presigned_get_url"]
-
-        return LightNote(
-            id=id,
-            file_id=file_id,
-            note_type=note_type,
-            title=title,
-            updated_at=updated_at,
-            presigned_url=presigned_url,
-            presigned_get_url=presigned_get_url,
-        )
-
-    def download_notes(self, dest: str):
-        """Download all notes to a specified directory.
-
-        Text notes are saved as .txt; audio is saved as .m4a.
-
-        Args:
-            dest: The destination directory to save to.
+        Text notes saved as .txt, audio notes saved as .m4a.
         """
         os.makedirs(dest, exist_ok=True)
 
         notes = self.get_notes()
-
-        from collections import Counter
-
         title_counts = Counter(note.title for note in notes)
 
         for note in notes:
@@ -148,36 +108,29 @@ class LightNotes:
             else:
                 slug = f"{note.title}_{note.updated_at}" if note.title else note.id
 
-            # fetch note content
-            resp = self._l._page.request.fetch(
-                note.presigned_get_url,
-                headers={},
-                method="GET",
-            )
+            content = self.get_note_content(note)
 
             if note.note_type == "audio":
                 path = os.path.join(dest, f"{slug}.m4a")
                 with open(path, "wb") as f:
-                    f.write(resp.body())
+                    f.write(content)
             else:
                 path = os.path.join(dest, f"{slug}.txt")
                 with open(path, "w") as f:
-                    f.write(resp.text())
+                    f.write(content.decode())
 
             console.print(f"[green]Saved:[/green] {path}")
 
-    def create_text_note(self, title: str, content: str, content_is_path: bool = False):
-        """Create new text note.
+    def create_text_note(self, title: str, content: str, content_is_path: bool = False) -> None:
+        """Create a new text note.
 
         Args:
             title: The title of the note to create.
-            content: Note content.
-            content_is_path: True if `content` is a filepath to read from.
-                             False if `content` is a raw string.
+            content: Note content, or a file path if content_is_path is True.
+            content_is_path: If True, read content from the given path.
         """
         device_tool_id = self._ensure_device_tool_id()
 
-        # POST to create the note
         resp = self._l._request(
             f"{API_BASE}/api/notes",
             method="POST",
@@ -186,6 +139,7 @@ class LightNotes:
                     "attributes": {
                         "device_tool_id": device_tool_id,
                         "filename": "note.txt",
+                        "note_type": "text",
                         "title": title,
                     },
                     "type": "notes",
@@ -194,8 +148,7 @@ class LightNotes:
         )
         self._l._check_response(resp, "creating note")
 
-        json = resp.json()
-        presigned_url = json["included"][0]["attributes"]["presigned_url"]
+        presigned_url = resp.json()["included"][0]["attributes"]["presigned_url"]
 
         if content_is_path:
             with open(content) as f:
@@ -203,10 +156,6 @@ class LightNotes:
         else:
             _content = content
 
-        # PUT the contents of the note
-        resp = self._l._page.request.fetch(
-            presigned_url,
-            headers={},
-            method="PUT",
-            data=_content,
+        self._l._page.request.fetch(
+            presigned_url, headers={}, method="PUT", data=_content
         )

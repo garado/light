@@ -1,4 +1,4 @@
-"""Music library management for Light devices."""
+"""Music management for Light devices."""
 
 from enum import StrEnum
 import os
@@ -378,7 +378,9 @@ class LightMusic:
         # our custom sort is a subset of rank
         self.set_sort_mode(SortMode.RANK)
 
-        original_positions: dict[str, int] = {t.audio_id: i for i, t in enumerate(tracks)}
+        original_positions: dict[str, int] = {
+            t.audio_id: i for i, t in enumerate(tracks)
+        }
 
         for new_position, track in enumerate(sorted_tracks):
             if original_positions[track.audio_id] == new_position:
