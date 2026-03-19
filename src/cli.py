@@ -92,10 +92,10 @@ def notes():
 # ── Podcast commands ──────────────────────────────────────────────────────────
 
 
-@podcast.command()
+@podcast.command("add")
 @with_light
 @click.argument("rss_feed_url")
-def add(light: Light, rss_feed_url, **kwargs):
+def podcast_add(light: Light, rss_feed_url):
     """Subscribe to a podcast by RSS feed URL.
 
     The server resolves the title and publisher automatically from the feed.
@@ -115,10 +115,10 @@ def add(light: Light, rss_feed_url, **kwargs):
         console.print(f"[dim]Publisher:[/dim] {p.publisher}")
 
 
-@podcast.command()
+@podcast.command("delete")
 @with_light
 @click.argument("title")
-def delete(light: Light, title, **kwargs):
+def podcast_delete(light: Light, title):
     """Unfollow a podcast by title.
 
     Uses exact title matching. Run `light podcast list` to see titles.
@@ -134,7 +134,7 @@ def delete(light: Light, title, **kwargs):
 # ── Music commands ─────────────────────────────────────────────────────────────
 
 
-@music.command()
+@music.command("upload")
 @with_light
 @click.argument("songs", nargs=-1, required=True)
 @click.option(
@@ -150,7 +150,7 @@ def delete(light: Light, title, **kwargs):
     show_default=True,
     help="How to match existing tracks when checking for duplicates.",
 )
-def upload(light: Light, songs, allow_duplicates, match_title_by, **kwargs):
+def music_upload(light: Light, songs, allow_duplicates, match_title_by):
     """Upload one or more audio files to your device.
 
     Duplicate detection is on by default — existing tracks with a matching
@@ -172,10 +172,10 @@ def upload(light: Light, songs, allow_duplicates, match_title_by, **kwargs):
         progress.update(task, description="Done.")
 
 
-@music.command()
+@music.command("delete")
 @with_light
 @click.argument("songs", nargs=-1, required=True)
-def delete(light: Light, songs, **kwargs):
+def music_delete(light: Light, songs):
     """Delete tracks by title.
 
     Uses exact title matching. Run `light music list` to see track titles.
@@ -192,7 +192,7 @@ def delete(light: Light, songs, **kwargs):
         progress.update(task, description="Done.")
 
 
-@music.command()
+@music.command("sort")
 @with_light
 @click.argument("field", type=click.Choice(["artist", "title", "none"]))
 @click.option(
@@ -203,7 +203,7 @@ def delete(light: Light, songs, **kwargs):
     help="Sort ascending (default).",
 )
 @click.option("--desc", "order", flag_value="descending", help="Sort descending.")
-def sort(light: Light, field, order, **kwargs):
+def music_sort(light: Light, field, order):
     """Sort tracks by artist, title, or reset to manual order.
 
     `none` resets to the manual ordering you set in the app.
@@ -237,12 +237,12 @@ def sort(light: Light, field, order, **kwargs):
         progress.update(task, description="Done.")
 
 
-@music.command()
+@music.command("update")
 @with_light
 @click.argument("title")
 @click.option("--new-title", default=None, help="New track title.")
 @click.option("--artist", default=None, help="New artist name.")
-def update(light: Light, title, new_title, artist, **kwargs):
+def music_update(light: Light, title, new_title, artist):
     """Update metadata for a track.
 
     Matches by exact title. At least one of `--new-title` or `--artist` must be provided.
@@ -271,9 +271,9 @@ def update(light: Light, title, new_title, artist, **kwargs):
         progress.update(task, description="Done.")
 
 
-@music.command()
+@music.command("list")
 @with_light
-def list(light: Light, **kwargs):
+def music_list(light: Light):
     """List all tracks on your device."""
     tracks = light.music.get_tracks()
     table = Table(show_header=True)
@@ -288,9 +288,9 @@ def list(light: Light, **kwargs):
 # ── Notes commands ─────────────────────────────────────────────────────────────
 
 
-@notes.command()
+@notes.command("list")
 @with_light
-def list(light: Light, **kwargs):
+def notes_list(light: Light):
     """List all notes on your device.
 
     Shows the first line of text notes and labels audio notes.
@@ -311,10 +311,10 @@ def list(light: Light, **kwargs):
         console.print(f"[dim]{i}.[/dim] {preview}")
 
 
-@notes.command()
+@notes.command("download")
 @with_light
 @click.argument("path")
-def download(light: Light, path: str, **kwargs):
+def notes_download(light: Light, path: str):
     """Download all notes to a directory.
 
     Text notes are saved as `.txt`, audio notes as `.m4a`.
@@ -332,7 +332,7 @@ def download(light: Light, path: str, **kwargs):
         progress.update(task, description="Done.")
 
 
-@notes.command()
+@notes.command("add")
 @with_light
 @click.argument("title")
 @click.argument("content", default=None, required=False)
@@ -344,9 +344,7 @@ def download(light: Light, path: str, **kwargs):
     type=click.Path(exists=True),
     help="Read note content from a file instead of inline.",
 )
-def add(
-    light: Light, title: str, content: str | None, content_file: str | None, **kwargs
-):
+def notes_add(light: Light, title: str, content: str | None, content_file: str | None):
     """Create a new text note.
 
     Provide content inline as an argument, or from a file with `--file`.
@@ -372,10 +370,10 @@ def add(
         progress.update(task, description="Done.")
 
 
-@notes.command()
+@notes.command("watch")
 @with_light
 @click.argument("file_id")
-def watch(light: Light, file_id: str, **kwargs):
+def notes_watch(light: Light, file_id: str):
     """Poll a note for changes and print when it's updated.
 
     Checks every second and prints when `updated_at` changes.
