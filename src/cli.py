@@ -1,7 +1,6 @@
 import time
 import rich_click as click
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from core import Light, with_light
@@ -104,12 +103,7 @@ def podcast_add(light: Light, rss_feed_url):
 
     `light podcast add https://feeds.simplecast.com/FO6kxYGj`
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Adding podcast...")
-        p = light.podcast.add_podcast(rss_feed_url)
-        progress.update(task, description="Done.")
+    p = light.podcast.add_podcast(rss_feed_url)
     console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
     if p.publisher:
         console.print(f"[dim]Publisher:[/dim] {p.publisher}")
@@ -123,12 +117,7 @@ def podcast_delete(light: Light, title):
 
     Uses exact title matching. Run `light podcast list` to see titles.
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Deleting podcast...")
-        light.podcast.delete_podcast_by_title(title)
-        progress.update(task, description="Done.")
+    light.podcast.delete_podcast_by_title(title)
 
 
 # ── Music commands ─────────────────────────────────────────────────────────────
@@ -160,16 +149,11 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by):
 
     `light music upload track1.mp3 track2.mp3`
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Uploading...")
-        light.music.upload_tracks(
-            list(songs),
-            allow_duplicates=allow_duplicates,
-            match_title_by=match_title_by,
-        )
-        progress.update(task, description="Done.")
+    light.music.upload_tracks(
+        list(songs),
+        allow_duplicates=allow_duplicates,
+        match_title_by=match_title_by,
+    )
 
 
 @music.command("delete")
@@ -184,12 +168,7 @@ def music_delete(light: Light, songs):
 
     `light music delete "Song Title" "Another Song"`
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Deleting...")
-        light.music.delete_tracks_by_title(list(songs))
-        progress.update(task, description="Done.")
+    light.music.delete_tracks_by_title(list(songs))
 
 
 @music.command("sort")
@@ -216,25 +195,18 @@ def music_sort(light: Light, field, order):
 
     `light music sort none`
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Sorting...")
+    descending = order == "descending"
 
-        descending = order == "descending"
-
-        if field == "artist":
-            light.music.set_sort_mode(
-                SortMode.ARTIST_DESC if descending else SortMode.ARTIST_ASC
-            )
-        elif field == "title":
-            light.music.set_sort_mode(
-                SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
-            )
-        elif field == "none":
-            light.music.set_sort_mode(SortMode.RANK)
-
-        progress.update(task, description="Done.")
+    if field == "artist":
+        light.music.set_sort_mode(
+            SortMode.ARTIST_DESC if descending else SortMode.ARTIST_ASC
+        )
+    elif field == "title":
+        light.music.set_sort_mode(
+            SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
+        )
+    elif field == "none":
+        light.music.set_sort_mode(SortMode.RANK)
 
 
 @music.command("update")
@@ -251,24 +223,17 @@ def music_update(light: Light, title, new_title, artist):
 
     `light music update "Old Title" --new-title "New Title" --artist "Artist"`
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Updating...")
+    tracks = light.music.get_tracks()
+    matches = [t for t in tracks if t.title == title]
 
-        tracks = light.music.get_tracks()
-        matches = [t for t in tracks if t.title == title]
+    if not matches:
+        console.print(f"[yellow]No track found with title: {title}[/yellow]")
+        return
 
-        if not matches:
-            console.print(f"[yellow]No track found with title: {title}[/yellow]")
-            return
-
-        for track in matches:
-            light.music.update_track_metadata(
-                track.audio_id, title=new_title, artist=artist
-            )
-
-        progress.update(task, description="Done.")
+    for track in matches:
+        light.music.update_track_metadata(
+            track.audio_id, title=new_title, artist=artist
+        )
 
 
 @music.command("list")
@@ -295,12 +260,7 @@ def notes_list(light: Light):
 
     Shows the first line of text notes and labels audio notes.
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Fetching notes...")
-        all_notes = light.notes.get_notes()
-        progress.update(task, description="Done.")
+    all_notes = light.notes.get_notes()
     for i, note in enumerate(all_notes, 1):
         if note.note_type == "audio":
             preview = f"[dim](audio)[/dim] {note.title}"
@@ -324,12 +284,7 @@ def notes_download(light: Light, path: str):
 
     `light notes download ~/my-notes`
     """
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Downloading notes...")
-        light.notes.download_notes(path)
-        progress.update(task, description="Done.")
+    light.notes.download_notes(path)
 
 
 @notes.command("add")
@@ -359,15 +314,10 @@ def notes_add(light: Light, title: str, content: str | None, content_file: str |
         raise click.UsageError("Provide CONTENT or --file.")
     if content is not None and content_file is not None:
         raise click.UsageError("CONTENT and --file are mutually exclusive.")
-    with Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), console=console
-    ) as progress:
-        task = progress.add_task("Adding note...")
-        if content_file:
-            light.notes.create_text_note(title, content_file, content_is_path=True)
-        else:
-            light.notes.create_text_note(title, content)
-        progress.update(task, description="Done.")
+    if content_file:
+        light.notes.create_text_note(title, content_file, content_is_path=True)
+    else:
+        light.notes.create_text_note(title, content)
 
 
 @notes.command("watch")
