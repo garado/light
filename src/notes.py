@@ -1,6 +1,7 @@
 """Notes management for Light devices."""
 
 from dataclasses import dataclass
+import os
 from typing import TYPE_CHECKING, Any
 from rich.console import Console
 
@@ -21,7 +22,6 @@ class LightNote:
     presigned_get_url: str  # ???
     note_type: str
     title: str
-    content: Any
     updated_at: str
 
 
@@ -72,17 +72,6 @@ class LightNotes:
             self._l._check_response(resp, "presigned get url")
             presigned_get_url = resp.json()["presigned_get_url"]
 
-            # getting content is a separate call
-            if note_type == "text":
-                resp = self._l._page.request.fetch(
-                    presigned_get_url,
-                    headers={},
-                    method="GET",
-                )
-                content = resp.text()
-            else:
-                content = None
-
             note = LightNote(
                 id=id,
                 file_id=file_id,
@@ -91,7 +80,6 @@ class LightNotes:
                 updated_at=updated_at,
                 presigned_url=presigned_url,
                 presigned_get_url=presigned_get_url,
-                content=content,
             )
 
             notes.append(note)
@@ -99,3 +87,47 @@ class LightNotes:
         print(notes)
 
         return notes
+
+    def download_notes(self, dest: str):
+        """Download all notes to a specified directory.
+
+        Text notes are saved as .txt; audio is saved as .m4a.
+
+        Args:
+            dest: The destination directory to save to.
+        """
+        os.makedirs(dest, exist_ok=True)
+
+        notes = self.get_notes()
+
+        from collections import Counter
+
+        title_counts = Counter(note.title for note in notes)
+
+        for note in notes:
+            if note.title and title_counts[note.title] == 1:
+                slug = note.title
+            else:
+                slug = f"{note.title}_{note.updated_at}" if note.title else note.id
+
+            # fetch note content
+            resp = self._l._page.request.fetch(
+                note.presigned_get_url,
+                headers={},
+                method="GET",
+            )
+
+            if note.note_type == "audio":
+                path = os.path.join(dest, f"{slug}.m4a")
+                with open(path, "wb") as f:
+                    f.write(resp.body())
+            else:
+                path = os.path.join(dest, f"{slug}.txt")
+                with open(path, "w") as f:
+                    f.write(resp.text())
+
+            console.print(f"[green]Saved:[/green] {path}")
+
+    def create_text_note(self, title: str, content: str):
+        """Create new text note."""
+        pass

@@ -212,6 +212,20 @@ def list(light: Light, **kwargs):
         console.print(f"[dim]{i}.[/dim] {preview}")
 
 
+@notes.command()
+@with_common_options
+@with_light
+@click.argument("path")
+def download(light: Light, path: str, **kwargs):
+    """Download all notes to file."""
+    with Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), console=console
+    ) as progress:
+        task = progress.add_task("Downloading notes...")
+        light.notes.download_notes(path)
+        progress.update(task, description="Done.")
+
+
 @cli.command()
 @click.option("--email-file", default=None)
 @click.option("--password-file", default=None)
@@ -219,12 +233,14 @@ def list(light: Light, **kwargs):
 @click.option("--no-headless", is_flag=True)
 def tui(email_file, password_file, device_id_file, no_headless):
     """Launch the interactive TUI."""
-    run_tui(LightConfig(
-        email_file=email_file,
-        password_file=password_file,
-        phone_file=device_id_file,
-        headless=not no_headless,
-    ))
+    run_tui(
+        LightConfig(
+            email_file=email_file,
+            password_file=password_file,
+            phone_file=device_id_file,
+            headless=not no_headless,
+        )
+    )
 
 
 if __name__ == "__main__":
