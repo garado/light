@@ -3,6 +3,8 @@ import json
 import functools
 from typing import TYPE_CHECKING, Any, Callable, final
 
+import click
+
 import keyring
 from rich.console import Console
 from playwright.sync_api import APIResponse, Browser, Page, Playwright, sync_playwright
@@ -31,10 +33,14 @@ class Light:
         device_id_file: str | None = None,
     ) -> None:
         self.headless: bool = headless
-        self.email: str = email or self._resolve(email_file, "LIGHT_EMAIL")
-        self.password: str = password or self._resolve(password_file, "LIGHT_PASSWORD")
-        self.phone: str = phone or self._resolve(phone_file, "LIGHT_PHONE_NUMBER")
-        self.device_id: str = device_id or self._resolve(
+        self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
+        self.password: str | None = password or self._resolve(
+            password_file, "LIGHT_PASSWORD"
+        )
+        self.phone: str | None = phone or self._resolve(
+            phone_file, "LIGHT_PHONE_NUMBER"
+        )
+        self.device_id: str | None = device_id or self._resolve(
             device_id_file, "LIGHT_DEVICE_ID"
         )
         self._api_token: str | None = None
@@ -123,9 +129,11 @@ class Light:
     def _load_cache(self) -> bool:
         try:
             raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
-        except keyring.errors.NoKeyringError:
+        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+            print(f"keyring error: {e}")
             return False
         if raw is None:
+            print("keyring: no entry found")
             return False
         try:
             data = json.loads(raw)
@@ -153,7 +161,8 @@ class Light:
                     }
                 ),
             )
-        except keyring.errors.NoKeyringError:
+        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked):
+            print("keyring error")
             pass
 
     def _validate_cache(self) -> bool:
@@ -187,15 +196,11 @@ class Light:
         self._playlist_id = (data if isinstance(data, dict) else data[0])["id"]
 
     @staticmethod
-    def _resolve(filepath: str | None, env_key: str) -> str:
+    def _resolve(filepath: str | None, env_key: str) -> str | None:
         """Resolve a secret from a file or environment variable.
 
-        Args:
-            filepath: Path to file containing the secret.
-            env_key: Environment variable name.
-
-        Returns:
-            Value of secret.
+        Returns None if not found — errors are deferred to login() where
+        credentials are actually needed (keyring may make them unnecessary).
         """
         if filepath:
             try:
@@ -204,12 +209,7 @@ class Light:
             except OSError as e:
                 console.print(f"[red]Could not read {filepath}: {e}[/red]")
                 raise SystemExit(1)
-        if value := os.environ.get(env_key):
-            return value
-        console.print(
-            f"[red]Must provide --{env_key.removeprefix('LIGHT_').lower().replace('_', '-')} or set {env_key}[/red]"
-        )
-        raise SystemExit(1)
+        return os.environ.get(env_key)
 
     @staticmethod
     def _format_phone(number: str) -> str:
@@ -224,6 +224,12 @@ class Light:
         """Authenticate into the Light dashboard and grab auth tokens."""
         if self._api_token is not None:
             return  # auth is already cached
+
+        if not self.email or not self.password:
+            console.print(
+                "[red]No cached session found. Provide --email and --password (or set LIGHT_EMAIL / LIGHT_PASSWORD).[/red]"
+            )
+            raise SystemExit(1)
 
         self._page.goto(BASE_URL)
         self._page.wait_for_load_state("networkidle")
@@ -319,19 +325,15 @@ def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to initialize a Light/Playwright context."""
 
     @functools.wraps(f)
-    def wrapper(
-        *args: Any,
-        email: str | None = None,
-        password: str | None = None,
-        device_id: str | None = None,
-        no_headless: bool = False,
-        **kwargs: Any,
-    ) -> Any:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        obj = click.get_current_context().find_object(dict) or {}
         with Light(
-            email_file=email,
-            password_file=password,
-            phone_file=device_id,
-            headless=not no_headless,
+            email=obj.get("email"),
+            email_file=obj.get("email_file"),
+            password=obj.get("password"),
+            password_file=obj.get("password_file"),
+            phone_file=obj.get("device_id"),
+            headless=not obj.get("no_headless", False),
         ) as light:
             return f(light, *args, **kwargs)
 

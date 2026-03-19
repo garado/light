@@ -10,8 +10,10 @@
       playwright
       click
       rich
+      rich-click
       mutagen
       keyring
+      secretstorage
       textual
     ]);
     light = pkgs.writeShellScriptBin "light" ''

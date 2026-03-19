@@ -1,5 +1,5 @@
 import time
-import click
+import rich_click as click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
@@ -8,49 +8,86 @@ from core import Light, with_light
 from music import SortMode
 from tui import LightConfig, run_tui
 
+click.rich_click.USE_RICH_MARKUP = True
+click.rich_click.USE_MARKDOWN = True
+click.rich_click.SHOW_ARGUMENTS = True
+click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
+click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
+
 console = Console()
-
-common_options = [
-    click.option("--email", default=None),
-    click.option("--email-file", default=None),
-    click.option("--password", default=None),
-    click.option("--password-file", default=None),
-    click.option("--device-id", default=None),
-    click.option("--device-id-file", default=None),
-    click.option("--no-headless", is_flag=True),
-]
-
-
-def with_common_options(f):
-    for option in common_options:
-        f = option(f)
-    return f
 
 
 @click.group()
-def cli():
-    """Interface with Light device."""
-    pass
+@click.option("--email", default=None, help="Light account email address.")
+@click.option("--email-file", default=None, help="Path to file containing email.")
+@click.option("--password", default=None, help="Light account password.")
+@click.option("--password-file", default=None, help="Path to file containing password.")
+@click.option("--device-id", default=None, help="Path to file containing phone number.")
+@click.option("--device-id-file", default=None, help="Path to file containing device ID.")
+@click.option("--no-headless", is_flag=True, help="Show the browser window during authentication.")
+@click.pass_context
+def cli(ctx, email, email_file, password, password_file, device_id, device_id_file, no_headless):
+    """**Unofficial CLI for the Light Phone.**
+
+    Manage music, podcasts, and notes on your Light Phone device
+    from the comfort of your terminal.
+
+    Credentials can be provided via options, files, or environment variables:
+    `LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`.
+    """
+    ctx.ensure_object(dict)
+    ctx.obj.update({
+        "email": email,
+        "email_file": email_file,
+        "password": password,
+        "password_file": password_file,
+        "device_id": device_id,
+        "device_id_file": device_id_file,
+        "no_headless": no_headless,
+    })
 
 
 @cli.group()
 def music():
-    """Manage Light music library."""
+    """Manage your music library.
+
+    Upload tracks, delete them, sort your playlist, and update metadata.
+    """
     pass
 
 
 @cli.group()
 def podcast():
-    """Manage Light podcasts."""
+    """Manage your podcast subscriptions.
+
+    Add podcasts by RSS feed URL and remove ones you no longer want.
+    """
     pass
 
 
+@cli.group()
+def notes():
+    """Manage your notes.
+
+    List, add, download, and watch for changes to text and audio notes.
+    """
+    pass
+
+
+# ── Podcast commands ──────────────────────────────────────────────────────────
+
 @podcast.command()
-@with_common_options
 @with_light
 @click.argument("rss_feed_url")
 def add(light: Light, rss_feed_url, **kwargs):
-    """Subscribe to a podcast by RSS feed URL."""
+    """Subscribe to a podcast by RSS feed URL.
+
+    The server resolves the title and publisher automatically from the feed.
+
+    **Example:**
+
+    `light podcast add https://feeds.simplecast.com/FO6kxYGj`
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -63,11 +100,13 @@ def add(light: Light, rss_feed_url, **kwargs):
 
 
 @podcast.command()
-@with_common_options
 @with_light
 @click.argument("title")
 def delete(light: Light, title, **kwargs):
-    """Unfollow a podcast by title."""
+    """Unfollow a podcast by title.
+
+    Uses exact title matching. Run `light podcast list` to see titles.
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -76,19 +115,30 @@ def delete(light: Light, title, **kwargs):
         progress.update(task, description="Done.")
 
 
+# ── Music commands ─────────────────────────────────────────────────────────────
+
 @music.command()
-@with_common_options
 @with_light
 @click.argument("songs", nargs=-1, required=True)
-@click.option("--allow-duplicates", is_flag=True)
+@click.option("--allow-duplicates", is_flag=True, help="Skip duplicate checking and always upload.")
 @click.option(
     "--match-title-by",
     "-m",
     type=click.Choice(["filename", "metadata"]),
     default="metadata",
+    show_default=True,
+    help="How to match existing tracks when checking for duplicates.",
 )
 def upload(light: Light, songs, allow_duplicates, match_title_by, **kwargs):
-    """Upload audio files to device."""
+    """Upload one or more audio files to your device.
+
+    Duplicate detection is on by default — existing tracks with a matching
+    title will be replaced. Use `--allow-duplicates` to skip this.
+
+    **Example:**
+
+    `light music upload track1.mp3 track2.mp3`
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -102,11 +152,17 @@ def upload(light: Light, songs, allow_duplicates, match_title_by, **kwargs):
 
 
 @music.command()
-@with_common_options
 @with_light
 @click.argument("songs", nargs=-1, required=True)
 def delete(light: Light, songs, **kwargs):
-    """Delete tracks by title."""
+    """Delete tracks by title.
+
+    Uses exact title matching. Run `light music list` to see track titles.
+
+    **Example:**
+
+    `light music delete "Song Title" "Another Song"`
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -116,13 +172,23 @@ def delete(light: Light, songs, **kwargs):
 
 
 @music.command()
-@with_common_options
 @with_light
 @click.argument("field", type=click.Choice(["artist", "title", "none"]))
-@click.option("--asc", "order", flag_value="ascending", default=True)
-@click.option("--desc", "order", flag_value="descending", help="Sort descending")
+@click.option("--asc", "order", flag_value="ascending", default=True, help="Sort ascending (default).")
+@click.option("--desc", "order", flag_value="descending", help="Sort descending.")
 def sort(light: Light, field, order, **kwargs):
-    """Sort tracks by artist, title, or reset to manual order."""
+    """Sort tracks by artist, title, or reset to manual order.
+
+    `none` resets to the manual ordering you set in the app.
+
+    **Examples:**
+
+    `light music sort artist --desc`
+
+    `light music sort title`
+
+    `light music sort none`
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -145,13 +211,19 @@ def sort(light: Light, field, order, **kwargs):
 
 
 @music.command()
-@with_common_options
 @with_light
 @click.argument("title")
-@click.option("--new-title", default=None, help="New track title")
-@click.option("--artist", default=None, help="New artist name")
+@click.option("--new-title", default=None, help="New track title.")
+@click.option("--artist", default=None, help="New artist name.")
 def update(light: Light, title, new_title, artist, **kwargs):
-    """Update metadata for a track matching TITLE."""
+    """Update metadata for a track.
+
+    Matches by exact title. At least one of `--new-title` or `--artist` must be provided.
+
+    **Example:**
+
+    `light music update "Old Title" --new-title "New Title" --artist "Artist"`
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -173,10 +245,9 @@ def update(light: Light, title, new_title, artist, **kwargs):
 
 
 @music.command()
-@with_common_options
 @with_light
 def list(light: Light, **kwargs):
-    """List all tracks on device."""
+    """List all tracks on your device."""
     tracks = light.music.get_tracks()
     table = Table(show_header=True)
     table.add_column("#", style="dim", width=4)
@@ -187,17 +258,15 @@ def list(light: Light, **kwargs):
     console.print(table)
 
 
-@cli.group()
-def notes():
-    """Manage Light notes."""
-    pass
-
+# ── Notes commands ─────────────────────────────────────────────────────────────
 
 @notes.command()
-@with_common_options
 @with_light
 def list(light: Light, **kwargs):
-    """List all notes on device."""
+    """List all notes on your device.
+
+    Shows the first line of text notes and labels audio notes.
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -215,11 +284,18 @@ def list(light: Light, **kwargs):
 
 
 @notes.command()
-@with_common_options
 @with_light
 @click.argument("path")
 def download(light: Light, path: str, **kwargs):
-    """Download all notes to file."""
+    """Download all notes to a directory.
+
+    Text notes are saved as `.txt`, audio notes as `.m4a`.
+    If two notes share a title, the timestamp is appended to disambiguate.
+
+    **Example:**
+
+    `light notes download ~/my-notes`
+    """
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), console=console
     ) as progress:
@@ -229,7 +305,6 @@ def download(light: Light, path: str, **kwargs):
 
 
 @notes.command()
-@with_common_options
 @with_light
 @click.argument("title")
 @click.argument("content", default=None, required=False)
@@ -239,12 +314,21 @@ def download(light: Light, path: str, **kwargs):
     "content_file",
     default=None,
     type=click.Path(exists=True),
-    help="Read new note content from file.",
+    help="Read note content from a file instead of inline.",
 )
 def add(
     light: Light, title: str, content: str | None, content_file: str | None, **kwargs
 ):
-    """Add a text note. Provide CONTENT inline or via --file."""
+    """Create a new text note.
+
+    Provide content inline as an argument, or from a file with `--file`.
+
+    **Examples:**
+
+    `light notes add "Shopping list" "eggs, milk, bread"`
+
+    `light notes add "Meeting notes" --file notes.txt`
+    """
     if content is None and content_file is None:
         raise click.UsageError("Provide CONTENT or --file.")
     if content is not None and content_file is not None:
@@ -262,30 +346,41 @@ def add(
 
 @notes.command()
 @with_light
-@with_common_options
 @click.argument("file_id")
 def watch(light: Light, file_id: str, **kwargs):
-    """Watch note with a specific file ID for changes."""
+    """Poll a note for changes and print when it's updated.
 
-    note = light.notes.get_note_metadata("4f1d3063-085b-4738-8ba1-582c5d1cd9ac")
+    Checks every second and prints when `updated_at` changes.
+    Useful for watching a note you're actively editing on your phone.
 
+    **Example:**
+
+    `light notes watch 4f1d3063-085b-4738-8ba1-582c5d1cd9ac`
+    """
+    note = light.notes.get_note_metadata(file_id)
     last_updated_at = note.updated_at
 
     while True:
         time.sleep(1)
-        note = light.notes.get_note_metadata("4f1d3063-085b-4738-8ba1-582c5d1cd9ac")
+        note = light.notes.get_note_metadata(file_id)
         if note.updated_at != last_updated_at:
-            print("Change detected!")
+            console.print("[green]Change detected![/green]")
             last_updated_at = note.updated_at
 
 
+# ── TUI ────────────────────────────────────────────────────────────────────────
+
 @cli.command()
-@click.option("--email-file", default=None)
-@click.option("--password-file", default=None)
-@click.option("--device-id-file", default=None)
-@click.option("--no-headless", is_flag=True)
+@click.option("--email-file", default=None, help="Path to file containing email.")
+@click.option("--password-file", default=None, help="Path to file containing password.")
+@click.option("--device-id-file", default=None, help="Path to file containing device ID.")
+@click.option("--no-headless", is_flag=True, help="Show the browser window during authentication.")
 def tui(email_file, password_file, device_id_file, no_headless):
-    """Launch the interactive TUI."""
+    """Launch the interactive terminal UI.
+
+    A full-screen interface for browsing and managing your music library
+    with vim-style keybindings.
+    """
     run_tui(
         LightConfig(
             email_file=email_file,
