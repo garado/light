@@ -23,10 +23,23 @@ console = Console()
 @click.option("--password", default=None, help="Light account password.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
 @click.option("--device-id", default=None, help="Path to file containing phone number.")
-@click.option("--device-id-file", default=None, help="Path to file containing device ID.")
-@click.option("--no-headless", is_flag=True, help="Show the browser window during authentication.")
+@click.option(
+    "--device-id-file", default=None, help="Path to file containing device ID."
+)
+@click.option(
+    "--no-headless", is_flag=True, help="Show the browser window during authentication."
+)
 @click.pass_context
-def cli(ctx, email, email_file, password, password_file, device_id, device_id_file, no_headless):
+def cli(
+    ctx,
+    email,
+    email_file,
+    password,
+    password_file,
+    device_id,
+    device_id_file,
+    no_headless,
+):
     """**Unofficial CLI for the Light Phone.**
 
     Manage music, podcasts, and notes on your Light Phone device
@@ -36,15 +49,17 @@ def cli(ctx, email, email_file, password, password_file, device_id, device_id_fi
     `LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`.
     """
     ctx.ensure_object(dict)
-    ctx.obj.update({
-        "email": email,
-        "email_file": email_file,
-        "password": password,
-        "password_file": password_file,
-        "device_id": device_id,
-        "device_id_file": device_id_file,
-        "no_headless": no_headless,
-    })
+    ctx.obj.update(
+        {
+            "email": email,
+            "email_file": email_file,
+            "password": password,
+            "password_file": password_file,
+            "device_id": device_id,
+            "device_id_file": device_id_file,
+            "no_headless": no_headless,
+        }
+    )
 
 
 @cli.group()
@@ -75,6 +90,7 @@ def notes():
 
 
 # ── Podcast commands ──────────────────────────────────────────────────────────
+
 
 @podcast.command()
 @with_light
@@ -117,10 +133,15 @@ def delete(light: Light, title, **kwargs):
 
 # ── Music commands ─────────────────────────────────────────────────────────────
 
+
 @music.command()
 @with_light
 @click.argument("songs", nargs=-1, required=True)
-@click.option("--allow-duplicates", is_flag=True, help="Skip duplicate checking and always upload.")
+@click.option(
+    "--allow-duplicates",
+    is_flag=True,
+    help="Skip duplicate checking and always upload.",
+)
 @click.option(
     "--match-title-by",
     "-m",
@@ -174,7 +195,13 @@ def delete(light: Light, songs, **kwargs):
 @music.command()
 @with_light
 @click.argument("field", type=click.Choice(["artist", "title", "none"]))
-@click.option("--asc", "order", flag_value="ascending", default=True, help="Sort ascending (default).")
+@click.option(
+    "--asc",
+    "order",
+    flag_value="ascending",
+    default=True,
+    help="Sort ascending (default).",
+)
 @click.option("--desc", "order", flag_value="descending", help="Sort descending.")
 def sort(light: Light, field, order, **kwargs):
     """Sort tracks by artist, title, or reset to manual order.
@@ -259,6 +286,7 @@ def list(light: Light, **kwargs):
 
 
 # ── Notes commands ─────────────────────────────────────────────────────────────
+
 
 @notes.command()
 @with_light
@@ -370,11 +398,16 @@ def watch(light: Light, file_id: str, **kwargs):
 
 # ── TUI ────────────────────────────────────────────────────────────────────────
 
+
 @cli.command()
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
-@click.option("--device-id-file", default=None, help="Path to file containing device ID.")
-@click.option("--no-headless", is_flag=True, help="Show the browser window during authentication.")
+@click.option(
+    "--device-id-file", default=None, help="Path to file containing device ID."
+)
+@click.option(
+    "--no-headless", is_flag=True, help="Show the browser window during authentication."
+)
 def tui(email_file, password_file, device_id_file, no_headless):
     """Launch the interactive terminal UI.
 

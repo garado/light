@@ -2,6 +2,8 @@ import os
 import json
 import functools
 from typing import TYPE_CHECKING, Any, Callable, final
+from urllib.request import Request, urlopen
+from urllib.error import URLError
 
 import click
 
@@ -49,9 +51,9 @@ class Light:
         self._podcast_device_tool_id: str | None = None
         self._notes_device_tool_id: str | None = None
 
-        self._playwright: Playwright
-        self._browser: Browser
-        self._page: Page
+        self._playwright: Playwright | None = None
+        self._browser: Browser | None = None
+        self._page: Page | None = None
 
         # namespaced modules
         self.music: "LightMusic"
@@ -64,16 +66,13 @@ class Light:
             from notes import LightNotes
 
     def __enter__(self) -> "Light":
-        """Start Playwright context and grab auth stuff."""
-        self._playwright = sync_playwright().start()
-        self._browser = self._playwright.firefox.launch(headless=self.headless)
-        self._page = self._browser.new_context().new_page()
-
+        """Authenticate, launching Playwright only if the cache is not usable."""
         console.print("[green]Authenticating...[/green]")
 
         if self._load_cache() and self._validate_cache():
             console.print("[green]Using cached session.[/green]")
         else:
+            self._start_playwright()
             self.login()
             self._fetch_device_tool_id()
             self._save_cache()
@@ -91,9 +90,18 @@ class Light:
         return self
 
     def __exit__(self, *_: object) -> None:
-        """Stop Playwright context."""
-        self._browser.close()
-        self._playwright.stop()
+        if self._browser is not None:
+            self._browser.close()
+        if self._playwright is not None:
+            self._playwright.stop()
+
+    def _start_playwright(self) -> None:
+        """Launch the browser (idempotent)."""
+        if self._playwright is not None:
+            return
+        self._playwright = sync_playwright().start()
+        self._browser = self._playwright.firefox.launch(headless=self.headless)
+        self._page = self._browser.new_context().new_page()
 
     def _request(
         self,
@@ -118,6 +126,7 @@ class Light:
         if data is not None:
             headers["Content-Type"] = "application/vnd.api+json"
 
+        self._start_playwright()
         return self._page.request.fetch(
             url,
             method=method,
@@ -166,14 +175,20 @@ class Light:
             pass
 
     def _validate_cache(self) -> bool:
-        # dummy api call
-        resp = self._request(
+        url = (
             f"https://production.lightphonecloud.com/api/playlists"
             f"?playlist_ids={self._playlist_id}"
-            f"&device_tool_id={self._device_tool_id}",
-            method="GET",
+            f"&device_tool_id={self._device_tool_id}"
         )
-        return resp.ok
+        req = Request(url, headers={
+            "Authorization": self._api_token or "",
+            "Accept": "application/vnd.api+json",
+        })
+        try:
+            with urlopen(req, timeout=10) as resp:
+                return resp.status == 200
+        except URLError:
+            return False
 
     def _fetch_device_tool_id(self) -> None:
         """Navigate to music edit page once to grab dynamic config values.
@@ -231,6 +246,7 @@ class Light:
             )
             raise SystemExit(1)
 
+        self._start_playwright()
         self._page.goto(BASE_URL)
         self._page.wait_for_load_state("networkidle")
 
