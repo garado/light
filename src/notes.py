@@ -39,9 +39,7 @@ class LightNotes:
         return self._l._notes_device_tool_id
 
     def get_notes(self) -> list[LightNote]:
-        """Fetch all notes, downloading content via presigned URLs."""
-        print("getting notes")
-
+        """Fetch metadata for all notes."""
         device_tool_id = self._ensure_device_tool_id()
 
         resp = self._l._request(
@@ -86,9 +84,47 @@ class LightNotes:
 
             notes.append(note)
 
-        print(notes)
-
         return notes
+
+    def get_note_metadata(self, file_id: str) -> LightNote:
+        """Fetch metadata for a single note.
+
+        Args:
+            file_id: The file ID of the note to check.
+        """
+        self._ensure_device_tool_id()
+
+        resp = self._l._request(
+            f"{API_BASE}/api/notes/{file_id}",
+            method="GET",
+        )
+        self._l._check_response(resp, f"fetching note {file_id}")
+
+        json = resp.json()
+        id = json["data"]["id"]
+        file_id = json["data"]["attributes"]["file_id"]
+        note_type = json["data"]["attributes"]["note_type"]
+        title = json["data"]["attributes"]["title"]
+        updated_at = json["data"]["attributes"]["updated_at"]
+
+        presigned_url = json["included"][0]["attributes"]["presigned_url"]
+
+        # presigned get url is a separate call
+        resp = self._l._request(
+            f"{API_BASE}/api/notes/{id}/generate_presigned_get_url",
+        )
+        self._l._check_response(resp, f"presigned get url for {file_id}")
+        presigned_get_url = resp.json()["presigned_get_url"]
+
+        return LightNote(
+            id=id,
+            file_id=file_id,
+            note_type=note_type,
+            title=title,
+            updated_at=updated_at,
+            presigned_url=presigned_url,
+            presigned_get_url=presigned_get_url,
+        )
 
     def download_notes(self, dest: str):
         """Download all notes to a specified directory.

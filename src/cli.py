@@ -1,3 +1,4 @@
+import time
 import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -257,6 +258,25 @@ def add(
         else:
             light.notes.create_text_note(title, content)
         progress.update(task, description="Done.")
+
+
+@notes.command()
+@with_light
+@with_common_options
+@click.argument("file_id")
+def watch(light: Light, file_id: str, **kwargs):
+    """Watch note with a specific file ID for changes."""
+
+    note = light.notes.get_note_metadata("4f1d3063-085b-4738-8ba1-582c5d1cd9ac")
+
+    last_updated_at = note.updated_at
+
+    while True:
+        time.sleep(1)
+        note = light.notes.get_note_metadata("4f1d3063-085b-4738-8ba1-582c5d1cd9ac")
+        if note.updated_at != last_updated_at:
+            print("Change detected!")
+            last_updated_at = note.updated_at
 
 
 @cli.command()
