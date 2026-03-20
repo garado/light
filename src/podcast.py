@@ -4,12 +4,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from rich.console import Console
 
+import endpoints
+
 if TYPE_CHECKING:
     from core import Light
 
 console = Console()
-
-API_BASE = "https://production.lightphonecloud.com"
 
 
 @dataclass
@@ -37,7 +37,7 @@ class LightPodcasts:
         """Fetch all followed podcasts for this device."""
         device_tool_id = self._ensure_device_tool_id()
         resp = self._l._request(
-            f"{API_BASE}/api/followed_podcasts?device_tool_id={device_tool_id}",
+            f"{endpoints.FOLLOWED_PODCASTS}?device_tool_id={device_tool_id}",
         )
         self._l._check_response(resp, "get podcasts")
         body: dict[str, Any] = resp.json()
@@ -73,7 +73,7 @@ class LightPodcasts:
             return
         for p in matches:
             resp = self._l._request(
-                f"{API_BASE}/api/followed_podcasts/{p.followed_podcast_id}",
+                endpoints.followed_podcast(p.followed_podcast_id),
                 method="DELETE",
             )
             self._l._check_response(resp, "delete podcast")
@@ -86,7 +86,7 @@ class LightPodcasts:
         device_tool_id = self._ensure_device_tool_id()
 
         resp = self._l._request(
-            f"{API_BASE}/api/podcasts",
+            endpoints.PODCASTS,
             method="POST",
             data={
                 "data": {
@@ -107,7 +107,7 @@ class LightPodcasts:
         attrs: dict[str, Any] = body["data"]["attributes"]
 
         resp = self._l._request(
-            f"{API_BASE}/api/followed_podcasts",
+            endpoints.FOLLOWED_PODCASTS,
             method="POST",
             data={
                 "data": {

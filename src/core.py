@@ -2,6 +2,7 @@ from __future__ import annotations
 import logging
 
 import click
+import endpoints
 import functools
 import json
 import keyring
@@ -13,6 +14,9 @@ from urllib.request import Request, urlopen
 
 if TYPE_CHECKING:
     from playwright.sync_api import Browser, Page, Playwright
+
+KEYRING_SERVICE = "unofficial-light-api"
+KEYRING_USER = "session"
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
@@ -36,11 +40,6 @@ class _RawResponse:
 
     def json(self) -> Any:
         return json.loads(self._content)
-
-
-BASE_URL = "https://dashboard.thelightphone.com"
-KEYRING_SERVICE = "unofficial-light-api"
-KEYRING_USER = "session"
 
 
 @final
@@ -220,11 +219,7 @@ class Light:
             pass
 
     def _validate_cache(self) -> bool:
-        url = (
-            f"https://production.lightphonecloud.com/api/playlists"
-            f"?playlist_ids={self._playlist_id}"
-            f"&device_tool_id={self._device_tool_id}"
-        )
+        url = f"{endpoints.PLAYLISTS}?playlist_ids={self._playlist_id}&device_tool_id={self._device_tool_id}"
         req = Request(
             url,
             headers={
@@ -295,7 +290,7 @@ class Light:
             raise SystemExit(1)
 
         self._start_playwright()
-        self._page.goto(BASE_URL)
+        self._page.goto(endpoints.DASHBOARD)
         self._page.wait_for_load_state("networkidle")
 
         self._page.locator('input[name*="email"]').fill(self.email)
@@ -321,7 +316,7 @@ class Light:
 
     def _nav_to_dash_root(self) -> None:
         """Navigate to the root dashboard menu."""
-        self._page.goto(BASE_URL)
+        self._page.goto(endpoints.DASHBOARD)
         self._page.wait_for_load_state("networkidle")
 
         if "/login" in self._page.url:

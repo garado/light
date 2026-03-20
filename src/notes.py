@@ -8,14 +8,13 @@ from typing import TYPE_CHECKING
 
 from rich.console import Console
 
+import endpoints
+
 if TYPE_CHECKING:
     from core import Light
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
-
-API_BASE = "https://production.lightphonecloud.com"
-NOTES_BASE = "light-two-api-production.nyc3.digitaloceanspaces.com"
 
 
 @dataclass
@@ -56,7 +55,7 @@ class LightNotes:
         Fetches a fresh presigned GET URL each time (they expire).
         """
         resp = self._l._request(
-            f"{API_BASE}/api/notes/{note.id}/generate_presigned_get_url",
+            endpoints.note_presigned_get_url(note.id),
         )
 
         self._l._check_response(resp, f"presigned get url for {note.id}")
@@ -71,7 +70,7 @@ class LightNotes:
         device_tool_id = self._ensure_device_tool_id()
 
         resp = self._l._request(
-            f"{API_BASE}/api/notes?device_tool_id={device_tool_id}",
+            f"{endpoints.NOTES}?device_tool_id={device_tool_id}",
         )
         self._l._check_response(resp, "list notes")
 
@@ -87,7 +86,7 @@ class LightNotes:
         """Fetch metadata for a single note."""
         self._ensure_device_tool_id()
 
-        resp = self._l._request(f"{API_BASE}/api/notes/{note_id}", method="GET")
+        resp = self._l._request(endpoints.note(note_id), method="GET")
         self._l._check_response(resp, f"fetching note {note_id}")
 
         json = resp.json()
@@ -135,7 +134,7 @@ class LightNotes:
         device_tool_id = self._ensure_device_tool_id()
 
         resp = self._l._request(
-            f"{API_BASE}/api/notes",
+            endpoints.NOTES,
             method="POST",
             data={
                 "data": {

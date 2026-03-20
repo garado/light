@@ -13,11 +13,10 @@ from playwright.sync_api import APIResponse
 from rich.console import Console
 
 from core import Light
+import endpoints
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
-
-API_BASE = "https://production.lightphonecloud.com"
 
 
 @dataclass
@@ -62,9 +61,7 @@ class LightMusic:
             cannot be detected from the API.
         """
         resp: APIResponse = self._l._request(
-            f"{API_BASE}/api/playlists"
-            f"?playlist_ids={self._l._playlist_id}"
-            f"&device_tool_id={self._l._device_tool_id}",
+            f"{endpoints.PLAYLISTS}?playlist_ids={self._l._playlist_id}&device_tool_id={self._l._device_tool_id}",
             method="GET",
         )
         self._l._check_response(resp)
@@ -92,7 +89,7 @@ class LightMusic:
                 )
 
             resp: APIResponse = self._l._request(
-                f"{API_BASE}/api/playlists/sort_mode",
+                endpoints.PLAYLISTS_SORT_MODE,
                 method="POST",
                 data={
                     "playlist_id": self._l._playlist_id,
@@ -114,9 +111,7 @@ class LightMusic:
             List of LightTracks in the current playlist order.
         """
         resp: APIResponse = self._l._request(
-            f"{API_BASE}/api/playlist_items"
-            f"?playlist_ids={self._l._playlist_id}"
-            f"&device_tool_id={self._l._device_tool_id}",
+            f"{endpoints.PLAYLIST_ITEMS}?playlist_ids={self._l._playlist_id}&device_tool_id={self._l._device_tool_id}",
             method="GET",
         )
 
@@ -183,7 +178,7 @@ class LightMusic:
         tracks_deleted = 0
         for track in to_delete:
             resp = self._l._request(
-                f"{API_BASE}/api/audios/{track.audio_id}", method="DELETE"
+                endpoints.audio(track.audio_id), method="DELETE"
             )
 
             if not resp.ok:
@@ -288,7 +283,7 @@ class LightMusic:
                 continue
 
             create_resp = self._l._request(
-                f"{API_BASE}/api/audios",
+                endpoints.AUDIOS,
                 method="POST",
                 data={
                     "data": {
@@ -346,7 +341,7 @@ class LightMusic:
             attrs["artist"] = artist
 
         resp = self._l._request(
-            f"{API_BASE}/api/audios/{audio_id}",
+            endpoints.audio(audio_id),
             method="PATCH",
             data={
                 "data": {
@@ -389,7 +384,7 @@ class LightMusic:
                 continue
             self._l._check_response(
                 self._l._request(
-                    f"{API_BASE}/api/playlist_items/{track.playlist_item_id}",
+                    endpoints.playlist_item(track.playlist_item_id),
                     method="PATCH",
                     data={
                         "data": {
