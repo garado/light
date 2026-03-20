@@ -1,3 +1,4 @@
+import logging
 import time
 import rich_click as click
 from rich.console import Console
@@ -14,20 +15,21 @@ click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
 
 console = Console()
-
+log = logging.getLogger(f"light.{__name__}")
 
 @click.group()
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password", default=None, help="Light account password.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
-@click.option("--device-id", default=None, help="Path to file containing phone number.")
+@click.option("--device-id", default=None, help="Phone number.")
 @click.option(
-    "--device-id-file", default=None, help="Path to file containing device ID."
+    "--device-id-file", default=None, help="Path to file containing phone number."
 )
 @click.option(
     "--no-headless", is_flag=True, help="Show the browser window during authentication."
 )
+@click.option("--log-level", default="WARNING", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False), help="Log level.")
 @click.pass_context
 def cli(
     ctx,
@@ -38,6 +40,7 @@ def cli(
     device_id,
     device_id_file,
     no_headless,
+    log_level,
 ):
     """**Unofficial CLI for the Light Phone.**
 
@@ -47,6 +50,9 @@ def cli(
     Credentials can be provided via options, files, or environment variables:
     `LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`.
     """
+    logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
+    logging.getLogger("light").setLevel(log_level.upper())
+
     ctx.ensure_object(dict)
     ctx.obj.update(
         {
@@ -262,10 +268,12 @@ def notes_list(light: Light):
     """
     all_notes = light.notes.get_notes()
     for i, note in enumerate(all_notes, 1):
+        content = light.notes.get_note_content(note)
+
         if note.note_type == "audio":
             preview = f"[dim](audio)[/dim] {note.title}"
-        elif note.content and note.content.strip():
-            preview = note.content.splitlines()[0]
+        elif content and content.strip():
+            preview = f"[dim]({note.title})[/dim] {content.splitlines()[0]}"
         else:
             preview = "[dim](empty)[/dim]"
         console.print(f"[dim]{i}.[/dim] {preview}")

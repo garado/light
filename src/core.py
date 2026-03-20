@@ -1,17 +1,42 @@
-import os
-import json
-import functools
-from typing import TYPE_CHECKING, Any, Callable, final
-from urllib.request import Request, urlopen
-from urllib.error import URLError
+from __future__ import annotations
+import logging
 
 import click
-
+import functools
+import json
 import keyring
+import os
 from rich.console import Console
-from playwright.sync_api import APIResponse, Browser, Page, Playwright, sync_playwright
+from typing import TYPE_CHECKING, Any, Callable, final
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Browser, Page, Playwright
 
 console = Console()
+log = logging.getLogger(f"light.{__name__}")
+
+class _RawResponse:
+    """Minimal response wrapper for urllib fetches, mimicking the Playwright APIResponse interface."""
+
+    def __init__(self, status: int, content: bytes) -> None:
+        self.status = status
+        self._content = content
+
+    @property
+    def ok(self) -> bool:
+        return 200 <= self.status < 300
+
+    def body(self) -> bytes:
+        return self._content
+
+    def text(self) -> str:
+        return self._content.decode()
+
+    def json(self) -> Any:
+        return json.loads(self._content)
+
 
 BASE_URL = "https://dashboard.thelightphone.com"
 KEYRING_SERVICE = "unofficial-light-api"
@@ -34,7 +59,7 @@ class Light:
         device_id: str | None = None,
         device_id_file: str | None = None,
     ) -> None:
-        self.headless: bool = headless
+        # secrets
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
             password_file, "LIGHT_PASSWORD"
@@ -51,21 +76,23 @@ class Light:
         self._podcast_device_tool_id: str | None = None
         self._notes_device_tool_id: str | None = None
 
+        # if auth with playwright is needed
+        self.headless: bool = headless
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self._page: Page | None = None
 
-        # namespaced modules
-        self.music: "LightMusic"
-        self.podcast: "LightPodcasts"
-        self.notes: "LightNotes"
+        # modules
+        self.music: LightMusic
+        self.podcast: LightPodcasts
+        self.notes: LightNotes
 
         if TYPE_CHECKING:
             from music import LightMusic
             from podcast import LightPodcasts
             from notes import LightNotes
 
-    def __enter__(self) -> "Light":
+    def __enter__(self) -> Light:
         """Authenticate, launching Playwright only if the cache is not usable."""
         console.print("[green]Authenticating...[/green]")
 
@@ -99,9 +126,29 @@ class Light:
         """Launch the browser (idempotent)."""
         if self._playwright is not None:
             return
+        from playwright.sync_api import sync_playwright
         self._playwright = sync_playwright().start()
         self._browser = self._playwright.firefox.launch(headless=self.headless)
         self._page = self._browser.new_context().new_page()
+
+    def _fetch(
+        self,
+        url: str,
+        method: str = "GET",
+        headers: dict[str, str] | None = None,
+        data: bytes | str | None = None,
+        timeout: int = 30_000,
+    ) -> _RawResponse:
+        """Make a raw (unauthenticated) request, e.g. to presigned S3 URLs."""
+        if isinstance(data, str):
+            data = data.encode()
+        req = Request(url, method=method, headers=headers or {}, data=data)
+        try:
+            with urlopen(req, timeout=timeout / 1000) as resp:
+                return _RawResponse(resp.status, resp.read())
+        except URLError as e:
+            code = e.code if hasattr(e, "code") else 0
+            return _RawResponse(code, b"")
 
     def _request(
         self,
@@ -109,40 +156,36 @@ class Light:
         method: str = "GET",
         data: dict[str, Any] | None = None,
         timeout: int = 30_000,
-    ) -> APIResponse:
-        """Make an authenticated request to the Light API.
-
-        Args:
-            url: URL of API endpoint.
-            method: HTTP method.
-            data: Request payload.
-            timeout: Timeout in milliseconds.
-        """
+    ) -> _RawResponse:
+        """Make an authenticated request to the Light API."""
         headers: dict[str, str] = {
             "Authorization": self._api_token or "",
             "Accept": "application/vnd.api+json",
         }
-
+        body: bytes | None = None
         if data is not None:
             headers["Content-Type"] = "application/vnd.api+json"
+            body = json.dumps(data).encode()
 
-        self._start_playwright()
-        return self._page.request.fetch(
-            url,
-            method=method,
-            headers=headers,
-            data=json.dumps(data) if data is not None else None,
-            timeout=timeout,
-        )
+        req = Request(url, method=method, headers=headers, data=body)
+        try:
+            with urlopen(req, timeout=timeout / 1000) as resp:
+                return _RawResponse(resp.status, resp.read())
+        except URLError as e:
+            code = e.code if hasattr(e, "code") else 0
+            body_bytes = e.read() if hasattr(e, "read") else b""
+            return _RawResponse(code, body_bytes)
 
     def _load_cache(self) -> bool:
+        log.debug("loading cache")
+
         try:
             raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
         except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
-            print(f"keyring error: {e}")
+            log.debug(f"keyring error: {e}")
             return False
         if raw is None:
-            print("keyring: no entry found")
+            log.debug(f"keyring: no entry found {e}")
             return False
         try:
             data = json.loads(raw)
@@ -151,8 +194,10 @@ class Light:
             self._playlist_id = data["playlist_id"]
             self._podcast_device_tool_id = data.get("podcast_device_tool_id")
             self._notes_device_tool_id = data.get("notes_device_tool_id")
+            log.debug("cache loaded successfully")
             return True
-        except (KeyError, json.JSONDecodeError):
+        except (KeyError, json.JSONDecodeError) as e:
+            log.debug(f"error: {e}")
             return False
 
     def _save_cache(self) -> None:
@@ -180,10 +225,13 @@ class Light:
             f"?playlist_ids={self._playlist_id}"
             f"&device_tool_id={self._device_tool_id}"
         )
-        req = Request(url, headers={
-            "Authorization": self._api_token or "",
-            "Accept": "application/vnd.api+json",
-        })
+        req = Request(
+            url,
+            headers={
+                "Authorization": self._api_token or "",
+                "Accept": "application/vnd.api+json",
+            },
+        )
         try:
             with urlopen(req, timeout=10) as resp:
                 return resp.status == 200
@@ -332,7 +380,7 @@ class Light:
             ".playlist-table-row"
         ).first.wait_for()  # ensure page has loaded
 
-    def _check_response(self, response: APIResponse, context: str = "") -> None:
+    def _check_response(self, response: _RawResponse, context: str = "") -> None:
         if not response.ok:
             raise RuntimeError(f"{context}: {response.status} {response.text()}")
 
@@ -348,7 +396,8 @@ def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
             email_file=obj.get("email_file"),
             password=obj.get("password"),
             password_file=obj.get("password_file"),
-            phone_file=obj.get("device_id"),
+            phone=obj.get("device_id"),
+            phone_file=obj.get("device_id_file"),
             headless=not obj.get("no_headless", False),
         ) as light:
             return f(light, *args, **kwargs)

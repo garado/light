@@ -1,5 +1,6 @@
 """Notes management for Light devices."""
 
+import logging
 import os
 from collections import Counter
 from dataclasses import dataclass
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from core import Light
 
 console = Console()
+log = logging.getLogger(f"light.{__name__}")
 
 API_BASE = "https://production.lightphonecloud.com"
 NOTES_BASE = "light-two-api-production.nyc3.digitaloceanspaces.com"
@@ -60,9 +62,7 @@ class LightNotes:
         self._l._check_response(resp, f"presigned get url for {note.id}")
         presigned_get_url = resp.json()["presigned_get_url"]
 
-        content_resp = self._l._page.request.fetch(
-            presigned_get_url, headers={}, method="GET"
-        )
+        content_resp = self._l._fetch(presigned_get_url, method="GET")
 
         return content_resp.body()
 
@@ -159,6 +159,6 @@ class LightNotes:
         else:
             _content = content
 
-        self._l._page.request.fetch(
-            presigned_url, headers={}, method="PUT", data=_content
-        )
+        self._l._fetch(presigned_url, method="PUT", data=_content)
+
+        console.print(f"[green]Saved note successfully[/green]")

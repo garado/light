@@ -1,6 +1,7 @@
 """Music management for Light devices."""
 
 from enum import StrEnum
+import logging
 import os
 import re
 from typing import Any, Callable, Literal
@@ -14,6 +15,7 @@ from rich.console import Console
 from core import Light
 
 console = Console()
+log = logging.getLogger(f"light.{__name__}")
 
 API_BASE = "https://production.lightphonecloud.com"
 
@@ -312,7 +314,7 @@ class LightMusic:
             with open(file_path, "rb") as f:
                 data = f.read()
 
-            put_resp = self._l._page.request.fetch(
+            put_resp = self._l._fetch(
                 presigned_url,
                 method="PUT",
                 headers={"Content-Type": "audio/mpeg"},
