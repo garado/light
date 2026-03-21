@@ -1,3 +1,10 @@
+"""
+█░░ █ █▀▀ █░█ ▀█▀   █▀▀ █░░ █
+█▄▄ █ █▄█ █▀█ ░█░   █▄▄ █▄▄ █
+
+Command line interface for Light devices.
+"""
+
 import logging
 import time
 import rich_click as click
@@ -261,14 +268,38 @@ def music_list(light: Light):
 
 @notes.command("list")
 @with_light
-def notes_list(light: Light):
+@click.option(
+    "--id",
+    "-i",
+    "show_id",
+    default=False,
+    type=bool,
+    is_flag=True,
+    help="Include note ID in output (use with `notes watch`).",
+)
+@click.option(
+    "--content-preview",
+    "-c",
+    default=False,
+    type=bool,
+    is_flag=True,
+    help="Include content preview in output.",
+)
+def notes_list(light: Light, show_id=False, content_preview=False):
     """List all notes on your device.
 
     Shows the first line of text notes and labels audio notes.
     """
     all_notes = light.notes.get_notes()
+
+    if content_preview:
+        console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
+
     for i, note in enumerate(all_notes, 1):
-        content = light.notes.get_note_content(note)
+        if content_preview:
+            content = light.notes.get_note_content(note)
+        else:
+            content = ""
 
         if note.note_type == "audio":
             preview = f"[dim](audio)[/dim] {note.title}"
@@ -276,7 +307,9 @@ def notes_list(light: Light):
             preview = f"[dim]({note.title})[/dim] {content.splitlines()[0]}"
         else:
             preview = "[dim](empty)[/dim]"
-        console.print(f"[dim]{i}.[/dim] {preview}")
+
+        id_prefix = f"{note.id} " if show_id else ""
+        console.print(f"[dim]{i}.[/dim] {id_prefix}{preview}")
 
 
 @notes.command("download")
@@ -330,25 +363,29 @@ def notes_add(light: Light, title: str, content: str | None, content_file: str |
 
 @notes.command("watch")
 @with_light
-@click.argument("file_id")
-def notes_watch(light: Light, file_id: str):
-    """Poll a note for changes and print when it's updated.
+@click.argument("note_id")
+def notes_watch(light: Light, note_id: str):
+    """Poll a note for changes and print its content when updated.
 
-    Checks every second and prints when `updated_at` changes.
+    Checks every second and prints content when `updated_at` changes.
     Useful for watching a note you're actively editing on your phone.
+
+    Run `light notes list --id` to find the note ID.
 
     **Example:**
 
     `light notes watch 4f1d3063-085b-4738-8ba1-582c5d1cd9ac`
     """
-    note = light.notes.get_note_metadata(file_id)
+    note = light.notes.get_note_metadata(note_id)
     last_updated_at = note.updated_at
 
     while True:
         time.sleep(1)
-        note = light.notes.get_note_metadata(file_id)
+        note = light.notes.get_note_metadata(note_id)
         if note.updated_at != last_updated_at:
-            console.print("[green]Change detected![/green]")
+            content = light.notes.get_note_content(note)
+            console.print(f"[green]Updated at {note.updated_at}:[/green]")
+            console.print(content.decode())
             last_updated_at = note.updated_at
 
 
