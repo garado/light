@@ -55,8 +55,6 @@ class Light:
         password_file: str | None = None,
         phone: str | None = None,
         phone_file: str | None = None,
-        device_id: str | None = None,
-        device_id_file: str | None = None,
     ) -> None:
         # secrets
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
@@ -65,9 +63,6 @@ class Light:
         )
         self.phone: str | None = phone or self._resolve(
             phone_file, "LIGHT_PHONE_NUMBER"
-        )
-        self.device_id: str | None = device_id or self._resolve(
-            device_id_file, "LIGHT_DEVICE_ID"
         )
         self._api_token: str | None = None
         self._device_tool_id: str | None = None
@@ -184,7 +179,7 @@ class Light:
             log.debug(f"keyring error: {e}")
             return False
         if raw is None:
-            log.debug(f"keyring: no entry found {e}")
+            log.debug(f"keyring: no entry found")
             return False
         try:
             data = json.loads(raw)
@@ -285,7 +280,7 @@ class Light:
 
         if not self.email or not self.password:
             console.print(
-                "[red]No cached session found. Provide --email and --password (or set LIGHT_EMAIL / LIGHT_PASSWORD).[/red]"
+                "[red]No cached session found. Provide --email, --password, --phone-number (or set LIGHT_EMAIL / LIGHT_PASSWORD / LIGHT_PHONE_NUMBER).[/red]"
             )
             raise SystemExit(1)
 
@@ -392,8 +387,8 @@ def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
                 email_file=obj.get("email_file"),
                 password=obj.get("password"),
                 password_file=obj.get("password_file"),
-                phone=obj.get("device_id"),
-                phone_file=obj.get("device_id_file"),
+                phone=obj.get("phone_number"),
+                phone_file=obj.get("phone_number_file"),
                 headless=not obj.get("no_headless", False),
             ) as light:
                 return f(light, *args, **kwargs)

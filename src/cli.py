@@ -29,9 +29,9 @@ log = logging.getLogger(f"light.{__name__}")
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password", default=None, help="Light account password.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
-@click.option("--device-id", default=None, help="Phone number.")
+@click.option("--phone-number", default=None, help="Phone number.")
 @click.option(
-    "--device-id-file", default=None, help="Path to file containing phone number."
+    "--phone-number-file", default=None, help="Path to file containing phone number."
 )
 @click.option(
     "--no-headless", is_flag=True, help="Show the browser window during authentication."
@@ -44,8 +44,8 @@ def cli(
     email_file,
     password,
     password_file,
-    device_id,
-    device_id_file,
+    phone_number,
+    phone_number_file,
     no_headless,
     log_level,
 ):
@@ -67,8 +67,8 @@ def cli(
             "email_file": email_file,
             "password": password,
             "password_file": password_file,
-            "device_id": device_id,
-            "device_id_file": device_id_file,
+            "phone_number": phone_number,
+            "phone_number_file": phone_number_file,
             "no_headless": no_headless,
         }
     )
@@ -396,12 +396,12 @@ def notes_watch(light: Light, note_id: str):
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
 @click.option(
-    "--device-id-file", default=None, help="Path to file containing device ID."
+    "--phone-number-file", default=None, help="Path to file containing device ID."
 )
 @click.option(
     "--no-headless", is_flag=True, help="Show the browser window during authentication."
 )
-def tui(email_file, password_file, device_id_file, no_headless):
+def tui(email_file, password_file, phone_number_file, no_headless):
     """Launch the interactive terminal UI.
 
     A full-screen interface for browsing and managing your music library
@@ -411,7 +411,7 @@ def tui(email_file, password_file, device_id_file, no_headless):
         LightConfig(
             email_file=email_file,
             password_file=password_file,
-            phone_file=device_id_file,
+            phone_file=phone_number_file,
             headless=not no_headless,
         )
     )

@@ -1,9 +1,7 @@
 
 # Unofficial Light Phone CLI/API
 
-Unofficial API for interfacing with Light devices.
-
-This uses a combination of browser automation (Playwright) and reverse-engineered Light API endpoints.
+Unofficial tools and utilities for interfacing with Light devices.
 
 ## Installation
 
@@ -17,16 +15,14 @@ Three options:
 
 ```sh
 # 1. Environment variable
-# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_DEVICE_ID are set (see .env.example)
+# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_PHONE_NUMBER are set (see .env.example)
 light <command>
 
-# 2. Secrets file
-light --email=/run/secrets/light_email --password=/run/secrets/light_password \
---device-id=/run/secrets/light_device_id <command>
+# 2. Command line
+light --email=... --password=... --phone-number=... <command>
 
-# 3. Command line (not recommended)
-# TODO implement this
-light --email=your@email.com --password=password --device-id=1234567890 <command>
+# 3. File
+light --email-file=... --password-file=... --phone-number-file=... <command>
 ```
 
 ### Music
@@ -35,27 +31,29 @@ Supported features:
 
 - Uploading songs, optionally overwriting existing tracks
 - Deleting tracks
+- Sorting tracks by title/artist
+- Clear all tracks
 
 ```sh
-# Upload tracks (overwrite existing matching tracks; match on file title metadata)
-light music upload song1.mp3 song2.mp3 song3.mp3 --match-by-title metadata
-light music upload song1.mp3 song2.mp3 song3.mp3 -m metadata
-light music upload song1.mp3 song2.mp3 song3.mp3 # it's the default if --match-by-title isn't specified
+# Upload tracks
+# Overwrite existing matching tracks; match on file title metadata
+light music upload song1 song2 song3 --match-title-by metadata
 
-# Upload tracks (overwrite existing matching tracks; match on filename)
-light music upload song1.mp3 song2.mp3 song3.mp3 --match-by-title filename
-light music upload song1.mp3 song2.mp3 song3.mp3 -m filename
+# Upload tracks
+# Overwrite existing matching tracks; match on filename
+light music upload song1 song2 song3 --match-title-by filename
 
-# Upload tracks (don't overwrite)
-light music upload --allow-duplicates song1.mp3 song2.mp3 song3.mp3
+# Upload tracks
+# Don't overwrite existing tracks
+light music upload --allow-duplicates song1 song2 song3
 
 # Delete tracks
-light music delete song.mp3
+light music delete song
 
 # Clear all tracks
 light music clear
 
-# Sort tracks by title!
+# Sort tracks by title (!!!)
 light music sort title --asc
 light music sort title --desc
 
