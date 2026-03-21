@@ -69,9 +69,7 @@ class LightNotes:
         """Fetch metadata for all notes."""
         device_tool_id = self._ensure_device_tool_id()
 
-        resp = self._l._request(
-            f"{endpoints.NOTES}?device_tool_id={device_tool_id}",
-        )
+        resp = self._l._request(endpoints.notes(device_tool_id))
         self._l._check_response(resp, "list notes")
 
         json = resp.json()
@@ -84,9 +82,8 @@ class LightNotes:
 
     def get_note_metadata(self, note_id: str) -> "LightNote":
         """Fetch metadata for a single note."""
-        self._ensure_device_tool_id()
-
-        resp = self._l._request(endpoints.note(note_id), method="GET")
+        device_tool_id = self._ensure_device_tool_id()
+        resp = self._l._request(endpoints.note(note_id, device_tool_id), method="GET")
         self._l._check_response(resp, f"fetching note {note_id}")
 
         json = resp.json()

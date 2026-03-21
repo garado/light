@@ -36,9 +36,7 @@ class LightPodcasts:
     def get_podcasts(self) -> list[LightPodcast]:
         """Fetch all followed podcasts for this device."""
         device_tool_id = self._ensure_device_tool_id()
-        resp = self._l._request(
-            f"{endpoints.FOLLOWED_PODCASTS}?device_tool_id={device_tool_id}",
-        )
+        resp = self._l._request(endpoints.followed_podcasts(device_tool_id))
         self._l._check_response(resp, "get podcasts")
         body: dict[str, Any] = resp.json()
 

@@ -61,7 +61,7 @@ class LightMusic:
             cannot be detected from the API.
         """
         resp: APIResponse = self._l._request(
-            f"{endpoints.PLAYLISTS}?playlist_ids={self._l._playlist_id}&device_tool_id={self._l._device_tool_id}",
+            endpoints.playlists(self._l._playlist_id, self._l._device_tool_id),
             method="GET",
         )
         self._l._check_response(resp)
@@ -111,7 +111,7 @@ class LightMusic:
             List of LightTracks in the current playlist order.
         """
         resp: APIResponse = self._l._request(
-            f"{endpoints.PLAYLIST_ITEMS}?playlist_ids={self._l._playlist_id}&device_tool_id={self._l._device_tool_id}",
+            endpoints.playlist_items(self._l._playlist_id, self._l._device_tool_id),
             method="GET",
         )
 

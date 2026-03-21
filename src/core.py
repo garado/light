@@ -77,9 +77,9 @@ class Light:
 
         # if auth with playwright is needed
         self.headless: bool = headless
-        self._playwright: Playwright | None = None
-        self._browser: Browser | None = None
-        self._page: Page | None = None
+        self._playwright: Playwright
+        self._browser: Browser
+        self._page: Page
 
         # modules
         self.music: LightMusic
@@ -116,14 +116,14 @@ class Light:
         return self
 
     def __exit__(self, *_: object) -> None:
-        if self._browser is not None:
+        if hasattr(self, "_browser"):
             self._browser.close()
-        if self._playwright is not None:
+        if hasattr(self, "_playwright"):
             self._playwright.stop()
 
     def _start_playwright(self) -> None:
         """Launch the browser (idempotent)."""
-        if self._playwright is not None:
+        if hasattr(self, "_playwright"):
             return
         from playwright.sync_api import sync_playwright
         self._playwright = sync_playwright().start()
@@ -219,7 +219,7 @@ class Light:
             pass
 
     def _validate_cache(self) -> bool:
-        url = f"{endpoints.PLAYLISTS}?playlist_ids={self._playlist_id}&device_tool_id={self._device_tool_id}"
+        url = endpoints.playlists(self._playlist_id, self._device_tool_id)
         req = Request(
             url,
             headers={
@@ -386,15 +386,19 @@ def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(f)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         obj = click.get_current_context().find_object(dict) or {}
-        with Light(
-            email=obj.get("email"),
-            email_file=obj.get("email_file"),
-            password=obj.get("password"),
-            password_file=obj.get("password_file"),
-            phone=obj.get("device_id"),
-            phone_file=obj.get("device_id_file"),
-            headless=not obj.get("no_headless", False),
-        ) as light:
-            return f(light, *args, **kwargs)
+        try:
+            with Light(
+                email=obj.get("email"),
+                email_file=obj.get("email_file"),
+                password=obj.get("password"),
+                password_file=obj.get("password_file"),
+                phone=obj.get("device_id"),
+                phone_file=obj.get("device_id_file"),
+                headless=not obj.get("no_headless", False),
+            ) as light:
+                return f(light, *args, **kwargs)
+        except RuntimeError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise SystemExit(1)
 
     return wrapper
