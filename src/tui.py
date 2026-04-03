@@ -306,15 +306,33 @@ class LightApp(App):
         self.run_worker(lambda: self._do_move(track, j), exclusive=True, thread=True)
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
+        from open_api_specification_client.api.default import patch_api_playlist_items_param2
+        from open_api_specification_client.models import (
+            PatchApiPlaylistItemsParam2Body,
+            PatchApiPlaylistItemsParam2BodyData,
+            PatchApiPlaylistItemsParam2BodyDataAttributes,
+            PatchApiPlaylistItemsParam2BodyDataType,
+        )
         assert self._pw is not None
-        self._pw.submit(lambda light: light._check_response(
-            light._request(
-                f"https://production.lightphonecloud.com/api/playlist_items/{track.playlist_item_id}",
-                method="PATCH",
-                data={"data": {"id": track.playlist_item_id, "type": "playlist_items", "attributes": {"position": new_position}}},
-            ),
-            "move track",
-        ))
+
+        def _move(light):
+            resp = patch_api_playlist_items_param2.sync_detailed(
+                param2=track.playlist_item_id,
+                client=light._api_client,
+                body=PatchApiPlaylistItemsParam2Body(
+                    data=PatchApiPlaylistItemsParam2BodyData(
+                        id=track.playlist_item_id,
+                        type_=PatchApiPlaylistItemsParam2BodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsParam2BodyDataAttributes(
+                            position=new_position,
+                        ),
+                    )
+                ),
+            )
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(f"move track: {resp.status_code}")
+
+        self._pw.submit(_move)
 
     # --- actions ---
 

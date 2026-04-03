@@ -1,10 +1,43 @@
 """Podcast management for Light devices."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from rich.console import Console
 
-import endpoints
+from open_api_specification_client.api.default import (
+    delete_api_followed_podcasts_param2,
+    get_api_followed_podcasts,
+    post_api_followed_podcasts,
+    post_api_podcasts,
+)
+from open_api_specification_client.models import (
+    PostApiFollowedPodcastsBody,
+    PostApiFollowedPodcastsBodyData,
+    PostApiFollowedPodcastsBodyDataRelationships,
+    PostApiFollowedPodcastsBodyDataType,
+    PostApiPodcastsBody,
+    PostApiPodcastsBodyData,
+    PostApiPodcastsBodyDataAttributes,
+    PostApiPodcastsBodyDataType,
+)
+from open_api_specification_client.models.post_api_followed_podcasts_body_data_relationships_device_tool import (
+    PostApiFollowedPodcastsBodyDataRelationshipsDeviceTool,
+)
+from open_api_specification_client.models.post_api_followed_podcasts_body_data_relationships_device_tool_data import (
+    PostApiFollowedPodcastsBodyDataRelationshipsDeviceToolData,
+)
+from open_api_specification_client.models.post_api_followed_podcasts_body_data_relationships_device_tool_data_type import (
+    PostApiFollowedPodcastsBodyDataRelationshipsDeviceToolDataType,
+)
+from open_api_specification_client.models.post_api_followed_podcasts_body_data_relationships_podcast import (
+    PostApiFollowedPodcastsBodyDataRelationshipsPodcast,
+)
+from open_api_specification_client.models.post_api_followed_podcasts_body_data_relationships_podcast_data import (
+    PostApiFollowedPodcastsBodyDataRelationshipsPodcastData,
+)
+from open_api_specification_client.models.post_api_followed_podcasts_body_data_relationships_podcast_data_type import (
+    PostApiFollowedPodcastsBodyDataRelationshipsPodcastDataType,
+)
 
 if TYPE_CHECKING:
     from core import Light
@@ -36,28 +69,33 @@ class LightPodcasts:
     def get_podcasts(self) -> list[LightPodcast]:
         """Fetch all followed podcasts for this device."""
         device_tool_id = self._ensure_device_tool_id()
-        resp = self._l._request(endpoints.followed_podcasts(device_tool_id))
-        self._l._check_response(resp, "get podcasts")
-        body: dict[str, Any] = resp.json()
 
-        included_by_id: dict[str, dict[str, Any]] = {
-            item["id"]: item["attributes"]
-            for item in body.get("included", [])
-            if item["type"] == "podcasts"
+        resp = get_api_followed_podcasts.sync_detailed(
+            client=self._l._api_client,
+            device_tool_id=device_tool_id,
+        )
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"get podcasts: {resp.status_code}")
+
+        body = resp.parsed
+        included_by_id = {
+            item.id: item.attributes
+            for item in body.included
+            if item.type_ == "podcasts"
         }
 
         podcasts = []
-        for item in body["data"]:
-            podcast_id: str = item["attributes"]["podcast_id"]
-            attrs = included_by_id.get(podcast_id, {})
+        for item in body.data:
+            podcast_id = item.attributes.podcast_id
+            attrs = included_by_id.get(podcast_id)
             podcasts.append(
                 LightPodcast(
                     podcast_id=podcast_id,
-                    followed_podcast_id=item["id"],
-                    title=attrs.get("title") or "",
-                    publisher=attrs.get("publisher") or "",
-                    rss_feed_url=attrs.get("rss_feed_url") or "",
-                    description=attrs.get("description"),
+                    followed_podcast_id=item.id,
+                    title=(attrs.title or "") if attrs and attrs.title else "",
+                    publisher=(attrs.publisher or "") if attrs and attrs.publisher else "",
+                    rss_feed_url=(attrs.rss_feed_url or "") if attrs and attrs.rss_feed_url else "",
+                    description=(attrs.description or None) if attrs else None,
                 )
             )
         return podcasts
@@ -70,11 +108,12 @@ class LightPodcasts:
             console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
             return
         for p in matches:
-            resp = self._l._request(
-                endpoints.followed_podcast(p.followed_podcast_id),
-                method="DELETE",
+            resp = delete_api_followed_podcasts_param2.sync_detailed(
+                param2=p.followed_podcast_id,
+                client=self._l._api_client,
             )
-            self._l._check_response(resp, "delete podcast")
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(f"delete podcast: {resp.status_code}")
 
     def add_podcast(self, rss_feed_url: str) -> LightPodcast:
         """Add a podcast to the device by RSS feed URL.
@@ -83,50 +122,59 @@ class LightPodcasts:
         """
         device_tool_id = self._ensure_device_tool_id()
 
-        resp = self._l._request(
-            endpoints.PODCASTS,
-            method="POST",
-            data={
-                "data": {
-                    "attributes": {
-                        "description": None,
-                        "itunes_id": None,
-                        "publisher": None,
-                        "rss_feed_url": rss_feed_url,
-                        "title": None,
-                    },
-                    "type": "podcasts",
-                }
-            },
+        create_resp = post_api_podcasts.sync_detailed(
+            client=self._l._api_client,
+            body=PostApiPodcastsBody(
+                data=PostApiPodcastsBodyData(
+                    type_=PostApiPodcastsBodyDataType.PODCASTS,
+                    attributes=PostApiPodcastsBodyDataAttributes(
+                        rss_feed_url=rss_feed_url,
+                        title=None,
+                        publisher=None,
+                        description=None,
+                        itunes_id=None,
+                    ),
+                )
+            ),
         )
-        self._l._check_response(resp, "create podcast")
-        body: dict[str, Any] = resp.json()
-        podcast_id: str = body["data"]["id"]
-        attrs: dict[str, Any] = body["data"]["attributes"]
+        if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
+            raise RuntimeError(f"create podcast: {create_resp.status_code}")
 
-        resp = self._l._request(
-            endpoints.FOLLOWED_PODCASTS,
-            method="POST",
-            data={
-                "data": {
-                    "relationships": {
-                        "device_tool": {
-                            "data": {"type": "device_tools", "id": device_tool_id}
-                        },
-                        "podcast": {"data": {"type": "podcasts", "id": podcast_id}},
-                    },
-                    "type": "followed_podcasts",
-                }
-            },
+        podcast_id = create_resp.parsed.data.id
+        attrs = create_resp.parsed.data.attributes
+
+        follow_resp = post_api_followed_podcasts.sync_detailed(
+            client=self._l._api_client,
+            body=PostApiFollowedPodcastsBody(
+                data=PostApiFollowedPodcastsBodyData(
+                    type_=PostApiFollowedPodcastsBodyDataType.FOLLOWED_PODCASTS,
+                    relationships=PostApiFollowedPodcastsBodyDataRelationships(
+                        device_tool=PostApiFollowedPodcastsBodyDataRelationshipsDeviceTool(
+                            data=PostApiFollowedPodcastsBodyDataRelationshipsDeviceToolData(
+                                type_=PostApiFollowedPodcastsBodyDataRelationshipsDeviceToolDataType.DEVICE_TOOLS,
+                                id=device_tool_id,
+                            )
+                        ),
+                        podcast=PostApiFollowedPodcastsBodyDataRelationshipsPodcast(
+                            data=PostApiFollowedPodcastsBodyDataRelationshipsPodcastData(
+                                type_=PostApiFollowedPodcastsBodyDataRelationshipsPodcastDataType.PODCASTS,
+                                id=podcast_id,
+                            )
+                        ),
+                    ),
+                )
+            ),
         )
-        self._l._check_response(resp, "follow podcast")
-        followed_podcast_id: str = resp.json()["data"]["id"]
+        if follow_resp.status_code not in (200, 201) or follow_resp.parsed is None:
+            raise RuntimeError(f"follow podcast: {follow_resp.status_code}")
+
+        followed_podcast_id = follow_resp.parsed.data.id
 
         return LightPodcast(
             podcast_id=podcast_id,
             followed_podcast_id=followed_podcast_id,
-            title=attrs.get("title") or "",
-            publisher=attrs.get("publisher") or "",
-            rss_feed_url=attrs.get("rss_feed_url") or rss_feed_url,
-            description=attrs.get("description"),
+            title=attrs.title or "",
+            publisher=attrs.publisher or "",
+            rss_feed_url=attrs.rss_feed_url or rss_feed_url,
+            description=attrs.description or None,
         )

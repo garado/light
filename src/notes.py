@@ -8,7 +8,19 @@ from typing import TYPE_CHECKING
 
 from rich.console import Console
 
-import endpoints
+from open_api_specification_client.api.default import (
+    get_api_notes,
+    get_api_notes_param2,
+    get_api_notes_param2_generate_presigned_get_url,
+    post_api_notes,
+)
+from open_api_specification_client.models import (
+    PostApiNotesBody,
+    PostApiNotesBodyData,
+    PostApiNotesBodyDataAttributes,
+    PostApiNotesBodyDataAttributesNoteType,
+    PostApiNotesBodyDataType,
+)
 
 if TYPE_CHECKING:
     from core import Light
@@ -38,56 +50,68 @@ class LightNotes:
         assert self._l._notes_device_tool_id is not None
         return self._l._notes_device_tool_id
 
-    def _note_from_data(self, data: dict, included: dict) -> "LightNote":
-        """Build a LightNote from a data item and its included file entry."""
-        return LightNote(
-            id=data["id"],
-            file_id=data["attributes"]["file_id"],
-            note_type=data["attributes"]["note_type"],
-            title=data["attributes"]["title"],
-            updated_at=data["attributes"]["updated_at"],
-            presigned_url=included["attributes"]["presigned_url"],
-        )
-
     def get_note_content(self, note: LightNote) -> bytes:
         """Fetch the content of a note as raw bytes.
 
         Fetches a fresh presigned GET URL each time (they expire).
         """
-        resp = self._l._request(
-            endpoints.note_presigned_get_url(note.id),
+        resp = get_api_notes_param2_generate_presigned_get_url.sync_detailed(
+            param2=note.id,
+            client=self._l._api_client,
         )
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"presigned get url for {note.id}: {resp.status_code}")
 
-        self._l._check_response(resp, f"presigned get url for {note.id}")
-        presigned_get_url = resp.json()["presigned_get_url"]
-
-        content_resp = self._l._fetch(presigned_get_url, method="GET")
-
+        content_resp = self._l._fetch(resp.parsed.presigned_get_url, method="GET")
         return content_resp.body()
 
     def get_notes(self) -> list["LightNote"]:
         """Fetch metadata for all notes."""
         device_tool_id = self._ensure_device_tool_id()
 
-        resp = self._l._request(endpoints.notes(device_tool_id))
-        self._l._check_response(resp, "list notes")
+        resp = get_api_notes.sync_detailed(
+            client=self._l._api_client,
+            device_tool_id=device_tool_id,
+        )
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"list notes: {resp.status_code}")
 
-        json = resp.json()
-        assert len(json["data"]) == len(json["included"])
+        body = resp.parsed
+        assert len(body.data) == len(body.included)
 
         return [
-            self._note_from_data(data, included)
-            for data, included in zip(json["data"], json["included"])
+            LightNote(
+                id=data.id,
+                file_id=data.attributes.file_id,
+                note_type=data.attributes.note_type,
+                title=data.attributes.title,
+                updated_at=data.attributes.updated_at,
+                presigned_url=included.attributes.presigned_url,
+            )
+            for data, included in zip(body.data, body.included)
         ]
 
     def get_note_metadata(self, note_id: str) -> "LightNote":
         """Fetch metadata for a single note."""
         device_tool_id = self._ensure_device_tool_id()
-        resp = self._l._request(endpoints.note(note_id, device_tool_id), method="GET")
-        self._l._check_response(resp, f"fetching note {note_id}")
 
-        json = resp.json()
-        return self._note_from_data(json["data"], json["included"][0])
+        resp = get_api_notes_param2.sync_detailed(
+            param2=note_id,
+            client=self._l._api_client,
+            device_tool_id=device_tool_id,
+        )
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"fetching note {note_id}: {resp.status_code}")
+
+        body = resp.parsed
+        return LightNote(
+            id=body.data.id,
+            file_id=body.data.attributes.file_id,
+            note_type=body.data.attributes.note_type,
+            title=body.data.attributes.title,
+            updated_at=body.data.attributes.updated_at,
+            presigned_url=body.included[0].attributes.presigned_url,
+        )
 
     def download_notes(self, dest: str) -> None:
         """Download all notes to dest directory.
@@ -130,24 +154,24 @@ class LightNotes:
         """
         device_tool_id = self._ensure_device_tool_id()
 
-        resp = self._l._request(
-            endpoints.NOTES,
-            method="POST",
-            data={
-                "data": {
-                    "attributes": {
-                        "device_tool_id": device_tool_id,
-                        "filename": "note.txt",
-                        "note_type": "text",
-                        "title": title,
-                    },
-                    "type": "notes",
-                }
-            },
+        resp = post_api_notes.sync_detailed(
+            client=self._l._api_client,
+            body=PostApiNotesBody(
+                data=PostApiNotesBodyData(
+                    type_=PostApiNotesBodyDataType.NOTES,
+                    attributes=PostApiNotesBodyDataAttributes(
+                        device_tool_id=device_tool_id,
+                        filename="note.txt",
+                        note_type=PostApiNotesBodyDataAttributesNoteType.TEXT,
+                        title=title,
+                    ),
+                )
+            ),
         )
-        self._l._check_response(resp, "creating note")
+        if resp.status_code not in (200, 201) or resp.parsed is None:
+            raise RuntimeError(f"creating note: {resp.status_code}")
 
-        presigned_url = resp.json()["included"][0]["attributes"]["presigned_url"]
+        presigned_url = resp.parsed.included[0].attributes.presigned_url
 
         if content_is_path:
             with open(content) as f:

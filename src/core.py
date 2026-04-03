@@ -7,6 +7,8 @@ import functools
 import json
 import keyring
 import os
+from open_api_specification_client.client import AuthenticatedClient
+from open_api_specification_client.api.default import get_api_playlists
 from rich.console import Console
 from typing import TYPE_CHECKING, Any, Callable, final
 from urllib.error import URLError
@@ -17,12 +19,14 @@ if TYPE_CHECKING:
 
 KEYRING_SERVICE = "unofficial-light-api"
 KEYRING_USER = "session"
+API_BASE = "https://production.lightphonecloud.com"
+API_HEADERS = {"Accept": "application/vnd.api+json"}
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 class _RawResponse:
-    """Minimal response wrapper for urllib fetches, mimicking the Playwright APIResponse interface."""
+    """Minimal response wrapper for urllib fetches (used for raw S3 presigned URL calls)."""
 
     def __init__(self, status: int, content: bytes) -> None:
         self.status = status
@@ -64,7 +68,8 @@ class Light:
         self.phone: str | None = phone or self._resolve(
             phone_file, "LIGHT_PHONE_NUMBER"
         )
-        self._api_token: str | None = None
+        self._api_token: str | None = None  # raw bearer token (no "Bearer " prefix)
+        self._api_client: AuthenticatedClient | None = None
         self._device_tool_id: str | None = None
         self._playlist_id: str | None = None
         self._podcast_device_tool_id: str | None = None
@@ -97,6 +102,12 @@ class Light:
             self.login()
             self._fetch_device_tool_id()
             self._save_cache()
+
+        self._api_client = AuthenticatedClient(
+            base_url=API_BASE,
+            token=self._api_token,
+            headers=API_HEADERS,
+        )
 
         from music import LightMusic
         from podcast import LightPodcasts
@@ -144,32 +155,6 @@ class Light:
             code = e.code if hasattr(e, "code") else 0
             return _RawResponse(code, b"")
 
-    def _request(
-        self,
-        url: str,
-        method: str = "GET",
-        data: dict[str, Any] | None = None,
-        timeout: int = 30_000,
-    ) -> _RawResponse:
-        """Make an authenticated request to the Light API."""
-        headers: dict[str, str] = {
-            "Authorization": self._api_token or "",
-            "Accept": "application/vnd.api+json",
-        }
-        body: bytes | None = None
-        if data is not None:
-            headers["Content-Type"] = "application/vnd.api+json"
-            body = json.dumps(data).encode()
-
-        req = Request(url, method=method, headers=headers, data=body)
-        try:
-            with urlopen(req, timeout=timeout / 1000) as resp:
-                return _RawResponse(resp.status, resp.read())
-        except URLError as e:
-            code = e.code if hasattr(e, "code") else 0
-            body_bytes = e.read() if hasattr(e, "read") else b""
-            return _RawResponse(code, body_bytes)
-
     def _load_cache(self) -> bool:
         log.debug("loading cache")
 
@@ -214,19 +199,16 @@ class Light:
             pass
 
     def _validate_cache(self) -> bool:
-        url = endpoints.playlists(self._playlist_id, self._device_tool_id)
-        req = Request(
-            url,
-            headers={
-                "Authorization": self._api_token or "",
-                "Accept": "application/vnd.api+json",
-            },
+        client = AuthenticatedClient(
+            base_url=API_BASE,
+            token=self._api_token,
+            headers=API_HEADERS,
         )
-        try:
-            with urlopen(req, timeout=10) as resp:
-                return resp.status == 200
-        except URLError:
-            return False
+        resp = get_api_playlists.sync_detailed(
+            client=client,
+            device_tool_id=self._device_tool_id,
+        )
+        return resp.status_code == 200
 
     def _fetch_device_tool_id(self) -> None:
         """Navigate to music edit page once to grab dynamic config values.
@@ -304,10 +286,9 @@ class Light:
             raise SystemExit(1)
 
         body: dict[str, Any] = resp_info.value.json()
-        token: str = next(
+        self._api_token = next(
             i["attributes"]["token"] for i in body["included"] if i["type"] == "tokens"
         )
-        self._api_token = f"Bearer {token}"
 
     def _nav_to_dash_root(self) -> None:
         """Navigate to the root dashboard menu."""

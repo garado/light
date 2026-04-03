@@ -15,10 +15,13 @@
       keyring
       secretstorage
       textual
+      httpx
+      attrs
     ]);
     light = pkgs.writeShellScriptBin "light" ''
       PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \
       PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
+      PYTHONPATH=${./light-phone-client}:$PYTHONPATH \
       ${pythonEnv}/bin/python ${./src}/cli.py "$@"
     '';
   in {
@@ -40,6 +43,7 @@
       shellHook = ''
         export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
         export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
+        export PYTHONPATH=${./light-phone-client}:$PYTHONPATH
         ln -sfn ${pythonEnv} .venv
       '';
     };

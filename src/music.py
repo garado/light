@@ -9,11 +9,34 @@ from typing import Any, Callable, Literal
 from dataclasses import dataclass
 import click
 from mutagen import File
-from playwright.sync_api import APIResponse
 from rich.console import Console
 
 from core import Light
-import endpoints
+from open_api_specification_client.api.default import (
+    delete_api_audios_param2,
+    get_api_playlist_items,
+    get_api_playlists,
+    patch_api_audios_param2,
+    patch_api_playlist_items_param2,
+    post_api_audios,
+    post_api_playlists_sort_mode,
+)
+from open_api_specification_client.models import (
+    PatchApiAudiosParam2Body,
+    PatchApiAudiosParam2BodyData,
+    PatchApiAudiosParam2BodyDataAttributes,
+    PatchApiAudiosParam2BodyDataType,
+    PatchApiPlaylistItemsParam2Body,
+    PatchApiPlaylistItemsParam2BodyData,
+    PatchApiPlaylistItemsParam2BodyDataAttributes,
+    PatchApiPlaylistItemsParam2BodyDataType,
+    PostApiAudiosBody,
+    PostApiAudiosBodyData,
+    PostApiAudiosBodyDataAttributes,
+    PostApiAudiosBodyDataType,
+    PostApiPlaylistsSortModeBody,
+    PostApiPlaylistsSortModeBodySortMode,
+)
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
@@ -60,17 +83,15 @@ class LightMusic:
             Title-based sort modes (title_asc, title_desc) are custom, local-only modes and
             cannot be detected from the API.
         """
-        resp: APIResponse = self._l._request(
-            endpoints.playlists(self._l._playlist_id, self._l._device_tool_id),
-            method="GET",
+        resp = get_api_playlists.sync_detailed(
+            client=self._l._api_client,
+            device_tool_id=self._l._device_tool_id,
         )
-        self._l._check_response(resp)
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"get sort mode: {resp.status_code}")
 
-        body: dict[str, Any] = resp.json()
-        data = body["data"]
-        playlist = data["0"] if isinstance(data, dict) else data[0]
-        sort_mode = playlist["attributes"]["sort_mode"]
-        return SortMode(sort_mode)
+        playlist = resp.parsed.data[0]
+        return SortMode(playlist.attributes.sort_mode)
 
     def set_sort_mode(self, sort_mode: SortMode):
         """Set sort mode.
@@ -88,17 +109,17 @@ class LightMusic:
                     else SortMode.ARTIST_ASC
                 )
 
-            resp: APIResponse = self._l._request(
-                endpoints.PLAYLISTS_SORT_MODE,
-                method="POST",
-                data={
-                    "playlist_id": self._l._playlist_id,
-                    "device_tool_id": self._l._device_tool_id,
-                    "sort_mode": sort_mode,
-                },
+            resp = post_api_playlists_sort_mode.sync_detailed(
+                client=self._l._api_client,
+                body=PostApiPlaylistsSortModeBody(
+                    playlist_id=self._l._playlist_id,
+                    device_tool_id=self._l._device_tool_id,
+                    sort_mode=PostApiPlaylistsSortModeBodySortMode(sort_mode),
+                ),
             )
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(f"set sort mode: {resp.status_code}")
 
-            self._l._check_response(resp, "set sort mode")
             console.print("[green]Sort mode set successfully.[/green]")
 
         else:
@@ -110,43 +131,40 @@ class LightMusic:
         Returns:
             List of LightTracks in the current playlist order.
         """
-        resp: APIResponse = self._l._request(
-            endpoints.playlist_items(self._l._playlist_id, self._l._device_tool_id),
-            method="GET",
+        resp = get_api_playlist_items.sync_detailed(
+            client=self._l._api_client,
+            playlist_ids=self._l._playlist_id,
+            device_tool_id=self._l._device_tool_id,
         )
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"get tracks: {resp.status_code}")
 
-        self._l._check_response(resp)
-        body: dict[str, Any] = resp.json()
+        body = resp.parsed
 
-        file_attrs: dict[str, dict[str, str]] = {
-            item["id"]: item["attributes"]
-            for item in body.get("included", [])
-            if item["type"] == "files"
+        file_attrs = {
+            item.id: item.attributes
+            for item in body.included
+            if item.type_ == "files"
         }
-
-        audio_info: dict[str, dict[str, Any]] = {
-            item["id"]: {
-                "attrs": item["attributes"],
-                "file_id": item["relationships"]["processed_file"]["data"]["id"],
+        audio_info = {
+            item.id: {
+                "attrs": item.attributes,
+                "file_id": item.relationships.processed_file.data.id,
             }
-            for item in body.get("included", [])
-            if item["type"] == "audios"
+            for item in body.included
+            if item.type_ == "audios"
         }
 
-        items: list[dict[str, Any]] = sorted(
-            body["data"], key=lambda x: x["attributes"]["position"]
-        )
+        items = sorted(body.data, key=lambda x: x.attributes.position)
 
         return [
             LightTrack(
-                playlist_item_id=item["id"],
-                audio_id=(audio_id := item["relationships"]["audio"]["data"]["id"]),
-                presigned_url=file_attrs[audio_info[audio_id]["file_id"]][
-                    "presigned_url"
-                ],
-                title=audio_info[audio_id]["attrs"]["title"],
-                artist=audio_info[audio_id]["attrs"]["artist"],
-                album=audio_info[audio_id]["attrs"]["album"],
+                playlist_item_id=item.id,
+                audio_id=(audio_id := item.relationships.audio.data.id),
+                presigned_url=file_attrs[audio_info[audio_id]["file_id"]].presigned_url or "",
+                title=audio_info[audio_id]["attrs"].title or "",
+                artist=audio_info[audio_id]["attrs"].artist or "",
+                album=audio_info[audio_id]["attrs"].album or "",
             )
             for item in items
         ]
@@ -177,13 +195,14 @@ class LightMusic:
 
         tracks_deleted = 0
         for track in to_delete:
-            resp = self._l._request(
-                endpoints.audio(track.audio_id), method="DELETE"
+            resp = delete_api_audios_param2.sync_detailed(
+                param2=track.audio_id,
+                client=self._l._api_client,
             )
 
-            if not resp.ok:
+            if not (200 <= resp.status_code < 300):
                 console.print(
-                    f"[red]Failed to delete: {track.title} (status {resp.status})[/red]"
+                    f"[red]Failed to delete: {track.title} (status {resp.status_code})[/red]"
                 )
             else:
                 console.print(f"[green]Deleted: {track.title}[/green]")
@@ -282,28 +301,27 @@ class LightMusic:
                 )
                 continue
 
-            create_resp = self._l._request(
-                endpoints.AUDIOS,
-                method="POST",
-                data={
-                    "data": {
-                        "type": "audios",
-                        "attributes": {
-                            "filename": os.path.basename(file_path),
-                            "device_tool_id": self._l._device_tool_id,
-                        },
-                    }
-                },
+            create_resp = post_api_audios.sync_detailed(
+                client=self._l._api_client,
+                body=PostApiAudiosBody(
+                    data=PostApiAudiosBodyData(
+                        type_=PostApiAudiosBodyDataType.AUDIOS,
+                        attributes=PostApiAudiosBodyDataAttributes(
+                            filename=os.path.basename(file_path),
+                            device_tool_id=self._l._device_tool_id,
+                        ),
+                    )
+                ),
             )
+            if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
+                raise RuntimeError(
+                    f"create audio record for {os.path.basename(file_path)}: {create_resp.status_code}"
+                )
 
-            self._l._check_response(
-                create_resp, f"create audio record for {os.path.basename(file_path)}"
-            )
-
-            presigned_url: str = next(
-                i["attributes"]["presigned_url"]
-                for i in create_resp.json()["included"]
-                if i["type"] == "files" and i["attributes"].get("uploaded_at") is None
+            presigned_url = next(
+                item.attributes.presigned_url
+                for item in create_resp.parsed.included
+                if item.type_ == "files"
             )
 
             with open(file_path, "rb") as f:
@@ -334,25 +352,25 @@ class LightMusic:
             title: The new title, or None for no changes.
             artist: The new artist, or None for no changes.
         """
-        attrs = {}
-        if title is not None:
-            attrs["title"] = title
-        if artist is not None:
-            attrs["artist"] = artist
+        from open_api_specification_client.types import UNSET
 
-        resp = self._l._request(
-            endpoints.audio(audio_id),
-            method="PATCH",
-            data={
-                "data": {
-                    "id": audio_id,
-                    "type": "playlist_items",
-                    "attributes": attrs,
-                }
-            },
+        resp = patch_api_audios_param2.sync_detailed(
+            param2=audio_id,
+            client=self._l._api_client,
+            body=PatchApiAudiosParam2Body(
+                data=PatchApiAudiosParam2BodyData(
+                    id=audio_id,
+                    type_=PatchApiAudiosParam2BodyDataType.PLAYLIST_ITEMS,
+                    attributes=PatchApiAudiosParam2BodyDataAttributes(
+                        title=title if title is not None else UNSET,
+                        artist=artist if artist is not None else UNSET,
+                    ),
+                )
+            ),
         )
+        if not (200 <= resp.status_code < 300):
+            raise RuntimeError(f"update metadata: {resp.status_code}")
 
-        self._l._check_response(resp)
         console.print(f"[green]Update metadata successfully.[/green]")
 
     def _sort_by_title(self, descending: bool = False) -> None:
@@ -382,17 +400,21 @@ class LightMusic:
         for new_position, track in enumerate(sorted_tracks):
             if original_positions[track.audio_id] == new_position:
                 continue
-            self._l._check_response(
-                self._l._request(
-                    endpoints.playlist_item(track.playlist_item_id),
-                    method="PATCH",
-                    data={
-                        "data": {
-                            "id": track.playlist_item_id,
-                            "type": "playlist_items",
-                            "attributes": {"position": new_position},
-                        }
-                    },
+
+            resp = patch_api_playlist_items_param2.sync_detailed(
+                param2=track.playlist_item_id,
+                client=self._l._api_client,
+                body=PatchApiPlaylistItemsParam2Body(
+                    data=PatchApiPlaylistItemsParam2BodyData(
+                        id=track.playlist_item_id,
+                        type_=PatchApiPlaylistItemsParam2BodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsParam2BodyDataAttributes(
+                            position=new_position,
+                        ),
+                    )
                 ),
-                f"sort by title position {new_position}",
             )
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(
+                    f"sort by title position {new_position}: {resp.status_code}"
+                )
