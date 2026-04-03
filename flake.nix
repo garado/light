@@ -34,6 +34,7 @@
         pythonEnv
         playwright-driver.browsers
         pyright
+        openapi-python-client
       ];
 
       shellHook = ''

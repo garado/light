@@ -36,7 +36,8 @@
                               "type": "null"
                             },
                             "roles": {
-                              "type": "array"
+                              "type": "array",
+                              "items": {}
                             }
                           },
                           "required": [
@@ -68,7 +69,8 @@
                               "type": "object",
                               "properties": {
                                 "data": {
-                                  "type": "array"
+                                  "type": "array",
+                                  "items": {}
                                 }
                               },
                               "required": [
@@ -509,7 +511,7 @@
         ]
       }
     },
-    "/api/tools/:param2": {
+    "/api/tools/{param2}": {
       "get": {
         "summary": "/api/tools/:param2",
         "description": "**Host**: http://production.lightphonecloud.com",
@@ -603,7 +605,7 @@
         ],
         "parameters": [
           {
-            "name": ":param2",
+            "name": "param2",
             "in": "path",
             "required": true,
             "schema": {
@@ -1148,7 +1150,8 @@
                                 "type": "null"
                               },
                               "roles": {
-                                "type": "array"
+                                "type": "array",
+                                "items": {}
                               },
                               "config": {
                                 "type": "object"
@@ -1530,7 +1533,7 @@
         ]
       }
     },
-    "/api/playlist_items/:param2": {
+    "/api/playlist_items/{param2}": {
       "patch": {
         "summary": "/api/playlist_items/:param2",
         "description": "**Host**: http://production.lightphonecloud.com",
@@ -1652,7 +1655,7 @@
         ],
         "parameters": [
           {
-            "name": ":param2",
+            "name": "param2",
             "in": "path",
             "required": true,
             "schema": {
@@ -1707,7 +1710,7 @@
         }
       }
     },
-    "/api/audios/:param2": {
+    "/api/audios/{param2}": {
       "patch": {
         "summary": "/api/audios/:param2",
         "description": "**Host**: http://production.lightphonecloud.com",
@@ -1904,7 +1907,7 @@
         ],
         "parameters": [
           {
-            "name": ":param2",
+            "name": "param2",
             "in": "path",
             "required": true,
             "schema": {
@@ -3007,7 +3010,7 @@
         ]
       }
     },
-    "/api/notes/:param2/generate_presigned_get_url": {
+    "/api/notes/{param2}/generate_presigned_get_url": {
       "get": {
         "summary": "/api/notes/:param2/generate_presigned_get_url",
         "description": "**Host**: http://production.lightphonecloud.com",
@@ -3049,7 +3052,7 @@
         ],
         "parameters": [
           {
-            "name": ":param2",
+            "name": "param2",
             "in": "path",
             "required": true,
             "schema": {
@@ -3326,7 +3329,7 @@
         }
       }
     },
-    "/api/followed_podcasts/:param2": {
+    "/api/followed_podcasts/{param2}": {
       "delete": {
         "summary": "/api/followed_podcasts/:param2",
         "description": "**Host**: http://production.lightphonecloud.com",
@@ -3568,7 +3571,7 @@
         ],
         "parameters": [
           {
-            "name": ":param2",
+            "name": "param2",
             "in": "path",
             "required": true,
             "schema": {
@@ -3660,7 +3663,7 @@
         }
       }
     },
-    "/api/notes/:param2": {
+    "/api/notes/{param2}": {
       "get": {
         "summary": "/api/notes/:param2",
         "description": "**Host**: http://production.lightphonecloud.com\n\nFetch metadata for a single note.",
