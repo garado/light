@@ -7,7 +7,6 @@ import os
 from light_api import endpoints
 from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.api.default import get_api_playlists, get_api_followed_podcasts
-from rich.console import Console
 from typing import TYPE_CHECKING, Any, final
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -20,7 +19,6 @@ KEYRING_USER = "session"
 API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
 
-console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 class _RawResponse:
@@ -91,10 +89,10 @@ class Light:
 
     def __enter__(self) -> Light:
         """Authenticate, launching Playwright only if the cache is not usable."""
-        console.print("[green]Authenticating...[/green]")
+        log.info("Authenticating")
 
         if self._load_cache() and self._validate_cache():
-            console.print("[green]Using cached session.[/green]")
+            log.info("Using cached session")
         else:
             self._start_playwright()
             self.login()
@@ -118,7 +116,7 @@ class Light:
         self.podcast = LightPodcasts(self)
         self.notes = LightNotes(self)
 
-        console.print("[green]Authentication complete.[/green]")
+        log.info("Authentication complete")
 
         return self
 
@@ -157,15 +155,15 @@ class Light:
             return _RawResponse(code, b"")
 
     def _load_cache(self) -> bool:
-        log.debug("loading cache")
+        log.debug("Loading cache")
 
         try:
             raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
         except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
-            log.debug(f"keyring error: {e}")
+            log.debug(f"Keyring error: {e}")
             return False
         if raw is None:
-            log.debug(f"keyring: no entry found")
+            log.debug("Keyring: no entry found")
             return False
         try:
             data = json.loads(raw)
@@ -174,10 +172,10 @@ class Light:
             self._playlist_id = data["playlist_id"]
             self._podcast_device_tool_id = data.get("podcast_device_tool_id")
             self._notes_device_tool_id = data.get("notes_device_tool_id")
-            log.debug("cache loaded successfully")
+            log.debug("Cache loaded successfully")
             return True
         except (KeyError, json.JSONDecodeError) as e:
-            log.debug(f"error: {e}")
+            log.debug(f"Error: {e}")
             return False
 
     def _save_cache(self) -> None:
@@ -195,9 +193,8 @@ class Light:
                     }
                 ),
             )
-        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked):
-            print("keyring error")
-            pass
+        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+            log.warning(f"Keyring error: {e}")
 
     def _validate_cache(self) -> bool:
         client = AuthenticatedClient(
@@ -215,7 +212,7 @@ class Light:
         """Fetch music device_tool_id and playlist_id from the playlists API."""
         resp = get_api_playlists.sync_detailed(client=self._api_client)
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(f"could not fetch device_tool_id: {resp.status_code}")
+            raise RuntimeError(f"Could not fetch device_tool_id: {resp.status_code}")
         playlist = resp.parsed.data[0]
         self._playlist_id = playlist.id
         self._device_tool_id = playlist.attributes.device_tool_id
@@ -232,8 +229,7 @@ class Light:
                 with open(filepath) as f:
                     return f.read().strip()
             except OSError as e:
-                console.print(f"[red]Could not read {filepath}: {e}[/red]")
-                raise SystemExit(1)
+                raise RuntimeError(f"Could not read {filepath}: {e}") from e
         return os.environ.get(env_key)
 
     @staticmethod
@@ -251,10 +247,7 @@ class Light:
             return  # auth is already cached
 
         if not self.email or not self.password:
-            console.print(
-                "[red]No cached session found. Provide --email, --password, --phone-number (or set LIGHT_EMAIL / LIGHT_PASSWORD / LIGHT_PHONE_NUMBER).[/red]"
-            )
-            raise SystemExit(1)
+            raise RuntimeError("No cached session found — provide email, password, and phone number")
 
         self._start_playwright()
         self._page.goto(endpoints.DASHBOARD)
@@ -272,8 +265,7 @@ class Light:
         self._page.wait_for_load_state("networkidle")
 
         if "/login" in self._page.url:
-            console.print("[red]Login failed — check your credentials.[/red]")
-            raise SystemExit(1)
+            raise RuntimeError("Login failed — check your credentials")
 
         body: dict[str, Any] = resp_info.value.json()
         self._api_token = next(
@@ -318,7 +310,7 @@ class Light:
         from open_api_specification_client.api.default import get_api_notes
         resp = get_api_notes.sync_detailed(client=self._api_client)
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError("could not fetch notes device_tool_id: no notes on device — add a note first")
+            raise RuntimeError("Could not fetch notes device_tool_id: no notes on device — add a note first")
         self._notes_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
 
     def _fetch_podcast_device_tool_id(self) -> None:
@@ -326,7 +318,7 @@ class Light:
         from open_api_specification_client.api.default import get_api_followed_podcasts
         resp = get_api_followed_podcasts.sync_detailed(client=self._api_client)
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError("could not fetch podcast device_tool_id: no podcasts on device — add one first")
+            raise RuntimeError("Could not fetch podcast device_tool_id: no podcasts on device — add one first")
         self._podcast_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
 
     def nav_to_music_edit(self) -> None:

@@ -9,7 +9,6 @@ dependencies = [
     "keyring",
     "mutagen",
     "playwright",
-    "rich",
     "light_client",
 ]
 

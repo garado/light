@@ -1,8 +1,8 @@
 """Podcast management for Light devices."""
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
-from rich.console import Console
 
 from open_api_specification_client.api.default import (
     delete_api_followed_podcasts_param2,
@@ -42,7 +42,7 @@ from open_api_specification_client.models.post_api_followed_podcasts_body_data_r
 if TYPE_CHECKING:
     from light_api.client import Light
 
-console = Console()
+log = logging.getLogger(f"light.{__name__}")
 
 
 @dataclass
@@ -75,7 +75,7 @@ class LightPodcasts:
             device_tool_id=device_tool_id,
         )
         if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"get podcasts: {resp.status_code}")
+            raise RuntimeError(f"Get podcasts: {resp.status_code}")
 
         body = resp.parsed
         included_by_id = {
@@ -93,8 +93,14 @@ class LightPodcasts:
                     podcast_id=podcast_id,
                     followed_podcast_id=item.id,
                     title=(attrs.title or "") if attrs and attrs.title else "",
-                    publisher=(attrs.publisher or "") if attrs and attrs.publisher else "",
-                    rss_feed_url=(attrs.rss_feed_url or "") if attrs and attrs.rss_feed_url else "",
+                    publisher=(
+                        (attrs.publisher or "") if attrs and attrs.publisher else ""
+                    ),
+                    rss_feed_url=(
+                        (attrs.rss_feed_url or "")
+                        if attrs and attrs.rss_feed_url
+                        else ""
+                    ),
                     description=(attrs.description or None) if attrs else None,
                 )
             )
@@ -105,7 +111,7 @@ class LightPodcasts:
         podcasts = self.get_podcasts()
         matches = [p for p in podcasts if p.title == title]
         if not matches:
-            console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
+            log.info(f"No podcast found with title: {title!r}")
             return
         for p in matches:
             resp = delete_api_followed_podcasts_param2.sync_detailed(
@@ -113,7 +119,7 @@ class LightPodcasts:
                 client=self._l._api_client,
             )
             if not (200 <= resp.status_code < 300):
-                raise RuntimeError(f"delete podcast: {resp.status_code}")
+                raise RuntimeError(f"Delete podcast: {resp.status_code}")
 
     def add_podcast(self, rss_feed_url: str) -> LightPodcast:
         """Add a podcast to the device by RSS feed URL.
@@ -138,7 +144,7 @@ class LightPodcasts:
             ),
         )
         if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
-            raise RuntimeError(f"create podcast: {create_resp.status_code}")
+            raise RuntimeError(f"Create podcast: {create_resp.status_code}")
 
         podcast_id = create_resp.parsed.data.id
         attrs = create_resp.parsed.data.attributes
@@ -166,7 +172,7 @@ class LightPodcasts:
             ),
         )
         if follow_resp.status_code not in (200, 201) or follow_resp.parsed is None:
-            raise RuntimeError(f"follow podcast: {follow_resp.status_code}")
+            raise RuntimeError(f"Follow podcast: {follow_resp.status_code}")
 
         followed_podcast_id = follow_resp.parsed.data.id
 

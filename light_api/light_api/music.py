@@ -8,8 +8,6 @@ from typing import Any, Callable, Literal
 
 from dataclasses import dataclass
 from mutagen import File
-from rich.console import Console
-
 from light_api.client import Light
 from open_api_specification_client.api.default import (
     delete_api_audios_param2,
@@ -37,7 +35,6 @@ from open_api_specification_client.models import (
     PostApiPlaylistsSortModeBodySortMode,
 )
 
-console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 
@@ -87,7 +84,7 @@ class LightMusic:
             device_tool_id=self._l._device_tool_id,
         )
         if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"get sort mode: {resp.status_code}")
+            raise RuntimeError(f"Get sort mode: {resp.status_code}")
 
         playlist = resp.parsed.data[0]
         return SortMode(playlist.attributes.sort_mode)
@@ -117,9 +114,9 @@ class LightMusic:
                 ),
             )
             if not (200 <= resp.status_code < 300):
-                raise RuntimeError(f"set sort mode: {resp.status_code}")
+                raise RuntimeError(f"Set sort mode: {resp.status_code}")
 
-            console.print("[green]Sort mode set successfully.[/green]")
+            log.info("Sort mode set")
 
         else:
             self._sort_by_title(sort_mode == SortMode.TITLE_DESC)
@@ -136,7 +133,7 @@ class LightMusic:
             device_tool_id=self._l._device_tool_id,
         )
         if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"get tracks: {resp.status_code}")
+            raise RuntimeError(f"Get tracks: {resp.status_code}")
 
         body = resp.parsed
 
@@ -167,9 +164,7 @@ class LightMusic:
             for item in items
         ]
 
-    def delete_tracks_predicate(
-        self, predicate: Callable[[LightTrack], bool]
-    ) -> None:
+    def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
 
         Args:
@@ -180,7 +175,7 @@ class LightMusic:
         to_delete = [t for t in self._tracks if predicate(t)]
 
         if not to_delete:
-            log.info("no matching tracks")
+            log.info("No matching tracks")
             return
 
         tracks_deleted = 0
@@ -191,16 +186,12 @@ class LightMusic:
             )
 
             if not (200 <= resp.status_code < 300):
-                console.print(
-                    f"[red]Failed to delete: {track.title} (status {resp.status_code})[/red]"
-                )
+                log.warning(f"Failed to delete {track.title!r}: {resp.status_code}")
             else:
-                console.print(f"[green]Deleted: {track.title}[/green]")
+                log.info(f"Deleted {track.title!r}")
                 tracks_deleted += 1
 
-        console.print(
-            f"[green]Deleted {tracks_deleted}/{len(to_delete)} tracks [/green]"
-        )
+        log.info(f"Deleted {tracks_deleted}/{len(to_delete)} tracks")
 
     def delete_tracks_by_title(self, titles: list[str]) -> None:
         """Delete tracks by title.
@@ -268,12 +259,10 @@ class LightMusic:
             self.delete_tracks_by_title(titles)
 
         for file_path in files:
-            console.print(f"[green]Uploading {file_path}[/green]")
+            log.info(f"Uploading {file_path}")
 
             if not os.path.exists(file_path):
-                console.print(
-                    f"[yellow]Warning: file not found, skipping: {file_path}[/yellow]"
-                )
+                log.warning(f"File not found, skipping: {file_path}")
                 continue
 
             create_resp = post_api_audios.sync_detailed(
@@ -290,7 +279,7 @@ class LightMusic:
             )
             if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
                 raise RuntimeError(
-                    f"create audio record for {os.path.basename(file_path)}: {create_resp.status_code}"
+                    f"Create audio record for {os.path.basename(file_path)}: {create_resp.status_code}"
                 )
 
             presigned_url = next(
@@ -312,10 +301,7 @@ class LightMusic:
 
             self._l._check_response(put_resp, f"upload {os.path.basename(file_path)}")
 
-        console.print(f"[green]All uploads complete.[/green]")
-        console.print(
-            f"[green]It may take some time to process and appear on your device.[/green]"
-        )
+        log.info("All uploads complete")
 
     def update_track_metadata(
         self, audio_id: str, title: str | None = None, artist: str | None = None
@@ -346,7 +332,7 @@ class LightMusic:
         if not (200 <= resp.status_code < 300):
             raise RuntimeError(f"update metadata: {resp.status_code}")
 
-        console.print(f"[green]Update metadata successfully.[/green]")
+        log.info("Metadata updated")
 
     def _sort_by_title(self, descending: bool = False) -> None:
         """Sort tracks on device by title.
@@ -391,5 +377,5 @@ class LightMusic:
             )
             if not (200 <= resp.status_code < 300):
                 raise RuntimeError(
-                    f"sort by title position {new_position}: {resp.status_code}"
+                    f"Sort by title position {new_position}: {resp.status_code}"
                 )

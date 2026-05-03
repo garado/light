@@ -6,8 +6,6 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from rich.console import Console
-
 from open_api_specification_client.api.default import (
     get_api_notes,
     get_api_notes_param2,
@@ -25,7 +23,6 @@ from open_api_specification_client.models import (
 if TYPE_CHECKING:
     from light_api.client import Light
 
-console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 
@@ -60,7 +57,7 @@ class LightNotes:
             client=self._l._api_client,
         )
         if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"presigned get url for {note.id}: {resp.status_code}")
+            raise RuntimeError(f"Presigned get URL for {note.id}: {resp.status_code}")
 
         content_resp = self._l._fetch(resp.parsed.presigned_get_url, method="GET")
         return content_resp.body()
@@ -74,7 +71,7 @@ class LightNotes:
             device_tool_id=device_tool_id,
         )
         if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"list notes: {resp.status_code}")
+            raise RuntimeError(f"List notes: {resp.status_code}")
 
         body = resp.parsed
         assert len(body.data) == len(body.included)
@@ -101,7 +98,7 @@ class LightNotes:
             device_tool_id=device_tool_id,
         )
         if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"fetching note {note_id}: {resp.status_code}")
+            raise RuntimeError(f"Fetching note {note_id}: {resp.status_code}")
 
         body = resp.parsed
         return LightNote(
@@ -140,7 +137,7 @@ class LightNotes:
                 with open(path, "w") as f:
                     f.write(content.decode())
 
-            console.print(f"[green]Saved:[/green] {path}")
+            log.info(f"Saved {path}")
 
     def create_text_note(
         self, title: str, content: str, content_is_path: bool = False
@@ -169,7 +166,7 @@ class LightNotes:
             ),
         )
         if resp.status_code not in (200, 201) or resp.parsed is None:
-            raise RuntimeError(f"creating note: {resp.status_code}")
+            raise RuntimeError(f"Creating note: {resp.status_code}")
 
         presigned_url = resp.parsed.included[0].attributes.presigned_url
 
@@ -181,4 +178,4 @@ class LightNotes:
 
         self._l._fetch(presigned_url, method="PUT", data=_content)
 
-        console.print(f"[green]Saved note successfully[/green]")
+        log.info("Note saved")
