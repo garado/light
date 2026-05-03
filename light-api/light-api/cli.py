@@ -122,6 +122,23 @@ def podcast_add(light: Light, rss_feed_url):
         console.print(f"[dim]Publisher:[/dim] {p.publisher}")
 
 
+@podcast.command("list")
+@with_light
+def podcast_list(light: Light):
+    """List all followed podcasts on your device."""
+    podcasts = light.podcast.get_podcasts()
+    if not podcasts:
+        console.print("[dim]No podcasts followed.[/dim]")
+        return
+    table = Table(show_header=True)
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Title")
+    table.add_column("Publisher")
+    for i, p in enumerate(podcasts, 1):
+        table.add_row(str(i), p.title, p.publisher)
+    console.print(table)
+
+
 @podcast.command("delete")
 @with_light
 @click.argument("title")

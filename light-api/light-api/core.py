@@ -8,7 +8,7 @@ import json
 import keyring
 import os
 from open_api_specification_client.client import AuthenticatedClient
-from open_api_specification_client.api.default import get_api_playlists
+from open_api_specification_client.api.default import get_api_playlists, get_api_followed_podcasts
 from rich.console import Console
 from typing import TYPE_CHECKING, Any, Callable, final
 from urllib.error import URLError
@@ -100,7 +100,6 @@ class Light:
         else:
             self._start_playwright()
             self.login()
-            self._fetch_device_tool_id()
             self._save_cache()
 
         self._api_client = AuthenticatedClient(
@@ -108,6 +107,10 @@ class Light:
             token=self._api_token,
             headers=API_HEADERS,
         )
+
+        if not self._device_tool_id or not self._playlist_id:
+            self._fetch_device_tool_id()
+            self._save_cache()
 
         from music import LightMusic
         from podcast import LightPodcasts
@@ -211,24 +214,13 @@ class Light:
         return resp.status_code == 200
 
     def _fetch_device_tool_id(self) -> None:
-        """Navigate to music edit page once to grab dynamic config values.
-
-        TODO Not sure what device_tool_id actually does.
-        """
-        with self._page.expect_response(
-            lambda r: "/api/playlists" in r.url and r.request.method == "GET"
-        ) as playlists_resp:
-            with self._page.expect_response(
-                lambda r: "playlist_items" in r.url and r.request.method == "GET"
-            ):
-                self.nav_to_music_edit()
-
-        self._device_tool_id = playlists_resp.value.url.split("device_tool_id=")[
-            1
-        ].split("&")[0]
-        playlists_body: dict[str, Any] = playlists_resp.value.json()
-        data: dict[str, Any] | list[dict[str, Any]] = playlists_body["data"]
-        self._playlist_id = (data if isinstance(data, dict) else data[0])["id"]
+        """Fetch music device_tool_id and playlist_id from the playlists API."""
+        resp = get_api_playlists.sync_detailed(client=self._api_client)
+        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
+            raise RuntimeError(f"could not fetch device_tool_id: {resp.status_code}")
+        playlist = resp.parsed.data[0]
+        self._playlist_id = playlist.id
+        self._device_tool_id = playlist.attributes.device_tool_id
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str | None:
@@ -324,24 +316,20 @@ class Light:
         self._page.locator("li").filter(has_text="View Notes").click()
 
     def _fetch_notes_device_tool_id(self) -> None:
-        """Navigate to notes page to capture the notes device_tool_id."""
-        with self._page.expect_response(
-            lambda r: "/api/notes" in r.url and r.request.method == "GET"
-        ) as resp:
-            self._nav_to_notes_root()
-
-        url = resp.value.url
-        self._notes_device_tool_id = url.split("device_tool_id=")[1].split("&")[0]
+        """Fetch notes device_tool_id from the notes API."""
+        from open_api_specification_client.api.default import get_api_notes
+        resp = get_api_notes.sync_detailed(client=self._api_client)
+        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
+            raise RuntimeError("could not fetch notes device_tool_id: no notes on device — add a note first")
+        self._notes_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
 
     def _fetch_podcast_device_tool_id(self) -> None:
-        """Navigate to podcasts page to capture the podcast device_tool_id."""
-        with self._page.expect_response(
-            lambda r: "/api/followed_podcasts" in r.url and r.request.method == "GET"
-        ) as resp:
-            self._nav_to_podcasts_root()
-
-        url = resp.value.url
-        self._podcast_device_tool_id = url.split("device_tool_id=")[1].split("&")[0]
+        """Fetch podcast device_tool_id from the followed podcasts API."""
+        from open_api_specification_client.api.default import get_api_followed_podcasts
+        resp = get_api_followed_podcasts.sync_detailed(client=self._api_client)
+        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
+            raise RuntimeError("could not fetch podcast device_tool_id: no podcasts on device — add one first")
+        self._podcast_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
 
     def nav_to_music_edit(self) -> None:
         """Navigate to 'Music->Edit Playlists' tab."""

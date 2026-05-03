@@ -142,9 +142,7 @@ class LightMusic:
         body = resp.parsed
 
         file_attrs = {
-            item.id: item.attributes
-            for item in body.included
-            if item.type_ == "files"
+            item.id: item.attributes for item in body.included if item.type_ == "files"
         }
         audio_info = {
             item.id: {
@@ -161,7 +159,8 @@ class LightMusic:
             LightTrack(
                 playlist_item_id=item.id,
                 audio_id=(audio_id := item.relationships.audio.data.id),
-                presigned_url=file_attrs[audio_info[audio_id]["file_id"]].presigned_url or "",
+                presigned_url=file_attrs[audio_info[audio_id]["file_id"]].presigned_url
+                or "",
                 title=audio_info[audio_id]["attrs"].title or "",
                 artist=audio_info[audio_id]["attrs"].artist or "",
                 album=audio_info[audio_id]["attrs"].album or "",
@@ -284,7 +283,7 @@ class LightMusic:
                     f = File(s, easy=True)
                     if f is None:
                         raise ValueError(f"Could not read metadata from {s}")
-                    titles.append(f["title"][0])
+                    titles.append(f.get("title", ["Unknown Title"])[0])
             else:
                 titles = [os.path.splitext(os.path.basename(s))[0] for s in files]
 
