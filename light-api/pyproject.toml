@@ -1,9 +1,0 @@
-[tool.poetry]
-name = "light-api"
-version = "0.1.0"
-description = "Unofficial API for the Light Phone"
-authors = [
-  "Alexis Garado <alexisgarado@proton.me>"
-]
-readme = "README.md"
-packages = [{ include = "light_api" }]

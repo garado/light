@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "light-client"
+name = "light_client"
 version = "1.0.0"
 description = "Auto-generated API client for the Light Phone cloud API"
 authors = [
