@@ -1,8 +1,10 @@
 [tool.poetry]
-name = "open-api-specification-client"
+name = "light-client"
 version = "1.0.0"
-description = "A client library for accessing OpenAPI Specification"
-authors = []
+description = "Auto-generated API client for the Light Phone cloud API"
+authors = [
+  "Alexis Garado <alexisgarado@proton.me>"
+]
 readme = "README.md"
 packages = [
     { include = "open_api_specification_client" },
