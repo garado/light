@@ -1,16 +1,14 @@
 from __future__ import annotations
 import logging
 
-import click
-import endpoints
-import functools
 import json
 import keyring
 import os
+from light_api import endpoints
 from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.api.default import get_api_playlists, get_api_followed_podcasts
 from rich.console import Console
-from typing import TYPE_CHECKING, Any, Callable, final
+from typing import TYPE_CHECKING, Any, final
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -87,9 +85,9 @@ class Light:
         self.notes: LightNotes
 
         if TYPE_CHECKING:
-            from music import LightMusic
-            from podcast import LightPodcasts
-            from notes import LightNotes
+            from light_api.music import LightMusic
+            from light_api.podcast import LightPodcasts
+            from light_api.notes import LightNotes
 
     def __enter__(self) -> Light:
         """Authenticate, launching Playwright only if the cache is not usable."""
@@ -112,9 +110,9 @@ class Light:
             self._fetch_device_tool_id()
             self._save_cache()
 
-        from music import LightMusic
-        from podcast import LightPodcasts
-        from notes import LightNotes
+        from light_api.music import LightMusic
+        from light_api.podcast import LightPodcasts
+        from light_api.notes import LightNotes
 
         self.music = LightMusic(self)
         self.podcast = LightPodcasts(self)
@@ -344,25 +342,3 @@ class Light:
             raise RuntimeError(f"{context}: {response.status} {response.text()}")
 
 
-def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorator to initialize a Light/Playwright context."""
-
-    @functools.wraps(f)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        obj = click.get_current_context().find_object(dict) or {}
-        try:
-            with Light(
-                email=obj.get("email"),
-                email_file=obj.get("email_file"),
-                password=obj.get("password"),
-                password_file=obj.get("password_file"),
-                phone=obj.get("phone_number"),
-                phone_file=obj.get("phone_number_file"),
-                headless=not obj.get("no_headless", False),
-            ) as light:
-                return f(light, *args, **kwargs)
-        except RuntimeError as e:
-            console.print(f"[red]Error:[/red] {e}")
-            raise SystemExit(1)
-
-    return wrapper

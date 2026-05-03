@@ -11,8 +11,8 @@ from textual.binding import Binding
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Label, Static
 
-from core import Light
-from music import LightTrack, SortMode
+from light_api.client import Light
+from light_api.music import LightTrack, SortMode
 
 SORT_CYCLE: list[SortMode] = [
     SortMode.RANK,

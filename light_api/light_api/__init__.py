@@ -1,1 +1,1 @@
-from .core import Light, with_light
+from .client import Light

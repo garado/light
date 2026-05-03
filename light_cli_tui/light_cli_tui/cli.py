@@ -5,15 +5,42 @@
 Command line interface for Light devices.
 """
 
+import functools
 import logging
 import time
 import rich_click as click
 from rich.console import Console
 from rich.table import Table
+from typing import Any, Callable
 
-from core import Light, with_light
-from music import SortMode
-from tui import LightConfig, run_tui
+from light_api.client import Light
+from light_api.music import SortMode
+from light_cli_tui.tui import LightConfig, run_tui
+
+
+def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to initialize a Light/Playwright context."""
+
+    @functools.wraps(f)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        obj = click.get_current_context().find_object(dict) or {}
+        try:
+            with Light(
+                email=obj.get("email"),
+                email_file=obj.get("email_file"),
+                password=obj.get("password"),
+                password_file=obj.get("password_file"),
+                phone=obj.get("phone_number"),
+                phone_file=obj.get("phone_number_file"),
+                headless=not obj.get("no_headless", False),
+            ) as light:
+                return f(light, *args, **kwargs)
+        except RuntimeError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise SystemExit(1)
+
+    return wrapper
+
 
 click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.USE_MARKDOWN = True

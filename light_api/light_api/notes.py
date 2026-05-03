@@ -23,7 +23,7 @@ from open_api_specification_client.models import (
 )
 
 if TYPE_CHECKING:
-    from core import Light
+    from light_api.client import Light
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")

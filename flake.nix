@@ -21,8 +21,8 @@
     light = pkgs.writeShellScriptBin "light" ''
       PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers} \
       PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
-      PYTHONPATH=${./light-phone-client}:$PYTHONPATH \
-      ${pythonEnv}/bin/python ${./src}/cli.py "$@"
+      PYTHONPATH=${./light_client}:${./light_api}:$PYTHONPATH \
+      ${pythonEnv}/bin/python -m light_cli_tui.cli "$@"
     '';
   in {
     packages.${system}.default = light;
@@ -35,6 +35,7 @@
     devShells.${system}.default = pkgs.mkShell {
       nativeBuildInputs = with pkgs; [
         pythonEnv
+        uv
         playwright-driver.browsers
         pyright
         openapi-python-client
@@ -43,8 +44,6 @@
       shellHook = ''
         export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
         export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
-        export PYTHONPATH=${./light-phone-client}:$PYTHONPATH
-        ln -sfn ${pythonEnv} .venv
       '';
     };
   };

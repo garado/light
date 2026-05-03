@@ -40,7 +40,7 @@ from open_api_specification_client.models.post_api_followed_podcasts_body_data_r
 )
 
 if TYPE_CHECKING:
-    from core import Light
+    from light_api.client import Light
 
 console = Console()
 

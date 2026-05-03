@@ -7,11 +7,10 @@ import re
 from typing import Any, Callable, Literal
 
 from dataclasses import dataclass
-import click
 from mutagen import File
 from rich.console import Console
 
-from core import Light
+from light_api.client import Light
 from open_api_specification_client.api.default import (
     delete_api_audios_param2,
     get_api_playlist_items,
@@ -169,28 +168,20 @@ class LightMusic:
         ]
 
     def delete_tracks_predicate(
-        self, predicate: Callable[[LightTrack], bool], confirm: bool = True
+        self, predicate: Callable[[LightTrack], bool]
     ) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
 
         Args:
             predicate: Predicate for deletion target matching.
-            confirm: Whether to confirm before deletion.
         """
         self._init_tracks()
 
         to_delete = [t for t in self._tracks if predicate(t)]
 
         if not to_delete:
-            console.print("[yellow]No matching tracks.[/yellow]")
+            log.info("no matching tracks")
             return
-
-        if confirm:
-            console.print(f"Tracks to delete ({len(to_delete)}):")
-            for t in to_delete:
-                console.print(f"  {t.artist} — {t.title}")
-            if not click.confirm("Proceed?"):
-                return
 
         tracks_deleted = 0
         for track in to_delete:
@@ -211,56 +202,45 @@ class LightMusic:
             f"[green]Deleted {tracks_deleted}/{len(to_delete)} tracks [/green]"
         )
 
-    def delete_tracks_by_title(self, titles: list[str], confirm: bool = True) -> None:
+    def delete_tracks_by_title(self, titles: list[str]) -> None:
         """Delete tracks by title.
 
         Args:
             titles: List of track titles as they appear in the Light dashboard.
-            confirm: Whether to confirm before deletion.
         """
-        self.delete_tracks_predicate(lambda t: t.title in set(titles), confirm=confirm)
+        self.delete_tracks_predicate(lambda t: t.title in set(titles))
 
-    def delete_tracks_by_artist(self, artists: list[str], confirm: bool = True) -> None:
+    def delete_tracks_by_artist(self, artists: list[str]) -> None:
         """Delete tracks by artist.
 
         Args:
             artists: List of artists as they appear in the Light dashboard.
-            confirm: Whether to confirm before deletion.
         """
-        self.delete_tracks_predicate(
-            lambda t: t.artist in set(artists), confirm=confirm
-        )
+        self.delete_tracks_predicate(lambda t: t.artist in set(artists))
 
-    def delete_tracks_by_title_regex(self, pattern: str, confirm: bool = True) -> None:
+    def delete_tracks_by_title_regex(self, pattern: str) -> None:
         """Delete tracks whose title matches a regex pattern.
 
         Args:
             pattern: Regex pattern matched against each track's title.
                      Example: r"^The" to match all tracks starting with "The".
-            confirm: Whether to confirm before deletion.
         """
-        self.delete_tracks_predicate(
-            lambda t: bool(re.match(pattern, t.title)), confirm=confirm
-        )
+        self.delete_tracks_predicate(lambda t: bool(re.match(pattern, t.title)))
 
-    def delete_tracks_by_artist_regex(self, pattern: str, confirm: bool = True) -> None:
+    def delete_tracks_by_artist_regex(self, pattern: str) -> None:
         """Delete tracks whose artist matches a regex pattern.
 
         Args:
             pattern: Regex pattern matched against each track's artist name.
                      Example: r"^The" to match all artists starting with "The".
-            confirm: Whether to confirm before deletion.
         """
-        self.delete_tracks_predicate(
-            lambda t: bool(re.match(pattern, t.artist)), confirm=confirm
-        )
+        self.delete_tracks_predicate(lambda t: bool(re.match(pattern, t.artist)))
 
     def upload_tracks(
         self,
         files: list[str],
         allow_duplicates: bool = False,
         match_title_by: Literal["metadata", "filename"] = "metadata",
-        confirm_before_overwrite: bool = True,
     ) -> None:
         """Upload tracks to device.
 
@@ -273,8 +253,6 @@ class LightMusic:
                             "filename" uses the filename (without extension) as the title.
         """
         if not allow_duplicates:
-            console.print(f"[green]Removing duplicates...[/green]")
-
             titles: list[str]
 
             if match_title_by == "metadata":
@@ -287,9 +265,7 @@ class LightMusic:
             else:
                 titles = [os.path.splitext(os.path.basename(s))[0] for s in files]
 
-            self.delete_tracks_by_title(titles, confirm_before_overwrite)
-
-            console.print(f"[green]Finished removing duplicates (if any).[/green]")
+            self.delete_tracks_by_title(titles)
 
         for file_path in files:
             console.print(f"[green]Uploading {file_path}[/green]")
