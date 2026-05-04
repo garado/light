@@ -1,15 +1,44 @@
 
-# Light API
+# Light API/CLI/TUI
 
-An unofficial, community-maintained API for interacting with Light devices.
+An unofficial, community-maintained API and CLI/TUI for interacting with Light devices.
 
 ## Installation
 
-TODO
+From PyPI:
 
-## CLI usage
+```
+pip install light-api  # for developers
+pip install light-cli-tui  # for users
+```
 
-The CLI needs your Light email, password, and phone number to authenticate into the Light dashboard and do its thing.
+Nix users:
+
+```
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    light.url = "github:garado/light";
+  };
+  outputs = { nixpkgs, light, ... }: {
+    nixosConfigurations.YOURHOST = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            light.packages.x86_64-linux.light-cli-tui
+            light.packages.x86_64-linux.light-api
+          ]
+        }
+      ];
+    };
+  };
+}
+```
+
+## Authentication
+
+This needs your Light email, password, and phone number to authenticate into the Light dashboard and operate on the correct device.
 
 Three options:
 
@@ -24,6 +53,8 @@ light --email=... --password=... --phone-number=... <command>
 # 3. File
 light --email-file=... --password-file=... --phone-number-file=... <command>
 ```
+
+## Getting started
 
 ### Music
 
@@ -88,7 +119,7 @@ I use a custom music player. In my player, I have added the ability to designate
 
 # Technical stuff
 
-This uses browser automation to grab the bearer token, then uses Light's API endpoints (spec generated with [OpenAPI devtools](https://github.com/AndrewWalsh/openapi-devtools)) to perform dashboard functions.
+This uses browser automation to grab the bearer token, then uses Light's API endpoints - spec generated with [OpenAPI devtools](https://github.com/AndrewWalsh/openapi-devtools), and implemented with [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) to perform dashboard functions.
 
 ## How your credentials stay safe
 
@@ -105,3 +136,13 @@ This uses [Playwright](https://github.com/microsoft/playwright) for the browser 
 ### 3. Storing your credentials
 
 The bearer token is cached in the system keyring, which is the system's native password manager that you are probably already using - Keychain on MacOS, Credential Manager on Windows, whatever-you-installed on Linux.
+
+---
+
+dev stuff
+
+to regenerate the openapi helpers
+
+```
+openapi-python-client generate --path light_client/openapi-spec.json
+```
