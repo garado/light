@@ -225,7 +225,9 @@ class LightApp(App):
         self._pw: PlaywrightThread | None = None
         self._tracks: list[LightTrack] = []
         self._sort_index: int = 0
-        self._pending_sort_index: int | None = None  # set while cycling, not yet applied
+        self._pending_sort_index: int | None = (
+            None  # set while cycling, not yet applied
+        )
 
     def compose(self) -> ComposeResult:
         yield DataTable()
@@ -291,7 +293,9 @@ class LightApp(App):
         table = self.query_one(DataTable)
         row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
         audio_id = str(row_key.value)
-        i = next((idx for idx, t in enumerate(self._tracks) if t.audio_id == audio_id), None)
+        i = next(
+            (idx for idx, t in enumerate(self._tracks) if t.audio_id == audio_id), None
+        )
         if i is None:
             return
         j = i + direction
@@ -306,13 +310,16 @@ class LightApp(App):
         self.run_worker(lambda: self._do_move(track, j), exclusive=True, thread=True)
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
-        from open_api_specification_client.api.default import patch_api_playlist_items_param2
+        from open_api_specification_client.api.default import (
+            patch_api_playlist_items_param2,
+        )
         from open_api_specification_client.models import (
             PatchApiPlaylistItemsParam2Body,
             PatchApiPlaylistItemsParam2BodyData,
             PatchApiPlaylistItemsParam2BodyDataAttributes,
             PatchApiPlaylistItemsParam2BodyDataType,
         )
+
         assert self._pw is not None
 
         def _move(light):
@@ -357,14 +364,22 @@ class LightApp(App):
         sort_label = SORT_LABELS[SORT_CYCLE[self._sort_index]]
         if self._pending_sort_index is not None:
             pending_label = SORT_LABELS[SORT_CYCLE[self._pending_sort_index]]
-            self._set_status(f"{len(self._tracks)} tracks  |  sort: {sort_label} → {pending_label}  |  s cycle  enter apply  esc cancel")
+            self._set_status(
+                f"{len(self._tracks)} tracks  |  sort: {sort_label} → {pending_label}  |  s cycle  enter apply  esc cancel"
+            )
         else:
-            self._set_status(f"{len(self._tracks)} tracks  |  sort: {sort_label}  |  r refresh  s sort  d delete  e edit  q quit")
+            self._set_status(
+                f"{len(self._tracks)} tracks  |  sort: {sort_label}  |  r refresh  s sort  d delete  e edit  q quit"
+            )
 
     def action_sort(self) -> None:
         if self._pw is None:
             return
-        base = self._pending_sort_index if self._pending_sort_index is not None else self._sort_index
+        base = (
+            self._pending_sort_index
+            if self._pending_sort_index is not None
+            else self._sort_index
+        )
         self._pending_sort_index = (base + 1) % len(SORT_CYCLE)
         self._update_status()
 
@@ -384,7 +399,9 @@ class LightApp(App):
                     self._sort_index = pending
                     self._pending_sort_index = None
                     self._set_status(f"sorting by {label}...")
-                    self.run_worker(lambda: self._do_sort(sort_mode), exclusive=True, thread=True)
+                    self.run_worker(
+                        lambda: self._do_sort(sort_mode), exclusive=True, thread=True
+                    )
 
                 self.push_screen(ConfirmScreen(f"apply sort: {label}?"), on_confirm)
             elif event.key == "escape":
@@ -416,7 +433,7 @@ class LightApp(App):
         assert self._pw is not None
         self._pw.submit(
             lambda light: light.music.delete_tracks_predicate(
-                lambda t: t.audio_id == track.audio_id, confirm=False
+                lambda t: t.audio_id == track.audio_id
             )
         )
         tracks = self._pw.submit(lambda light: light.music.get_tracks())

@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 from open_api_specification_client.api.default import (
     get_api_notes,
-    get_api_notes_param2,
-    get_api_notes_param2_generate_presigned_get_url,
+    get_api_notes_note_id,
+    get_api_notes_note_id_generate_presigned_get_url,
     post_api_notes,
 )
 from open_api_specification_client.models import (
@@ -52,8 +52,8 @@ class LightNotes:
 
         Fetches a fresh presigned GET URL each time (they expire).
         """
-        resp = get_api_notes_param2_generate_presigned_get_url.sync_detailed(
-            param2=note.id,
+        resp = get_api_notes_note_id_generate_presigned_get_url.sync_detailed(
+            note_id=note.id,
             client=self._l._api_client,
         )
         if resp.status_code != 200 or resp.parsed is None:
@@ -74,7 +74,10 @@ class LightNotes:
             raise RuntimeError(f"List notes: {resp.status_code}")
 
         body = resp.parsed
-        assert len(body.data) == len(body.included)
+        if len(body.data) != len(body.included):
+            raise RuntimeError(
+                f"Expected {len(body.data)} included items, got {len(body.included)}"
+            )
 
         return [
             LightNote(
@@ -92,8 +95,8 @@ class LightNotes:
         """Fetch metadata for a single note."""
         device_tool_id = self._ensure_device_tool_id()
 
-        resp = get_api_notes_param2.sync_detailed(
-            param2=note_id,
+        resp = get_api_notes_note_id.sync_detailed(
+            note_id=note_id,
             client=self._l._api_client,
             device_tool_id=device_tool_id,
         )

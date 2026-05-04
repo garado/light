@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from open_api_specification_client.api.default import (
-    delete_api_followed_podcasts_param2,
+    delete_api_followed_podcasts_followed_podcast_id,
     get_api_followed_podcasts,
     post_api_followed_podcasts,
     post_api_podcasts,
@@ -114,8 +114,8 @@ class LightPodcasts:
             log.info(f"No podcast found with title: {title!r}")
             return
         for p in matches:
-            resp = delete_api_followed_podcasts_param2.sync_detailed(
-                param2=p.followed_podcast_id,
+            resp = delete_api_followed_podcasts_followed_podcast_id.sync_detailed(
+                followed_podcast_id=p.followed_podcast_id,
                 client=self._l._api_client,
             )
             if not (200 <= resp.status_code < 300):

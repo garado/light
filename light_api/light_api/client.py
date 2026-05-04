@@ -1,15 +1,17 @@
 from __future__ import annotations
-import logging
 
 import json
 import keyring
+import logging
 import os
-from light_api import endpoints
-from open_api_specification_client.client import AuthenticatedClient
-from open_api_specification_client.api.default import get_api_playlists, get_api_followed_podcasts
-from typing import TYPE_CHECKING, Any, final
+
+from typing import TYPE_CHECKING, Any, Callable, final
 from urllib.error import URLError
 from urllib.request import Request, urlopen
+
+from light_api import endpoints
+from open_api_specification_client.api.default import get_api_playlists
+from open_api_specification_client.client import AuthenticatedClient
 
 if TYPE_CHECKING:
     from playwright.sync_api import Browser, Page, Playwright
@@ -86,6 +88,30 @@ class Light:
             from light_api.music import LightMusic
             from light_api.podcast import LightPodcasts
             from light_api.notes import LightNotes
+
+    def reauth(self) -> None:
+        """Re-authenticate and refresh the API client. Should be called on a 401."""
+        log.info("Re-authenticating")
+        self._api_token = None
+        self._start_playwright()
+        self.login()
+        self._save_cache()
+        self._api_client = AuthenticatedClient(
+            base_url=API_BASE,
+            token=self._api_token,
+            headers=API_HEADERS,
+        )
+
+    def call_api(self, func: "Callable[[], Any]") -> "Any":
+        """Call an API function, re-authenticating once on 401.
+
+        Usage: resp = self._l.call_api(lambda: get_api_foo.sync_detailed(...))
+        """
+        resp = func()
+        if resp.status_code == 401:
+            self.reauth()
+            resp = func()
+        return resp
 
     def __enter__(self) -> Light:
         """Authenticate, launching Playwright only if the cache is not usable."""
@@ -268,9 +294,16 @@ class Light:
             raise RuntimeError("Login failed — check your credentials")
 
         body: dict[str, Any] = resp_info.value.json()
-        self._api_token = next(
-            i["attributes"]["token"] for i in body["included"] if i["type"] == "tokens"
+
+        token = next(
+            (i["attributes"]["token"] for i in body["included"] if i["type"] == "tokens"),
+            None,
         )
+
+        if token is None:
+            raise RuntimeError("Login succeeded but no token found in response")
+
+        self._api_token = token
 
     def _nav_to_dash_root(self) -> None:
         """Navigate to the root dashboard menu."""

@@ -1,52 +1,56 @@
 """Contains all the data models used in inputs/outputs"""
 
-from .delete_api_followed_podcasts_param_2_response_200 import DeleteApiFollowedPodcastsParam2Response200
-from .delete_api_followed_podcasts_param_2_response_200_data_item import (
-    DeleteApiFollowedPodcastsParam2Response200DataItem,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200 import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200,
 )
-from .delete_api_followed_podcasts_param_2_response_200_data_item_attributes import (
-    DeleteApiFollowedPodcastsParam2Response200DataItemAttributes,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItem,
 )
-from .delete_api_followed_podcasts_param_2_response_200_data_item_relationships import (
-    DeleteApiFollowedPodcastsParam2Response200DataItemRelationships,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item_attributes import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemAttributes,
 )
-from .delete_api_followed_podcasts_param_2_response_200_data_item_relationships_device_tool import (
-    DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsDeviceTool,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item_relationships import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationships,
 )
-from .delete_api_followed_podcasts_param_2_response_200_data_item_relationships_device_tool_data import (
-    DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsDeviceToolData,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item_relationships_device_tool import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsDeviceTool,
 )
-from .delete_api_followed_podcasts_param_2_response_200_data_item_relationships_podcast import (
-    DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsPodcast,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item_relationships_device_tool_data import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsDeviceToolData,
 )
-from .delete_api_followed_podcasts_param_2_response_200_data_item_relationships_podcast_data import (
-    DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsPodcastData,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item_relationships_podcast import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsPodcast,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItem,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_data_item_relationships_podcast_data import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsPodcastData,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_attributes import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemAttributes,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItem,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_attributes_config import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemAttributesConfig,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_attributes import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemAttributes,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_relationships import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationships,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_attributes_config import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemAttributesConfig,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_relationships_device import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsDevice,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_relationships import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationships,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_relationships_device_data import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsDeviceData,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_relationships_device import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsDevice,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_relationships_tool import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsTool,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_relationships_device_data import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsDeviceData,
 )
-from .delete_api_followed_podcasts_param_2_response_200_included_item_relationships_tool_data import (
-    DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsToolData,
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_relationships_tool import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsTool,
 )
-from .delete_api_followed_podcasts_param_2_response_200_jsonapi import DeleteApiFollowedPodcastsParam2Response200Jsonapi
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_included_item_relationships_tool_data import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsToolData,
+)
+from .delete_api_followed_podcasts_followed_podcast_id_response_200_jsonapi import (
+    DeleteApiFollowedPodcastsFollowedPodcastIdResponse200Jsonapi,
+)
 from .get_api_audio_capacity_response_200 import GetApiAudioCapacityResponse200
 from .get_api_devices_response_200 import GetApiDevicesResponse200
 from .get_api_devices_response_200_data_item import GetApiDevicesResponse200DataItem
@@ -143,15 +147,15 @@ from .get_api_followed_podcasts_response_200_included_item_relationships_tool_da
     GetApiFollowedPodcastsResponse200IncludedItemRelationshipsToolData,
 )
 from .get_api_followed_podcasts_response_200_jsonapi import GetApiFollowedPodcastsResponse200Jsonapi
-from .get_api_notes_param_2_generate_presigned_get_url_response_200 import (
-    GetApiNotesParam2GeneratePresignedGetUrlResponse200,
+from .get_api_notes_note_id_generate_presigned_get_url_response_200 import (
+    GetApiNotesNoteIdGeneratePresignedGetUrlResponse200,
 )
-from .get_api_notes_param_2_response_200 import GetApiNotesParam2Response200
-from .get_api_notes_param_2_response_200_data import GetApiNotesParam2Response200Data
-from .get_api_notes_param_2_response_200_data_attributes import GetApiNotesParam2Response200DataAttributes
-from .get_api_notes_param_2_response_200_included_item import GetApiNotesParam2Response200IncludedItem
-from .get_api_notes_param_2_response_200_included_item_attributes import (
-    GetApiNotesParam2Response200IncludedItemAttributes,
+from .get_api_notes_note_id_response_200 import GetApiNotesNoteIdResponse200
+from .get_api_notes_note_id_response_200_data import GetApiNotesNoteIdResponse200Data
+from .get_api_notes_note_id_response_200_data_attributes import GetApiNotesNoteIdResponse200DataAttributes
+from .get_api_notes_note_id_response_200_included_item import GetApiNotesNoteIdResponse200IncludedItem
+from .get_api_notes_note_id_response_200_included_item_attributes import (
+    GetApiNotesNoteIdResponse200IncludedItemAttributes,
 )
 from .get_api_notes_response_200 import GetApiNotesResponse200
 from .get_api_notes_response_200_data_item import GetApiNotesResponse200DataItem
@@ -243,14 +247,14 @@ from .get_api_podcasts_response_200 import GetApiPodcastsResponse200
 from .get_api_podcasts_response_200_data_item import GetApiPodcastsResponse200DataItem
 from .get_api_podcasts_response_200_data_item_attributes import GetApiPodcastsResponse200DataItemAttributes
 from .get_api_podcasts_response_200_jsonapi import GetApiPodcastsResponse200Jsonapi
-from .get_api_tools_param_2_response_200 import GetApiToolsParam2Response200
-from .get_api_tools_param_2_response_200_data import GetApiToolsParam2Response200Data
-from .get_api_tools_param_2_response_200_data_attributes import GetApiToolsParam2Response200DataAttributes
-from .get_api_tools_param_2_response_200_jsonapi import GetApiToolsParam2Response200Jsonapi
 from .get_api_tools_response_200 import GetApiToolsResponse200
 from .get_api_tools_response_200_data_item import GetApiToolsResponse200DataItem
 from .get_api_tools_response_200_data_item_attributes import GetApiToolsResponse200DataItemAttributes
 from .get_api_tools_response_200_jsonapi import GetApiToolsResponse200Jsonapi
+from .get_api_tools_tool_id_response_200 import GetApiToolsToolIdResponse200
+from .get_api_tools_tool_id_response_200_data import GetApiToolsToolIdResponse200Data
+from .get_api_tools_tool_id_response_200_data_attributes import GetApiToolsToolIdResponse200DataAttributes
+from .get_api_tools_tool_id_response_200_jsonapi import GetApiToolsToolIdResponse200Jsonapi
 from .get_api_users_current_response_200 import GetApiUsersCurrentResponse200
 from .get_api_users_current_response_200_data import GetApiUsersCurrentResponse200Data
 from .get_api_users_current_response_200_data_attributes import GetApiUsersCurrentResponse200DataAttributes
@@ -262,50 +266,56 @@ from .get_api_users_current_response_200_data_relationships_subscriptions import
     GetApiUsersCurrentResponse200DataRelationshipsSubscriptions,
 )
 from .get_api_users_current_response_200_jsonapi import GetApiUsersCurrentResponse200Jsonapi
-from .patch_api_audios_param_2_body import PatchApiAudiosParam2Body
-from .patch_api_audios_param_2_body_data import PatchApiAudiosParam2BodyData
-from .patch_api_audios_param_2_body_data_attributes import PatchApiAudiosParam2BodyDataAttributes
-from .patch_api_audios_param_2_body_data_type import PatchApiAudiosParam2BodyDataType
-from .patch_api_audios_param_2_response_200 import PatchApiAudiosParam2Response200
-from .patch_api_audios_param_2_response_200_data import PatchApiAudiosParam2Response200Data
-from .patch_api_audios_param_2_response_200_data_attributes import PatchApiAudiosParam2Response200DataAttributes
-from .patch_api_audios_param_2_response_200_data_relationships import PatchApiAudiosParam2Response200DataRelationships
-from .patch_api_audios_param_2_response_200_data_relationships_processed_file import (
-    PatchApiAudiosParam2Response200DataRelationshipsProcessedFile,
+from .patch_api_audios_audio_id_body import PatchApiAudiosAudioIdBody
+from .patch_api_audios_audio_id_body_data import PatchApiAudiosAudioIdBodyData
+from .patch_api_audios_audio_id_body_data_attributes import PatchApiAudiosAudioIdBodyDataAttributes
+from .patch_api_audios_audio_id_body_data_type import PatchApiAudiosAudioIdBodyDataType
+from .patch_api_audios_audio_id_response_200 import PatchApiAudiosAudioIdResponse200
+from .patch_api_audios_audio_id_response_200_data import PatchApiAudiosAudioIdResponse200Data
+from .patch_api_audios_audio_id_response_200_data_attributes import PatchApiAudiosAudioIdResponse200DataAttributes
+from .patch_api_audios_audio_id_response_200_data_relationships import PatchApiAudiosAudioIdResponse200DataRelationships
+from .patch_api_audios_audio_id_response_200_data_relationships_processed_file import (
+    PatchApiAudiosAudioIdResponse200DataRelationshipsProcessedFile,
 )
-from .patch_api_audios_param_2_response_200_data_relationships_processed_file_data import (
-    PatchApiAudiosParam2Response200DataRelationshipsProcessedFileData,
+from .patch_api_audios_audio_id_response_200_data_relationships_processed_file_data import (
+    PatchApiAudiosAudioIdResponse200DataRelationshipsProcessedFileData,
 )
-from .patch_api_audios_param_2_response_200_data_relationships_raw_file import (
-    PatchApiAudiosParam2Response200DataRelationshipsRawFile,
+from .patch_api_audios_audio_id_response_200_data_relationships_raw_file import (
+    PatchApiAudiosAudioIdResponse200DataRelationshipsRawFile,
 )
-from .patch_api_audios_param_2_response_200_data_relationships_raw_file_data import (
-    PatchApiAudiosParam2Response200DataRelationshipsRawFileData,
+from .patch_api_audios_audio_id_response_200_data_relationships_raw_file_data import (
+    PatchApiAudiosAudioIdResponse200DataRelationshipsRawFileData,
 )
-from .patch_api_audios_param_2_response_200_included_item import PatchApiAudiosParam2Response200IncludedItem
-from .patch_api_audios_param_2_response_200_included_item_attributes import (
-    PatchApiAudiosParam2Response200IncludedItemAttributes,
+from .patch_api_audios_audio_id_response_200_included_item import PatchApiAudiosAudioIdResponse200IncludedItem
+from .patch_api_audios_audio_id_response_200_included_item_attributes import (
+    PatchApiAudiosAudioIdResponse200IncludedItemAttributes,
 )
-from .patch_api_audios_param_2_response_200_jsonapi import PatchApiAudiosParam2Response200Jsonapi
-from .patch_api_playlist_items_param_2_body import PatchApiPlaylistItemsParam2Body
-from .patch_api_playlist_items_param_2_body_data import PatchApiPlaylistItemsParam2BodyData
-from .patch_api_playlist_items_param_2_body_data_attributes import PatchApiPlaylistItemsParam2BodyDataAttributes
-from .patch_api_playlist_items_param_2_body_data_type import PatchApiPlaylistItemsParam2BodyDataType
-from .patch_api_playlist_items_param_2_response_200 import PatchApiPlaylistItemsParam2Response200
-from .patch_api_playlist_items_param_2_response_200_data import PatchApiPlaylistItemsParam2Response200Data
-from .patch_api_playlist_items_param_2_response_200_data_attributes import (
-    PatchApiPlaylistItemsParam2Response200DataAttributes,
+from .patch_api_audios_audio_id_response_200_jsonapi import PatchApiAudiosAudioIdResponse200Jsonapi
+from .patch_api_playlist_items_playlist_item_id_body import PatchApiPlaylistItemsPlaylistItemIdBody
+from .patch_api_playlist_items_playlist_item_id_body_data import PatchApiPlaylistItemsPlaylistItemIdBodyData
+from .patch_api_playlist_items_playlist_item_id_body_data_attributes import (
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
 )
-from .patch_api_playlist_items_param_2_response_200_data_relationships import (
-    PatchApiPlaylistItemsParam2Response200DataRelationships,
+from .patch_api_playlist_items_playlist_item_id_body_data_type import PatchApiPlaylistItemsPlaylistItemIdBodyDataType
+from .patch_api_playlist_items_playlist_item_id_response_200 import PatchApiPlaylistItemsPlaylistItemIdResponse200
+from .patch_api_playlist_items_playlist_item_id_response_200_data import (
+    PatchApiPlaylistItemsPlaylistItemIdResponse200Data,
 )
-from .patch_api_playlist_items_param_2_response_200_data_relationships_processed_file import (
-    PatchApiPlaylistItemsParam2Response200DataRelationshipsProcessedFile,
+from .patch_api_playlist_items_playlist_item_id_response_200_data_attributes import (
+    PatchApiPlaylistItemsPlaylistItemIdResponse200DataAttributes,
 )
-from .patch_api_playlist_items_param_2_response_200_data_relationships_raw_file import (
-    PatchApiPlaylistItemsParam2Response200DataRelationshipsRawFile,
+from .patch_api_playlist_items_playlist_item_id_response_200_data_relationships import (
+    PatchApiPlaylistItemsPlaylistItemIdResponse200DataRelationships,
 )
-from .patch_api_playlist_items_param_2_response_200_jsonapi import PatchApiPlaylistItemsParam2Response200Jsonapi
+from .patch_api_playlist_items_playlist_item_id_response_200_data_relationships_processed_file import (
+    PatchApiPlaylistItemsPlaylistItemIdResponse200DataRelationshipsProcessedFile,
+)
+from .patch_api_playlist_items_playlist_item_id_response_200_data_relationships_raw_file import (
+    PatchApiPlaylistItemsPlaylistItemIdResponse200DataRelationshipsRawFile,
+)
+from .patch_api_playlist_items_playlist_item_id_response_200_jsonapi import (
+    PatchApiPlaylistItemsPlaylistItemIdResponse200Jsonapi,
+)
 from .post_api_audios_body import PostApiAudiosBody
 from .post_api_audios_body_data import PostApiAudiosBodyData
 from .post_api_audios_body_data_attributes import PostApiAudiosBodyDataAttributes
@@ -414,23 +424,23 @@ from .post_api_podcasts_response_201_data_attributes import PostApiPodcastsRespo
 from .post_api_podcasts_response_201_jsonapi import PostApiPodcastsResponse201Jsonapi
 
 __all__ = (
-    "DeleteApiFollowedPodcastsParam2Response200",
-    "DeleteApiFollowedPodcastsParam2Response200DataItem",
-    "DeleteApiFollowedPodcastsParam2Response200DataItemAttributes",
-    "DeleteApiFollowedPodcastsParam2Response200DataItemRelationships",
-    "DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsDeviceTool",
-    "DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsDeviceToolData",
-    "DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsPodcast",
-    "DeleteApiFollowedPodcastsParam2Response200DataItemRelationshipsPodcastData",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItem",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemAttributes",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemAttributesConfig",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationships",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsDevice",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsDeviceData",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsTool",
-    "DeleteApiFollowedPodcastsParam2Response200IncludedItemRelationshipsToolData",
-    "DeleteApiFollowedPodcastsParam2Response200Jsonapi",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItem",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemAttributes",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationships",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsDeviceTool",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsDeviceToolData",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsPodcast",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200DataItemRelationshipsPodcastData",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItem",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemAttributes",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemAttributesConfig",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationships",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsDevice",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsDeviceData",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsTool",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsToolData",
+    "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200Jsonapi",
     "GetApiAudioCapacityResponse200",
     "GetApiDevicesResponse200",
     "GetApiDevicesResponse200DataItem",
@@ -473,12 +483,12 @@ __all__ = (
     "GetApiFollowedPodcastsResponse200IncludedItemRelationshipsTool",
     "GetApiFollowedPodcastsResponse200IncludedItemRelationshipsToolData",
     "GetApiFollowedPodcastsResponse200Jsonapi",
-    "GetApiNotesParam2GeneratePresignedGetUrlResponse200",
-    "GetApiNotesParam2Response200",
-    "GetApiNotesParam2Response200Data",
-    "GetApiNotesParam2Response200DataAttributes",
-    "GetApiNotesParam2Response200IncludedItem",
-    "GetApiNotesParam2Response200IncludedItemAttributes",
+    "GetApiNotesNoteIdGeneratePresignedGetUrlResponse200",
+    "GetApiNotesNoteIdResponse200",
+    "GetApiNotesNoteIdResponse200Data",
+    "GetApiNotesNoteIdResponse200DataAttributes",
+    "GetApiNotesNoteIdResponse200IncludedItem",
+    "GetApiNotesNoteIdResponse200IncludedItemAttributes",
     "GetApiNotesResponse200",
     "GetApiNotesResponse200DataItem",
     "GetApiNotesResponse200DataItemAttributes",
@@ -525,14 +535,14 @@ __all__ = (
     "GetApiPodcastsResponse200DataItem",
     "GetApiPodcastsResponse200DataItemAttributes",
     "GetApiPodcastsResponse200Jsonapi",
-    "GetApiToolsParam2Response200",
-    "GetApiToolsParam2Response200Data",
-    "GetApiToolsParam2Response200DataAttributes",
-    "GetApiToolsParam2Response200Jsonapi",
     "GetApiToolsResponse200",
     "GetApiToolsResponse200DataItem",
     "GetApiToolsResponse200DataItemAttributes",
     "GetApiToolsResponse200Jsonapi",
+    "GetApiToolsToolIdResponse200",
+    "GetApiToolsToolIdResponse200Data",
+    "GetApiToolsToolIdResponse200DataAttributes",
+    "GetApiToolsToolIdResponse200Jsonapi",
     "GetApiUsersCurrentResponse200",
     "GetApiUsersCurrentResponse200Data",
     "GetApiUsersCurrentResponse200DataAttributes",
@@ -540,32 +550,32 @@ __all__ = (
     "GetApiUsersCurrentResponse200DataRelationshipsAffiliate",
     "GetApiUsersCurrentResponse200DataRelationshipsSubscriptions",
     "GetApiUsersCurrentResponse200Jsonapi",
-    "PatchApiAudiosParam2Body",
-    "PatchApiAudiosParam2BodyData",
-    "PatchApiAudiosParam2BodyDataAttributes",
-    "PatchApiAudiosParam2BodyDataType",
-    "PatchApiAudiosParam2Response200",
-    "PatchApiAudiosParam2Response200Data",
-    "PatchApiAudiosParam2Response200DataAttributes",
-    "PatchApiAudiosParam2Response200DataRelationships",
-    "PatchApiAudiosParam2Response200DataRelationshipsProcessedFile",
-    "PatchApiAudiosParam2Response200DataRelationshipsProcessedFileData",
-    "PatchApiAudiosParam2Response200DataRelationshipsRawFile",
-    "PatchApiAudiosParam2Response200DataRelationshipsRawFileData",
-    "PatchApiAudiosParam2Response200IncludedItem",
-    "PatchApiAudiosParam2Response200IncludedItemAttributes",
-    "PatchApiAudiosParam2Response200Jsonapi",
-    "PatchApiPlaylistItemsParam2Body",
-    "PatchApiPlaylistItemsParam2BodyData",
-    "PatchApiPlaylistItemsParam2BodyDataAttributes",
-    "PatchApiPlaylistItemsParam2BodyDataType",
-    "PatchApiPlaylistItemsParam2Response200",
-    "PatchApiPlaylistItemsParam2Response200Data",
-    "PatchApiPlaylistItemsParam2Response200DataAttributes",
-    "PatchApiPlaylistItemsParam2Response200DataRelationships",
-    "PatchApiPlaylistItemsParam2Response200DataRelationshipsProcessedFile",
-    "PatchApiPlaylistItemsParam2Response200DataRelationshipsRawFile",
-    "PatchApiPlaylistItemsParam2Response200Jsonapi",
+    "PatchApiAudiosAudioIdBody",
+    "PatchApiAudiosAudioIdBodyData",
+    "PatchApiAudiosAudioIdBodyDataAttributes",
+    "PatchApiAudiosAudioIdBodyDataType",
+    "PatchApiAudiosAudioIdResponse200",
+    "PatchApiAudiosAudioIdResponse200Data",
+    "PatchApiAudiosAudioIdResponse200DataAttributes",
+    "PatchApiAudiosAudioIdResponse200DataRelationships",
+    "PatchApiAudiosAudioIdResponse200DataRelationshipsProcessedFile",
+    "PatchApiAudiosAudioIdResponse200DataRelationshipsProcessedFileData",
+    "PatchApiAudiosAudioIdResponse200DataRelationshipsRawFile",
+    "PatchApiAudiosAudioIdResponse200DataRelationshipsRawFileData",
+    "PatchApiAudiosAudioIdResponse200IncludedItem",
+    "PatchApiAudiosAudioIdResponse200IncludedItemAttributes",
+    "PatchApiAudiosAudioIdResponse200Jsonapi",
+    "PatchApiPlaylistItemsPlaylistItemIdBody",
+    "PatchApiPlaylistItemsPlaylistItemIdBodyData",
+    "PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes",
+    "PatchApiPlaylistItemsPlaylistItemIdBodyDataType",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200Data",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200DataAttributes",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200DataRelationships",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200DataRelationshipsProcessedFile",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200DataRelationshipsRawFile",
+    "PatchApiPlaylistItemsPlaylistItemIdResponse200Jsonapi",
     "PostApiAudiosBody",
     "PostApiAudiosBodyData",
     "PostApiAudiosBodyDataAttributes",

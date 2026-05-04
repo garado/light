@@ -174,6 +174,18 @@ def podcast_delete(light: Light, title):
 
     Uses exact title matching. Run `light podcast list` to see titles.
     """
+    podcasts = light.podcast.get_podcasts()
+    matches = [p for p in podcasts if p.title == title]
+
+    if not matches:
+        console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
+        return
+
+    for p in matches:
+        console.print(f"  {p.title}")
+    if not click.confirm("Unfollow?"):
+        return
+
     light.podcast.delete_podcast_by_title(title)
 
 
@@ -206,8 +218,31 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by):
 
     `light music upload track1.mp3 track2.mp3`
     """
+    files = list(songs)
+
+    if not allow_duplicates:
+        from mutagen import File as MutagenFile
+        import os as _os
+        if match_title_by == "metadata":
+            titles = []
+            for s in files:
+                f = MutagenFile(s, easy=True)
+                titles.append(f.get("title", [_os.path.splitext(_os.path.basename(s))[0]])[0] if f else _os.path.splitext(_os.path.basename(s))[0])
+        else:
+            titles = [_os.path.splitext(_os.path.basename(s))[0] for s in files]
+
+        existing = light.music.get_tracks()
+        to_overwrite = [t for t in existing if t.title in set(titles)]
+
+        if to_overwrite:
+            console.print(f"Tracks to overwrite ({len(to_overwrite)}):")
+            for t in to_overwrite:
+                console.print(f"  {t.artist} — {t.title}")
+            if not click.confirm("Proceed?"):
+                return
+
     light.music.upload_tracks(
-        list(songs),
+        files,
         allow_duplicates=allow_duplicates,
         match_title_by=match_title_by,
     )
@@ -225,7 +260,21 @@ def music_delete(light: Light, songs):
 
     `light music delete "Song Title" "Another Song"`
     """
-    light.music.delete_tracks_by_title(list(songs))
+    titles = list(songs)
+    tracks = light.music.get_tracks()
+    to_delete = [t for t in tracks if t.title in set(titles)]
+
+    if not to_delete:
+        console.print("[yellow]No matching tracks.[/yellow]")
+        return
+
+    console.print(f"Tracks to delete ({len(to_delete)}):")
+    for t in to_delete:
+        console.print(f"  {t.artist} — {t.title}")
+    if not click.confirm("Proceed?"):
+        return
+
+    light.music.delete_tracks_by_title(titles)
 
 
 @music.command("sort")

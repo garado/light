@@ -10,23 +10,23 @@ from dataclasses import dataclass
 from mutagen import File
 from light_api.client import Light
 from open_api_specification_client.api.default import (
-    delete_api_audios_param2,
+    delete_api_audios_audio_id,
     get_api_playlist_items,
     get_api_playlists,
-    patch_api_audios_param2,
-    patch_api_playlist_items_param2,
+    patch_api_audios_audio_id,
+    patch_api_playlist_items_playlist_item_id,
     post_api_audios,
     post_api_playlists_sort_mode,
 )
 from open_api_specification_client.models import (
-    PatchApiAudiosParam2Body,
-    PatchApiAudiosParam2BodyData,
-    PatchApiAudiosParam2BodyDataAttributes,
-    PatchApiAudiosParam2BodyDataType,
-    PatchApiPlaylistItemsParam2Body,
-    PatchApiPlaylistItemsParam2BodyData,
-    PatchApiPlaylistItemsParam2BodyDataAttributes,
-    PatchApiPlaylistItemsParam2BodyDataType,
+    PatchApiAudiosAudioIdBody,
+    PatchApiAudiosAudioIdBodyData,
+    PatchApiAudiosAudioIdBodyDataAttributes,
+    PatchApiAudiosAudioIdBodyDataType,
+    PatchApiPlaylistItemsPlaylistItemIdBody,
+    PatchApiPlaylistItemsPlaylistItemIdBodyData,
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
     PostApiAudiosBody,
     PostApiAudiosBodyData,
     PostApiAudiosBodyDataAttributes,
@@ -79,10 +79,10 @@ class LightMusic:
             Title-based sort modes (title_asc, title_desc) are custom, local-only modes and
             cannot be detected from the API.
         """
-        resp = get_api_playlists.sync_detailed(
+        resp = self._l.call_api(lambda: get_api_playlists.sync_detailed(
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_id,
-        )
+        ))
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get sort mode: {resp.status_code}")
 
@@ -105,14 +105,14 @@ class LightMusic:
                     else SortMode.ARTIST_ASC
                 )
 
-            resp = post_api_playlists_sort_mode.sync_detailed(
+            resp = self._l.call_api(lambda: post_api_playlists_sort_mode.sync_detailed(
                 client=self._l._api_client,
                 body=PostApiPlaylistsSortModeBody(
                     playlist_id=self._l._playlist_id,
                     device_tool_id=self._l._device_tool_id,
                     sort_mode=PostApiPlaylistsSortModeBodySortMode(sort_mode),
                 ),
-            )
+            ))
             if not (200 <= resp.status_code < 300):
                 raise RuntimeError(f"Set sort mode: {resp.status_code}")
 
@@ -127,11 +127,11 @@ class LightMusic:
         Returns:
             List of LightTracks in the current playlist order.
         """
-        resp = get_api_playlist_items.sync_detailed(
+        resp = self._l.call_api(lambda: get_api_playlist_items.sync_detailed(
             client=self._l._api_client,
             playlist_ids=self._l._playlist_id,
             device_tool_id=self._l._device_tool_id,
-        )
+        ))
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get tracks: {resp.status_code}")
 
@@ -180,10 +180,10 @@ class LightMusic:
 
         tracks_deleted = 0
         for track in to_delete:
-            resp = delete_api_audios_param2.sync_detailed(
-                param2=track.audio_id,
+            resp = self._l.call_api(lambda aid=track.audio_id: delete_api_audios_audio_id.sync_detailed(
+                audio_id=aid,
                 client=self._l._api_client,
-            )
+            ))
 
             if not (200 <= resp.status_code < 300):
                 log.warning(f"Failed to delete {track.title!r}: {resp.status_code}")
@@ -265,18 +265,18 @@ class LightMusic:
                 log.warning(f"File not found, skipping: {file_path}")
                 continue
 
-            create_resp = post_api_audios.sync_detailed(
+            create_resp = self._l.call_api(lambda fp=file_path: post_api_audios.sync_detailed(
                 client=self._l._api_client,
                 body=PostApiAudiosBody(
                     data=PostApiAudiosBodyData(
                         type_=PostApiAudiosBodyDataType.AUDIOS,
                         attributes=PostApiAudiosBodyDataAttributes(
-                            filename=os.path.basename(file_path),
+                            filename=os.path.basename(fp),
                             device_tool_id=self._l._device_tool_id,
                         ),
                     )
                 ),
-            )
+            ))
             if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
                 raise RuntimeError(
                     f"Create audio record for {os.path.basename(file_path)}: {create_resp.status_code}"
@@ -315,20 +315,20 @@ class LightMusic:
         """
         from open_api_specification_client.types import UNSET
 
-        resp = patch_api_audios_param2.sync_detailed(
-            param2=audio_id,
+        resp = self._l.call_api(lambda: patch_api_audios_audio_id.sync_detailed(
+            audio_id=audio_id,
             client=self._l._api_client,
-            body=PatchApiAudiosParam2Body(
-                data=PatchApiAudiosParam2BodyData(
+            body=PatchApiAudiosAudioIdBody(
+                data=PatchApiAudiosAudioIdBodyData(
                     id=audio_id,
-                    type_=PatchApiAudiosParam2BodyDataType.PLAYLIST_ITEMS,
-                    attributes=PatchApiAudiosParam2BodyDataAttributes(
+                    type_=PatchApiAudiosAudioIdBodyDataType.PLAYLIST_ITEMS,
+                    attributes=PatchApiAudiosAudioIdBodyDataAttributes(
                         title=title if title is not None else UNSET,
                         artist=artist if artist is not None else UNSET,
                     ),
                 )
             ),
-        )
+        ))
         if not (200 <= resp.status_code < 300):
             raise RuntimeError(f"update metadata: {resp.status_code}")
 
@@ -362,14 +362,14 @@ class LightMusic:
             if original_positions[track.audio_id] == new_position:
                 continue
 
-            resp = patch_api_playlist_items_param2.sync_detailed(
-                param2=track.playlist_item_id,
+            resp = patch_api_playlist_items_playlist_item_id.sync_detailed(
+                playlist_item_id=track.playlist_item_id,
                 client=self._l._api_client,
-                body=PatchApiPlaylistItemsParam2Body(
-                    data=PatchApiPlaylistItemsParam2BodyData(
+                body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
                         id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsParam2BodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsParam2BodyDataAttributes(
+                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
                             position=new_position,
                         ),
                     )

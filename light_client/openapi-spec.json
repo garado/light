@@ -13,7 +13,7 @@
   "paths": {
     "/api/users/current": {
       "get": {
-        "summary": "/api/users/current",
+        "summary": "Get current user",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -141,7 +141,7 @@
     },
     "/api/devices": {
       "get": {
-        "summary": "/api/devices",
+        "summary": "List devices",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -516,9 +516,9 @@
         ]
       }
     },
-    "/api/tools/{param2}": {
+    "/api/tools/{tool_id}": {
       "get": {
-        "summary": "/api/tools/:param2",
+        "summary": "Get tool by ID",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -610,7 +610,7 @@
         ],
         "parameters": [
           {
-            "name": "param2",
+            "name": "tool_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -622,7 +622,7 @@
     },
     "/api/tools": {
       "get": {
-        "summary": "/api/tools",
+        "summary": "List tools",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -729,7 +729,7 @@
     },
     "/api/audio_capacity": {
       "get": {
-        "summary": "/api/audio_capacity",
+        "summary": "Get audio storage capacity",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -793,7 +793,7 @@
     },
     "/api/audios": {
       "post": {
-        "summary": "/api/audios",
+        "summary": "Create audio record",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "201": {
@@ -999,7 +999,7 @@
     },
     "/api/playlists": {
       "get": {
-        "summary": "/api/playlists",
+        "summary": "List playlists",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -1288,7 +1288,7 @@
     },
     "/api/playlist_items": {
       "get": {
-        "summary": "/api/playlist_items",
+        "summary": "List playlist items",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -1538,9 +1538,9 @@
         ]
       }
     },
-    "/api/playlist_items/{param2}": {
+    "/api/playlist_items/{playlist_item_id}": {
       "patch": {
-        "summary": "/api/playlist_items/:param2",
+        "summary": "Update playlist item position",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -1660,7 +1660,7 @@
         ],
         "parameters": [
           {
-            "name": "param2",
+            "name": "playlist_item_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -1715,9 +1715,9 @@
         }
       }
     },
-    "/api/audios/{param2}": {
+    "/api/audios/{audio_id}": {
       "patch": {
-        "summary": "/api/audios/:param2",
+        "summary": "Update audio metadata",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -1912,7 +1912,7 @@
         ],
         "parameters": [
           {
-            "name": "param2",
+            "name": "audio_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -1967,11 +1967,11 @@
         }
       },
       "delete": {
-        "summary": "/api/audios/:param2",
+        "summary": "Delete audio by ID",
         "description": "**Host**: http://production.lightphonecloud.com",
         "parameters": [
           {
-            "name": "param2",
+            "name": "audio_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -1997,7 +1997,7 @@
     },
     "/api/followed_podcasts": {
       "get": {
-        "summary": "/api/followed_podcasts",
+        "summary": "List followed podcasts",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -2253,7 +2253,7 @@
         ]
       },
       "post": {
-        "summary": "/api/followed_podcasts",
+        "summary": "Follow a podcast",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "201": {
@@ -2589,7 +2589,7 @@
     },
     "/api/notes": {
       "post": {
-        "summary": "/api/notes",
+        "summary": "Create a note",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "201": {
@@ -2821,7 +2821,7 @@
         }
       },
       "get": {
-        "summary": "/api/notes",
+        "summary": "List notes",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -3015,9 +3015,9 @@
         ]
       }
     },
-    "/api/notes/{param2}/generate_presigned_get_url": {
+    "/api/notes/{note_id}/generate_presigned_get_url": {
       "get": {
-        "summary": "/api/notes/:param2/generate_presigned_get_url",
+        "summary": "Generate presigned download URL for a note",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -3057,7 +3057,7 @@
         ],
         "parameters": [
           {
-            "name": "param2",
+            "name": "note_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -3069,7 +3069,7 @@
     },
     "/api/podcasts": {
       "get": {
-        "summary": "/api/podcasts",
+        "summary": "List podcasts",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -3177,7 +3177,7 @@
         ]
       },
       "post": {
-        "summary": "/api/podcasts",
+        "summary": "Register a podcast",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "201": {
@@ -3334,9 +3334,9 @@
         }
       }
     },
-    "/api/followed_podcasts/{param2}": {
+    "/api/followed_podcasts/{followed_podcast_id}": {
       "delete": {
-        "summary": "/api/followed_podcasts/:param2",
+        "summary": "Unfollow a podcast",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "200": {
@@ -3576,7 +3576,7 @@
         ],
         "parameters": [
           {
-            "name": "param2",
+            "name": "followed_podcast_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -3588,7 +3588,7 @@
     },
     "/api/playlists/sort_mode": {
       "post": {
-        "summary": "/api/playlists/sort_mode",
+        "summary": "Set playlist sort mode",
         "description": "**Host**: http://production.lightphonecloud.com",
         "responses": {
           "400": {
@@ -3668,13 +3668,13 @@
         }
       }
     },
-    "/api/notes/{param2}": {
+    "/api/notes/{note_id}": {
       "get": {
-        "summary": "/api/notes/:param2",
+        "summary": "Get note metadata by ID",
         "description": "**Host**: http://production.lightphonecloud.com\n\nFetch metadata for a single note.",
         "parameters": [
           {
-            "name": "param2",
+            "name": "note_id",
             "in": "path",
             "required": true,
             "schema": {
