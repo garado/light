@@ -150,6 +150,9 @@ from .get_api_followed_podcasts_response_200_jsonapi import GetApiFollowedPodcas
 from .get_api_notes_note_id_generate_presigned_get_url_response_200 import (
     GetApiNotesNoteIdGeneratePresignedGetUrlResponse200,
 )
+from .get_api_notes_note_id_generate_presigned_put_url_response_200 import (
+    GetApiNotesNoteIdGeneratePresignedPutUrlResponse200,
+)
 from .get_api_notes_note_id_response_200 import GetApiNotesNoteIdResponse200
 from .get_api_notes_note_id_response_200_data import GetApiNotesNoteIdResponse200Data
 from .get_api_notes_note_id_response_200_data_attributes import GetApiNotesNoteIdResponse200DataAttributes
@@ -515,6 +518,7 @@ __all__ = (
     "GetApiFollowedPodcastsResponse200IncludedItemRelationshipsToolData",
     "GetApiFollowedPodcastsResponse200Jsonapi",
     "GetApiNotesNoteIdGeneratePresignedGetUrlResponse200",
+    "GetApiNotesNoteIdGeneratePresignedPutUrlResponse200",
     "GetApiNotesNoteIdResponse200",
     "GetApiNotesNoteIdResponse200Data",
     "GetApiNotesNoteIdResponse200DataAttributes",

@@ -4069,6 +4069,48 @@
           }
         ]
       }
+    },
+    "/api/notes/{note_id}/generate_presigned_put_url": {
+      "get": {
+        "summary": "Generate a presigned PUT URL for uploading note content",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Note ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "presigned_put_url": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      }
     }
   },
   "components": {
