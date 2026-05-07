@@ -39,7 +39,6 @@ class LightConfig:
     password_file: str | None = None
     phone: str | None = None
     phone_file: str | None = None
-    headless: bool = True
 
 
 class PlaywrightThread:
@@ -73,7 +72,6 @@ class PlaywrightThread:
                 password_file=self._config.password_file,
                 phone=self._config.phone,
                 phone_file=self._config.phone_file,
-                headless=self._config.headless,
             ) as light:
                 self._ready.set()
                 while True:

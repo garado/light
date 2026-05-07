@@ -334,6 +334,14 @@ from .post_api_audios_response_201_data_relationships_raw_file_data import (
 from .post_api_audios_response_201_included_item import PostApiAudiosResponse201IncludedItem
 from .post_api_audios_response_201_included_item_attributes import PostApiAudiosResponse201IncludedItemAttributes
 from .post_api_audios_response_201_jsonapi import PostApiAudiosResponse201Jsonapi
+from .post_api_authorizations_body import PostApiAuthorizationsBody
+from .post_api_authorizations_response_200 import PostApiAuthorizationsResponse200
+from .post_api_authorizations_response_200_data import PostApiAuthorizationsResponse200Data
+from .post_api_authorizations_response_200_data_attributes import PostApiAuthorizationsResponse200DataAttributes
+from .post_api_authorizations_response_200_included_item import PostApiAuthorizationsResponse200IncludedItem
+from .post_api_authorizations_response_200_included_item_attributes import (
+    PostApiAuthorizationsResponse200IncludedItemAttributes,
+)
 from .post_api_followed_podcasts_body import PostApiFollowedPodcastsBody
 from .post_api_followed_podcasts_body_data import PostApiFollowedPodcastsBodyData
 from .post_api_followed_podcasts_body_data_relationships import PostApiFollowedPodcastsBodyDataRelationships
@@ -591,6 +599,12 @@ __all__ = (
     "PostApiAudiosResponse201IncludedItem",
     "PostApiAudiosResponse201IncludedItemAttributes",
     "PostApiAudiosResponse201Jsonapi",
+    "PostApiAuthorizationsBody",
+    "PostApiAuthorizationsResponse200",
+    "PostApiAuthorizationsResponse200Data",
+    "PostApiAuthorizationsResponse200DataAttributes",
+    "PostApiAuthorizationsResponse200IncludedItem",
+    "PostApiAuthorizationsResponse200IncludedItemAttributes",
     "PostApiFollowedPodcastsBody",
     "PostApiFollowedPodcastsBodyData",
     "PostApiFollowedPodcastsBodyDataRelationships",

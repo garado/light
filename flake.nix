@@ -26,7 +26,6 @@
       dependencies = with python.pkgs; [
         keyring
         mutagen
-        playwright
         light-client
       ];
     };
@@ -45,11 +44,6 @@
         light-api
       ];
 
-      postInstall = ''
-        wrapProgram $out/bin/light \
-          --set PLAYWRIGHT_BROWSERS_PATH ${pkgs.playwright-driver.browsers} \
-          --set PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS true
-      '';
     };
 
   in {
@@ -66,7 +60,6 @@
     devShells.${system}.default = pkgs.mkShell {
       nativeBuildInputs = with pkgs; [
         (python.withPackages (p: with p; [
-          playwright
           click
           rich
           rich-click
@@ -78,14 +71,11 @@
           attrs
         ]))
         uv
-        playwright-driver.browsers
         pyright
         openapi-python-client
       ];
 
       shellHook = ''
-        export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
-        export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
         export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH
         export PYTHONPATH=${pkgs.python312}/lib/python3.12/site-packages:$PYTHONPATH
       '';

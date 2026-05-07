@@ -7,4 +7,5 @@ def with_light(f):
     def wrapper(*args, **kwargs):
         with Light() as light:
             return f(light, *args, **kwargs)
+
     return wrapper

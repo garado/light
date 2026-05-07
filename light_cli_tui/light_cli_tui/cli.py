@@ -32,7 +32,6 @@ def with_light(f: Callable[..., Any]) -> Callable[..., Any]:
                 password_file=obj.get("password_file"),
                 phone=obj.get("phone_number"),
                 phone_file=obj.get("phone_number_file"),
-                headless=not obj.get("no_headless", False),
             ) as light:
                 return f(light, *args, **kwargs)
         except RuntimeError as e:
@@ -62,9 +61,6 @@ log = logging.getLogger(f"light.{__name__}")
     "--phone-number-file", default=None, help="Path to file containing phone number."
 )
 @click.option(
-    "--no-headless", is_flag=True, help="Show the browser window during authentication."
-)
-@click.option(
     "--log-level",
     default="WARNING",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
@@ -79,7 +75,6 @@ def cli(
     password_file,
     phone_number,
     phone_number_file,
-    no_headless,
     log_level,
 ):
     """**Unofficial CLI for the Light Phone.**
@@ -101,7 +96,6 @@ def cli(
             "password_file": password_file,
             "phone_number": phone_number,
             "phone_number_file": phone_number_file,
-            "no_headless": no_headless,
         }
     )
 

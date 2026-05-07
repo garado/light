@@ -11,6 +11,72 @@
     }
   ],
   "paths": {
+    "/api/authorizations": {
+      "post": {
+        "summary": "Authenticate and get bearer token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string" },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "email": { "type": "string" },
+                            "given_name": { "type": "string" },
+                            "family_name": { "type": "string" }
+                          }
+                        }
+                      }
+                    },
+                    "included": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "type": { "type": "string" },
+                          "attributes": {
+                            "type": "object",
+                            "properties": {
+                              "token": { "type": "string" },
+                              "max_age": { "type": "integer" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/audios/delete_all": {
       "post": {
         "summary": "Delete all audio tracks",
