@@ -592,7 +592,7 @@ class NotesPane(Widget):
         table = self.query_one("#notes-list", DataTable)
         table.clear()
         for note in notes:
-            prefix = "♪" if note.note_type == "audio" else "·"
+            prefix = "♪" if note.note_type == "audio" else "✎"
             table.add_row(f"{prefix} {note.title or '(untitled)'}", key=note.id)
         self.update_status()
 
@@ -607,7 +607,7 @@ class NotesPane(Widget):
         if note is None:
             sidebar.border_subtitle = ""
             return
-        prefix = "♪" if note.note_type == "audio" else "·"
+        prefix = "♪" if note.note_type == "audio" else "✎"
         sidebar.border_subtitle = f"{prefix} {note.title or '(untitled)'}"
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
@@ -616,7 +616,7 @@ class NotesPane(Widget):
         note = self._note_for_key(str(event.row_key.value))
         if note is None:
             return
-        prefix = "♪" if note.note_type == "audio" else "·"
+        prefix = "♪" if note.note_type == "audio" else "✎"
         self.query_one("#notes-sidebar").border_subtitle = f"{prefix} {note.title or '(untitled)'}"
 
     def _open_current_note(self) -> None:
@@ -624,7 +624,7 @@ class NotesPane(Widget):
         if note is None:
             return
         self._stop_audio_proc()
-        prefix = "♪" if note.note_type == "audio" else "·"
+        prefix = "♪" if note.note_type == "audio" else "✎"
         self.query_one("#note-content").border_title = f"Content  ·  {prefix} {note.title or '(untitled)'}  ({note.updated_at})"
         if note.note_type == "audio":
             self.query_one("#note-text", Static).update(
