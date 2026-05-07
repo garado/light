@@ -62,6 +62,8 @@ class SortMode(StrEnum):
     # implemented locally via position patching
     TITLE_ASC = "title_asc"
     TITLE_DESC = "title_desc"
+    ARTIST_ALBUM_ASC = "aa_asc"
+    ARTIST_ALBUM_DESC = "aa_desc"
 
 
 class LightMusic:
@@ -124,9 +126,10 @@ class LightMusic:
                 raise RuntimeError(f"Set sort mode: {resp.status_code}")
 
             log.info(f"Sort mode set")
-
-        else:
+        elif sort_mode in (SortMode.TITLE_ASC, SortMode.TITLE_DESC):
             self._sort_by_title(sort_mode == SortMode.TITLE_DESC)
+        elif sort_mode in (SortMode.ARTIST_ALBUM_ASC, SortMode.ARTIST_ALBUM_DESC):
+            self._sort_by_artist_album(sort_mode == SortMode.ARTIST_ALBUM_DESC)
 
     def get_tracks(self) -> list[LightTrack]:
         """Fetch list of all tracks on the device.
@@ -487,4 +490,52 @@ class LightMusic:
             if not (200 <= resp.status_code < 300):
                 raise RuntimeError(
                     f"Sort by title position {new_position}: {resp.status_code}"
+                )
+
+    def _sort_by_artist_album(self, descending: bool = False) -> None:
+        """Sort tracks on device by artist, then by album.
+
+        All tracks have a hidden 'album' field. The dashboard has no native sort-by-artist-album,
+        so we PATCH the position of each track directly.
+
+        Args:
+            descending: True to sort descending; False for ascending.
+        """
+        tracks: list[LightTrack] = self.get_tracks()
+        sorted_tracks: list[LightTrack] = sorted(
+            tracks,
+            key=lambda t: (t.artist.casefold(), t.album.casefold()),
+            reverse=descending,
+        )
+
+        # TODO abstract the below to a helper
+
+        # our custom sort is a subset of rank
+        self.set_sort_mode(SortMode.RANK)
+
+        original_positions: dict[str, int] = {
+            t.audio_id: i for i, t in enumerate(tracks)
+        }
+
+        for new_position, track in enumerate(sorted_tracks):
+            if original_positions[track.audio_id] == new_position:
+                continue
+
+            resp = self._l.call_api(
+                patch_api_playlist_items_playlist_item_id.sync_detailed,
+                playlist_item_id=track.playlist_item_id,
+                client=self._l._api_client,
+                body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                        id=track.playlist_item_id,
+                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                            position=new_position,
+                        ),
+                    )
+                ),
+            )
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(
+                    f"Sort by artist/album position {new_position}: {resp.status_code}"
                 )
