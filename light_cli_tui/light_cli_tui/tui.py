@@ -217,6 +217,7 @@ class MusicPane(Widget):
         table = self.query_one(DataTable)
         table.cursor_type = "row"
         table.show_header = True
+        table.add_column("", width=4)
         table.add_columns("title", "artist", "album")
         self.border_title = "Music"
         self.query_one("#search-bar", Input).display = False
@@ -236,10 +237,11 @@ class MusicPane(Widget):
         self.border_subtitle = "  ·  ".join(parts)
 
     def _populate_table(self, tracks: list[LightTrack]) -> None:
+        positions = {t.audio_id: i for i, t in enumerate(self._tracks, 1)}
         table = self.query_one(DataTable)
         table.clear()
         for track in tracks:
-            table.add_row(track.title, track.artist, track.album, key=track.audio_id)
+            table.add_row(str(positions.get(track.audio_id, "")), track.title, track.artist, track.album, key=track.audio_id)
 
     # --- search ---
 
