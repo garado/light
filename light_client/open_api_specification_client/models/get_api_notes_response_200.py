@@ -69,7 +69,7 @@ class GetApiNotesResponse200:
             data.append(data_item)
 
         included = []
-        _included = d.pop("included")
+        _included = d.pop("included", [])
         for included_item_data in _included:
             included_item = GetApiNotesResponse200IncludedItem.from_dict(included_item_data)
 

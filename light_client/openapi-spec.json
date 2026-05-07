@@ -21,10 +21,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
                 },
-                "required": ["email", "password"]
+                "required": [
+                  "email",
+                  "password"
+                ]
               }
             }
           }
@@ -40,14 +47,24 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "id": { "type": "string" },
-                        "type": { "type": "string" },
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
                         "attributes": {
                           "type": "object",
                           "properties": {
-                            "email": { "type": "string" },
-                            "given_name": { "type": "string" },
-                            "family_name": { "type": "string" }
+                            "email": {
+                              "type": "string"
+                            },
+                            "given_name": {
+                              "type": "string"
+                            },
+                            "family_name": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -57,13 +74,21 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "type": { "type": "string" },
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
                           "attributes": {
                             "type": "object",
                             "properties": {
-                              "token": { "type": "string" },
-                              "max_age": { "type": "integer" }
+                              "token": {
+                                "type": "string"
+                              },
+                              "max_age": {
+                                "type": "integer"
+                              }
                             }
                           }
                         }
@@ -3071,7 +3096,6 @@
                   },
                   "required": [
                     "data",
-                    "included",
                     "jsonapi"
                   ]
                 }
