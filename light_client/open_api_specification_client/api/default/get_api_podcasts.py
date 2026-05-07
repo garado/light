@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     title: str | Unset = UNSET,
 ) -> Response[GetApiPodcastsResponse200]:
-    """/api/podcasts
+    """List podcasts
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     title: str | Unset = UNSET,
 ) -> GetApiPodcastsResponse200 | None:
-    """/api/podcasts
+    """List podcasts
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     title: str | Unset = UNSET,
 ) -> Response[GetApiPodcastsResponse200]:
-    """/api/podcasts
+    """List podcasts
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     title: str | Unset = UNSET,
 ) -> GetApiPodcastsResponse200 | None:
-    """/api/podcasts
+    """List podcasts
 
      **Host**: http://production.lightphonecloud.com
 

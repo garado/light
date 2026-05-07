@@ -48,7 +48,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiUsersCurrentResponse200]:
-    """/api/users/current
+    """Get current user
 
      **Host**: http://production.lightphonecloud.com
 
@@ -73,7 +73,7 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> GetApiUsersCurrentResponse200 | None:
-    """/api/users/current
+    """Get current user
 
      **Host**: http://production.lightphonecloud.com
 
@@ -94,7 +94,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiUsersCurrentResponse200]:
-    """/api/users/current
+    """Get current user
 
      **Host**: http://production.lightphonecloud.com
 
@@ -117,7 +117,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> GetApiUsersCurrentResponse200 | None:
-    """/api/users/current
+    """Get current user
 
      **Host**: http://production.lightphonecloud.com
 

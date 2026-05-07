@@ -66,7 +66,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: PatchApiPlaylistItemsPlaylistItemIdBody,
 ) -> Response[PatchApiPlaylistItemsPlaylistItemIdResponse200]:
-    """/api/playlist_items/:playlist_item_id
+    """Update playlist item position
 
      **Host**: http://production.lightphonecloud.com
 
@@ -100,7 +100,7 @@ def sync(
     client: AuthenticatedClient,
     body: PatchApiPlaylistItemsPlaylistItemIdBody,
 ) -> PatchApiPlaylistItemsPlaylistItemIdResponse200 | None:
-    """/api/playlist_items/:playlist_item_id
+    """Update playlist item position
 
      **Host**: http://production.lightphonecloud.com
 
@@ -129,7 +129,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: PatchApiPlaylistItemsPlaylistItemIdBody,
 ) -> Response[PatchApiPlaylistItemsPlaylistItemIdResponse200]:
-    """/api/playlist_items/:playlist_item_id
+    """Update playlist item position
 
      **Host**: http://production.lightphonecloud.com
 
@@ -161,7 +161,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: PatchApiPlaylistItemsPlaylistItemIdBody,
 ) -> PatchApiPlaylistItemsPlaylistItemIdResponse200 | None:
-    """/api/playlist_items/:playlist_item_id
+    """Update playlist item position
 
      **Host**: http://production.lightphonecloud.com
 

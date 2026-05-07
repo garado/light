@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: PostApiPodcastsBody,
 ) -> Response[PostApiPodcastsResponse201]:
-    """/api/podcasts
+    """Register a podcast
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     body: PostApiPodcastsBody,
 ) -> PostApiPodcastsResponse201 | None:
-    """/api/podcasts
+    """Register a podcast
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: PostApiPodcastsBody,
 ) -> Response[PostApiPodcastsResponse201]:
-    """/api/podcasts
+    """Register a podcast
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: PostApiPodcastsBody,
 ) -> PostApiPodcastsResponse201 | None:
-    """/api/podcasts
+    """Register a podcast
 
      **Host**: http://production.lightphonecloud.com
 

@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: PostApiNotesBody,
 ) -> Response[PostApiNotesResponse201]:
-    """/api/notes
+    """Create a note
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     body: PostApiNotesBody,
 ) -> PostApiNotesResponse201 | None:
-    """/api/notes
+    """Create a note
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: PostApiNotesBody,
 ) -> Response[PostApiNotesResponse201]:
-    """/api/notes
+    """Create a note
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: PostApiNotesBody,
 ) -> PostApiNotesResponse201 | None:
-    """/api/notes
+    """Create a note
 
      **Host**: http://production.lightphonecloud.com
 

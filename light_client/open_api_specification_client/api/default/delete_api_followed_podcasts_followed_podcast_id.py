@@ -56,7 +56,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[DeleteApiFollowedPodcastsFollowedPodcastIdResponse200]:
-    """/api/followed_podcasts/:followed_podcast_id
+    """Unfollow a podcast
 
      **Host**: http://production.lightphonecloud.com
 
@@ -87,7 +87,7 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> DeleteApiFollowedPodcastsFollowedPodcastIdResponse200 | None:
-    """/api/followed_podcasts/:followed_podcast_id
+    """Unfollow a podcast
 
      **Host**: http://production.lightphonecloud.com
 
@@ -113,7 +113,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[DeleteApiFollowedPodcastsFollowedPodcastIdResponse200]:
-    """/api/followed_podcasts/:followed_podcast_id
+    """Unfollow a podcast
 
      **Host**: http://production.lightphonecloud.com
 
@@ -142,7 +142,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> DeleteApiFollowedPodcastsFollowedPodcastIdResponse200 | None:
-    """/api/followed_podcasts/:followed_podcast_id
+    """Unfollow a podcast
 
      **Host**: http://production.lightphonecloud.com
 

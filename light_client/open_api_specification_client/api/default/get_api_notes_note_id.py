@@ -64,7 +64,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiNotesNoteIdResponse200]:
-    """/api/notes/:note_id
+    """Get note metadata by ID
 
      **Host**: http://production.lightphonecloud.com
 
@@ -100,7 +100,7 @@ def sync(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiNotesNoteIdResponse200 | None:
-    """/api/notes/:note_id
+    """Get note metadata by ID
 
      **Host**: http://production.lightphonecloud.com
 
@@ -131,7 +131,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiNotesNoteIdResponse200]:
-    """/api/notes/:note_id
+    """Get note metadata by ID
 
      **Host**: http://production.lightphonecloud.com
 
@@ -165,7 +165,7 @@ async def asyncio(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiNotesNoteIdResponse200 | None:
-    """/api/notes/:note_id
+    """Get note metadata by ID
 
      **Host**: http://production.lightphonecloud.com
 

@@ -48,7 +48,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiDevicesResponse200]:
-    """/api/devices
+    """List devices
 
      **Host**: http://production.lightphonecloud.com
 
@@ -73,7 +73,7 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> GetApiDevicesResponse200 | None:
-    """/api/devices
+    """List devices
 
      **Host**: http://production.lightphonecloud.com
 
@@ -94,7 +94,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiDevicesResponse200]:
-    """/api/devices
+    """List devices
 
      **Host**: http://production.lightphonecloud.com
 
@@ -117,7 +117,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> GetApiDevicesResponse200 | None:
-    """/api/devices
+    """List devices
 
      **Host**: http://production.lightphonecloud.com
 

@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: PostApiPlaylistsSortModeBody,
 ) -> Response[PostApiPlaylistsSortModeResponse400]:
-    """/api/playlists/sort_mode
+    """Set playlist sort mode
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     body: PostApiPlaylistsSortModeBody,
 ) -> PostApiPlaylistsSortModeResponse400 | None:
-    """/api/playlists/sort_mode
+    """Set playlist sort mode
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: PostApiPlaylistsSortModeBody,
 ) -> Response[PostApiPlaylistsSortModeResponse400]:
-    """/api/playlists/sort_mode
+    """Set playlist sort mode
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: PostApiPlaylistsSortModeBody,
 ) -> PostApiPlaylistsSortModeResponse400 | None:
-    """/api/playlists/sort_mode
+    """Set playlist sort mode
 
      **Host**: http://production.lightphonecloud.com
 

@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: PostApiAudiosBody,
 ) -> Response[PostApiAudiosResponse201]:
-    """/api/audios
+    """Create audio record
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     body: PostApiAudiosBody,
 ) -> PostApiAudiosResponse201 | None:
-    """/api/audios
+    """Create audio record
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: PostApiAudiosBody,
 ) -> Response[PostApiAudiosResponse201]:
-    """/api/audios
+    """Create audio record
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: PostApiAudiosBody,
 ) -> PostApiAudiosResponse201 | None:
-    """/api/audios
+    """Create audio record
 
      **Host**: http://production.lightphonecloud.com
 

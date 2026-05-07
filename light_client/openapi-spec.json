@@ -11,6 +11,34 @@
     }
   ],
   "paths": {
+    "/api/audios/delete_all": {
+      "post": {
+        "summary": "Delete all audio tracks",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device_tool_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "device_tool_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All audios deleted"
+          }
+        }
+      }
+    },
     "/api/users/current": {
       "get": {
         "summary": "Get current user",
@@ -1493,7 +1521,6 @@
                   },
                   "required": [
                     "data",
-                    "included",
                     "jsonapi"
                   ]
                 }

@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiFollowedPodcastsResponse200]:
-    """/api/followed_podcasts
+    """List followed podcasts
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiFollowedPodcastsResponse200 | None:
-    """/api/followed_podcasts
+    """List followed podcasts
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiFollowedPodcastsResponse200]:
-    """/api/followed_podcasts
+    """List followed podcasts
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiFollowedPodcastsResponse200 | None:
-    """/api/followed_podcasts
+    """List followed podcasts
 
      **Host**: http://production.lightphonecloud.com
 

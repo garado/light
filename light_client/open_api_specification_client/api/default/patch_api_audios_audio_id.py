@@ -64,7 +64,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: PatchApiAudiosAudioIdBody,
 ) -> Response[PatchApiAudiosAudioIdResponse200]:
-    """/api/audios/:audio_id
+    """Update audio metadata
 
      **Host**: http://production.lightphonecloud.com
 
@@ -98,7 +98,7 @@ def sync(
     client: AuthenticatedClient,
     body: PatchApiAudiosAudioIdBody,
 ) -> PatchApiAudiosAudioIdResponse200 | None:
-    """/api/audios/:audio_id
+    """Update audio metadata
 
      **Host**: http://production.lightphonecloud.com
 
@@ -127,7 +127,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: PatchApiAudiosAudioIdBody,
 ) -> Response[PatchApiAudiosAudioIdResponse200]:
-    """/api/audios/:audio_id
+    """Update audio metadata
 
      **Host**: http://production.lightphonecloud.com
 
@@ -159,7 +159,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: PatchApiAudiosAudioIdBody,
 ) -> PatchApiAudiosAudioIdResponse200 | None:
-    """/api/audios/:audio_id
+    """Update audio metadata
 
      **Host**: http://production.lightphonecloud.com
 

@@ -33,8 +33,11 @@ SORT_LABELS: dict[SortMode, str] = {
 
 @dataclass
 class LightConfig:
+    email: str | None = None
     email_file: str | None = None
+    password: str | None = None
     password_file: str | None = None
+    phone: str | None = None
     phone_file: str | None = None
     headless: bool = True
 
@@ -64,8 +67,11 @@ class PlaywrightThread:
     def _run(self) -> None:
         try:
             with Light(
+                email=self._config.email,
                 email_file=self._config.email_file,
+                password=self._config.password,
                 password_file=self._config.password_file,
+                phone=self._config.phone,
                 phone_file=self._config.phone_file,
                 headless=self._config.headless,
             ) as light:
@@ -311,26 +317,26 @@ class LightApp(App):
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
         from open_api_specification_client.api.default import (
-            patch_api_playlist_items_param2,
+            patch_api_playlist_items_playlist_item_id
         )
         from open_api_specification_client.models import (
-            PatchApiPlaylistItemsParam2Body,
-            PatchApiPlaylistItemsParam2BodyData,
-            PatchApiPlaylistItemsParam2BodyDataAttributes,
-            PatchApiPlaylistItemsParam2BodyDataType,
+            PatchApiPlaylistItemsPlaylistItemIdBody,
+            PatchApiPlaylistItemsPlaylistItemIdBodyData,
+            PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
+            PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
         )
 
         assert self._pw is not None
 
         def _move(light):
-            resp = patch_api_playlist_items_param2.sync_detailed(
-                param2=track.playlist_item_id,
+            resp = patch_api_playlist_items_playlist_item_id.sync_detailed(
+                playlist_item_id=track.playlist_item_id,
                 client=light._api_client,
-                body=PatchApiPlaylistItemsParam2Body(
-                    data=PatchApiPlaylistItemsParam2BodyData(
+                body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
                         id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsParam2BodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsParam2BodyDataAttributes(
+                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
                             position=new_position,
                         ),
                     )

@@ -1,30 +1,35 @@
 from http import HTTPStatus
 from typing import Any
-from urllib.parse import quote
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.post_api_audios_delete_all_body import PostApiAudiosDeleteAllBody
 from ...types import Response
 
 
 def _get_kwargs(
-    audio_id: str,
+    *,
+    body: PostApiAudiosDeleteAllBody,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "delete",
-        "url": "/api/audios/{audio_id}".format(
-            audio_id=quote(str(audio_id), safe=""),
-        ),
+        "method": "post",
+        "url": "/api/audios/delete_all",
     }
 
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/vnd.api+json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
 def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | None:
-    if response.status_code == 204:
+    if response.status_code == 200:
         return None
 
     if client.raise_on_unexpected_status:
@@ -43,16 +48,14 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 
 def sync_detailed(
-    audio_id: str,
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
+    body: PostApiAudiosDeleteAllBody,
 ) -> Response[Any]:
-    """Delete audio by ID
-
-     **Host**: http://production.lightphonecloud.com
+    """Delete all audio tracks
 
     Args:
-        audio_id (str):
+        body (PostApiAudiosDeleteAllBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -63,7 +66,7 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
-        audio_id=audio_id,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -74,16 +77,14 @@ def sync_detailed(
 
 
 async def asyncio_detailed(
-    audio_id: str,
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
+    body: PostApiAudiosDeleteAllBody,
 ) -> Response[Any]:
-    """Delete audio by ID
-
-     **Host**: http://production.lightphonecloud.com
+    """Delete all audio tracks
 
     Args:
-        audio_id (str):
+        body (PostApiAudiosDeleteAllBody):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -94,7 +95,7 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
-        audio_id=audio_id,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)

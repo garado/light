@@ -63,7 +63,7 @@ def sync_detailed(
     playlist_ids: str | Unset = UNSET,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiPlaylistItemsResponse200]:
-    """/api/playlist_items
+    """List playlist items
 
      **Host**: http://production.lightphonecloud.com
 
@@ -97,7 +97,7 @@ def sync(
     playlist_ids: str | Unset = UNSET,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiPlaylistItemsResponse200 | None:
-    """/api/playlist_items
+    """List playlist items
 
      **Host**: http://production.lightphonecloud.com
 
@@ -126,7 +126,7 @@ async def asyncio_detailed(
     playlist_ids: str | Unset = UNSET,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiPlaylistItemsResponse200]:
-    """/api/playlist_items
+    """List playlist items
 
      **Host**: http://production.lightphonecloud.com
 
@@ -158,7 +158,7 @@ async def asyncio(
     playlist_ids: str | Unset = UNSET,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiPlaylistItemsResponse200 | None:
-    """/api/playlist_items
+    """List playlist items
 
      **Host**: http://production.lightphonecloud.com
 

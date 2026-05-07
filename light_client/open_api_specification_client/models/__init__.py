@@ -320,6 +320,7 @@ from .post_api_audios_body import PostApiAudiosBody
 from .post_api_audios_body_data import PostApiAudiosBodyData
 from .post_api_audios_body_data_attributes import PostApiAudiosBodyDataAttributes
 from .post_api_audios_body_data_type import PostApiAudiosBodyDataType
+from .post_api_audios_delete_all_body import PostApiAudiosDeleteAllBody
 from .post_api_audios_response_201 import PostApiAudiosResponse201
 from .post_api_audios_response_201_data import PostApiAudiosResponse201Data
 from .post_api_audios_response_201_data_relationships import PostApiAudiosResponse201DataRelationships
@@ -580,6 +581,7 @@ __all__ = (
     "PostApiAudiosBodyData",
     "PostApiAudiosBodyDataAttributes",
     "PostApiAudiosBodyDataType",
+    "PostApiAudiosDeleteAllBody",
     "PostApiAudiosResponse201",
     "PostApiAudiosResponse201Data",
     "PostApiAudiosResponse201DataRelationships",

@@ -54,7 +54,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiToolsToolIdResponse200]:
-    """/api/tools/:tool_id
+    """Get tool by ID
 
      **Host**: http://production.lightphonecloud.com
 
@@ -85,7 +85,7 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> GetApiToolsToolIdResponse200 | None:
-    """/api/tools/:tool_id
+    """Get tool by ID
 
      **Host**: http://production.lightphonecloud.com
 
@@ -111,7 +111,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiToolsToolIdResponse200]:
-    """/api/tools/:tool_id
+    """Get tool by ID
 
      **Host**: http://production.lightphonecloud.com
 
@@ -140,7 +140,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> GetApiToolsToolIdResponse200 | None:
-    """/api/tools/:tool_id
+    """Get tool by ID
 
      **Host**: http://production.lightphonecloud.com
 

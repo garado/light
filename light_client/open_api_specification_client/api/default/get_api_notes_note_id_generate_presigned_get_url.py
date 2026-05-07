@@ -56,7 +56,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiNotesNoteIdGeneratePresignedGetUrlResponse200]:
-    """/api/notes/:note_id/generate_presigned_get_url
+    """Generate presigned download URL for a note
 
      **Host**: http://production.lightphonecloud.com
 
@@ -87,7 +87,7 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> GetApiNotesNoteIdGeneratePresignedGetUrlResponse200 | None:
-    """/api/notes/:note_id/generate_presigned_get_url
+    """Generate presigned download URL for a note
 
      **Host**: http://production.lightphonecloud.com
 
@@ -113,7 +113,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[GetApiNotesNoteIdGeneratePresignedGetUrlResponse200]:
-    """/api/notes/:note_id/generate_presigned_get_url
+    """Generate presigned download URL for a note
 
      **Host**: http://production.lightphonecloud.com
 
@@ -142,7 +142,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> GetApiNotesNoteIdGeneratePresignedGetUrlResponse200 | None:
-    """/api/notes/:note_id/generate_presigned_get_url
+    """Generate presigned download URL for a note
 
      **Host**: http://production.lightphonecloud.com
 

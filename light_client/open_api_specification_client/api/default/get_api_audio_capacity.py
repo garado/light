@@ -59,7 +59,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiAudioCapacityResponse200]:
-    """/api/audio_capacity
+    """Get audio storage capacity
 
      **Host**: http://production.lightphonecloud.com
 
@@ -90,7 +90,7 @@ def sync(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiAudioCapacityResponse200 | None:
-    """/api/audio_capacity
+    """Get audio storage capacity
 
      **Host**: http://production.lightphonecloud.com
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> Response[GetApiAudioCapacityResponse200]:
-    """/api/audio_capacity
+    """Get audio storage capacity
 
      **Host**: http://production.lightphonecloud.com
 
@@ -145,7 +145,7 @@ async def asyncio(
     client: AuthenticatedClient,
     device_tool_id: str | Unset = UNSET,
 ) -> GetApiAudioCapacityResponse200 | None:
-    """/api/audio_capacity
+    """Get audio storage capacity
 
      **Host**: http://production.lightphonecloud.com
 

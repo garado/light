@@ -57,7 +57,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     device_id: str | Unset = UNSET,
 ) -> Response[GetApiToolsResponse200]:
-    """/api/tools
+    """List tools
 
      **Host**: http://production.lightphonecloud.com
 
@@ -88,7 +88,7 @@ def sync(
     client: AuthenticatedClient,
     device_id: str | Unset = UNSET,
 ) -> GetApiToolsResponse200 | None:
-    """/api/tools
+    """List tools
 
      **Host**: http://production.lightphonecloud.com
 
@@ -114,7 +114,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     device_id: str | Unset = UNSET,
 ) -> Response[GetApiToolsResponse200]:
-    """/api/tools
+    """List tools
 
      **Host**: http://production.lightphonecloud.com
 
@@ -143,7 +143,7 @@ async def asyncio(
     client: AuthenticatedClient,
     device_id: str | Unset = UNSET,
 ) -> GetApiToolsResponse200 | None:
-    """/api/tools
+    """List tools
 
      **Host**: http://production.lightphonecloud.com
 

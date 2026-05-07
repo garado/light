@@ -1,8 +1,8 @@
 """
-█░░ █ █▀▀ █░█ ▀█▀   █▀▀ █░░ █
-█▄▄ █ █▄█ █▀█ ░█░   █▄▄ █▄▄ █
+█░░ █ █▀▀ █░█ ▀█▀   █▀▀ █░░ █   ▄█▄   ▀█▀ █░█ █
+█▄▄ █ █▄█ █▀█ ░█░   █▄▄ █▄▄ █   ░▀░   ░█░ █▄█ █
 
-Command line interface for Light devices.
+Command line tools for Light devices.
 """
 
 import functools
@@ -51,6 +51,7 @@ click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
+
 @click.group()
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
@@ -63,7 +64,12 @@ log = logging.getLogger(f"light.{__name__}")
 @click.option(
     "--no-headless", is_flag=True, help="Show the browser window during authentication."
 )
-@click.option("--log-level", default="WARNING", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False), help="Log level.")
+@click.option(
+    "--log-level",
+    default="WARNING",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
+    help="Log level.",
+)
 @click.pass_context
 def cli(
     ctx,
@@ -78,11 +84,10 @@ def cli(
 ):
     """**Unofficial CLI for the Light Phone.**
 
-    Manage music, podcasts, and notes on your Light Phone device
-    from the comfort of your terminal.
+    Manages music, podcasts, and notes on your Light device from the terminal.
 
-    Credentials can be provided via options, files, or environment variables:
-    `LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`.
+    Credentials can be provided via options, files, or environment variables
+    (`LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`).
     """
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
@@ -103,7 +108,7 @@ def cli(
 
 @cli.group()
 def music():
-    """Manage your music library.
+    """Music library management.
 
     Upload tracks, delete them, sort your playlist, and update metadata.
     """
@@ -112,7 +117,7 @@ def music():
 
 @cli.group()
 def podcast():
-    """Manage your podcast subscriptions.
+    """Podcast management.
 
     Add podcasts by RSS feed URL and remove ones you no longer want.
     """
@@ -121,14 +126,14 @@ def podcast():
 
 @cli.group()
 def notes():
-    """Manage your notes.
+    """Notes management.
 
     List, add, download, and watch for changes to text and audio notes.
     """
     pass
 
 
-# ── Podcast commands ──────────────────────────────────────────────────────────
+# -- Podcast commands ----------------------------------------------------------
 
 
 @podcast.command("add")
@@ -154,15 +159,19 @@ def podcast_add(light: Light, rss_feed_url):
 def podcast_list(light: Light):
     """List all followed podcasts on your device."""
     podcasts = light.podcast.get_podcasts()
+
     if not podcasts:
         console.print("[dim]No podcasts followed.[/dim]")
         return
+
     table = Table(show_header=True)
     table.add_column("#", style="dim", width=4)
     table.add_column("Title")
     table.add_column("Publisher")
+
     for i, p in enumerate(podcasts, 1):
         table.add_row(str(i), p.title, p.publisher)
+
     console.print(table)
 
 
@@ -189,7 +198,7 @@ def podcast_delete(light: Light, title):
     light.podcast.delete_podcast_by_title(title)
 
 
-# ── Music commands ─────────────────────────────────────────────────────────────
+# -- Music commands -------------------------------------------------------------
 
 
 @music.command("upload")
@@ -211,7 +220,7 @@ def podcast_delete(light: Light, title):
 def music_upload(light: Light, songs, allow_duplicates, match_title_by):
     """Upload one or more audio files to your device.
 
-    Duplicate detection is on by default — existing tracks with a matching
+    Duplicate detection is on by default - existing tracks with a matching
     title will be replaced. Use `--allow-duplicates` to skip this.
 
     **Example:**
@@ -221,13 +230,18 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by):
     files = list(songs)
 
     if not allow_duplicates:
-        from mutagen import File as MutagenFile
+        from mutagen._file import File as MutagenFile
         import os as _os
+
         if match_title_by == "metadata":
             titles = []
             for s in files:
                 f = MutagenFile(s, easy=True)
-                titles.append(f.get("title", [_os.path.splitext(_os.path.basename(s))[0]])[0] if f else _os.path.splitext(_os.path.basename(s))[0])
+                titles.append(
+                    f.get("title", [_os.path.splitext(_os.path.basename(s))[0]])[0]
+                    if f
+                    else _os.path.splitext(_os.path.basename(s))[0]
+                )
         else:
             titles = [_os.path.splitext(_os.path.basename(s))[0] for s in files]
 
@@ -247,6 +261,18 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by):
         match_title_by=match_title_by,
     )
 
+
+@music.command("delete-all")
+@with_light
+def music_delete_all(light: Light):
+    """Delete ALL tracks on device."""
+    if not click.confirm("This will delete ALL tracks on the device. Proceed?"):
+        return
+    
+    if input('Type "yes i am sure" to confirm: ') != "yes i am sure":
+        return
+
+    light.music.delete_all_tracks()
 
 @music.command("delete")
 @with_light
@@ -319,15 +345,15 @@ def music_sort(light: Light, field, order):
 @with_light
 @click.argument("title")
 @click.option("--new-title", default=None, help="New track title.")
-@click.option("--artist", default=None, help="New artist name.")
-def music_update(light: Light, title, new_title, artist):
+@click.option("--new-artist", default=None, help="New artist name.")
+def music_update(light: Light, title, new_title, new_artist):
     """Update metadata for a track.
 
-    Matches by exact title. At least one of `--new-title` or `--artist` must be provided.
+    Matches by exact title. At least one of `--new-title` or `--new-artist` must be provided.
 
     **Example:**
 
-    `light music update "Old Title" --new-title "New Title" --artist "Artist"`
+    `light music update "Old Title" --new-title "New Title" --new-artist "Artist"`
     """
     tracks = light.music.get_tracks()
     matches = [t for t in tracks if t.title == title]
@@ -338,7 +364,7 @@ def music_update(light: Light, title, new_title, artist):
 
     for track in matches:
         light.music.update_track_metadata(
-            track.audio_id, title=new_title, artist=artist
+            track.audio_id, title=new_title, artist=new_artist
         )
 
 
@@ -347,16 +373,19 @@ def music_update(light: Light, title, new_title, artist):
 def music_list(light: Light):
     """List all tracks on your device."""
     tracks = light.music.get_tracks()
+
     table = Table(show_header=True)
     table.add_column("#", style="dim", width=4)
     table.add_column("Title")
     table.add_column("Artist")
+
     for i, track in enumerate(tracks, 1):
         table.add_row(str(i), track.title, track.artist)
+
     console.print(table)
 
 
-# ── Notes commands ─────────────────────────────────────────────────────────────
+# -- Notes commands -------------------------------------------------------------
 
 
 @notes.command("list")
@@ -446,8 +475,10 @@ def notes_add(light: Light, title: str, content: str | None, content_file: str |
     """
     if content is None and content_file is None:
         raise click.UsageError("Provide CONTENT or --file.")
+
     if content is not None and content_file is not None:
         raise click.UsageError("CONTENT and --file are mutually exclusive.")
+
     if content_file:
         light.notes.create_text_note(title, content_file, content_is_path=True)
     else:
@@ -460,7 +491,7 @@ def notes_add(light: Light, title: str, content: str | None, content_file: str |
 def notes_watch(light: Light, note_id: str):
     """Poll a note for changes and print its content when updated.
 
-    Checks every second and prints content when `updated_at` changes.
+    Checks every 5 seconds and prints content when `updated_at` changes.
     Useful for watching a note you're actively editing on your phone.
 
     Run `light notes list --id` to find the note ID.
@@ -473,7 +504,7 @@ def notes_watch(light: Light, note_id: str):
     last_updated_at = note.updated_at
 
     while True:
-        time.sleep(1)
+        time.sleep(5)
         note = light.notes.get_note_metadata(note_id)
         if note.updated_at != last_updated_at:
             content = light.notes.get_note_content(note)
@@ -482,30 +513,27 @@ def notes_watch(light: Light, note_id: str):
             last_updated_at = note.updated_at
 
 
-# ── TUI ────────────────────────────────────────────────────────────────────────
+# -- TUI ------------------------------------------------------------------------
 
 
 @cli.command()
-@click.option("--email-file", default=None, help="Path to file containing email.")
-@click.option("--password-file", default=None, help="Path to file containing password.")
-@click.option(
-    "--phone-number-file", default=None, help="Path to file containing device ID."
-)
-@click.option(
-    "--no-headless", is_flag=True, help="Show the browser window during authentication."
-)
-def tui(email_file, password_file, phone_number_file, no_headless):
+@click.pass_context
+def tui(ctx):
     """Launch the interactive terminal UI.
 
     A full-screen interface for browsing and managing your music library
     with vim-style keybindings.
     """
+    obj = ctx.obj or {}
     run_tui(
         LightConfig(
-            email_file=email_file,
-            password_file=password_file,
-            phone_file=phone_number_file,
-            headless=not no_headless,
+            email=obj.get("email"),
+            email_file=obj.get("email_file"),
+            password=obj.get("password"),
+            password_file=obj.get("password_file"),
+            phone=obj.get("phone_number"),
+            phone_file=obj.get("phone_number_file"),
+            headless=not obj.get("no_headless", False),
         )
     )
 
