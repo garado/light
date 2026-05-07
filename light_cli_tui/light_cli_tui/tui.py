@@ -598,7 +598,7 @@ class NotesPane(Widget):
 
     def update_status(self) -> None:
         self._set_status(
-            f"{len(self._notes)} notes  |  j/k nav  p play/stop audio  r refresh  h/l tabs  q quit"
+            f"{len(self._notes)} notes  |  j/k nav  enter load note  p play/stop audio  r refresh  h/l tabs  q quit"
         )
 
     def refresh_header(self) -> None:
@@ -616,9 +616,16 @@ class NotesPane(Widget):
         note = self._note_for_key(str(event.row_key.value))
         if note is None:
             return
-        self._stop_audio_proc()
         prefix = "♪" if note.note_type == "audio" else "·"
         self.query_one("#notes-sidebar").border_subtitle = f"{prefix} {note.title or '(untitled)'}"
+
+    def _open_current_note(self) -> None:
+        note = self._current_note()
+        if note is None:
+            return
+        self._stop_audio_proc()
+        prefix = "♪" if note.note_type == "audio" else "·"
+        self.query_one("#note-content").border_title = f"Content  ·  {prefix} {note.title or '(untitled)'}  ({note.updated_at})"
         if note.note_type == "audio":
             self.query_one("#note-text", Static).update(
                 f"♪  {note.title or '(untitled)'}\n\n[audio note]  press p to play"
@@ -738,6 +745,9 @@ class NotesPane(Widget):
             return
         elif key == "G":
             table.move_cursor(row=table.row_count - 1)
+            event.stop()
+        elif key == "enter":
+            self._open_current_note()
             event.stop()
         elif key == "p":
             self._toggle_audio()
