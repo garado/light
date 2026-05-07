@@ -1,13 +1,15 @@
 """Music management for Light devices."""
 
-from enum import StrEnum
 import logging
+import mimetypes
 import os
 import re
+from enum import StrEnum
 from typing import Any, Callable, Literal
 
 from dataclasses import dataclass
-from mutagen import File
+from mutagen._file import File
+
 from light_api.client import Light
 from open_api_specification_client.api.default import (
     delete_api_audios_audio_id,
@@ -17,6 +19,7 @@ from open_api_specification_client.api.default import (
     patch_api_playlist_items_playlist_item_id,
     post_api_audios,
     post_api_playlists_sort_mode,
+    post_api_audios_delete_all,
 )
 from open_api_specification_client.models import (
     PatchApiAudiosAudioIdBody,
@@ -31,6 +34,7 @@ from open_api_specification_client.models import (
     PostApiAudiosBodyData,
     PostApiAudiosBodyDataAttributes,
     PostApiAudiosBodyDataType,
+    PostApiAudiosDeleteAllBody,
     PostApiPlaylistsSortModeBody,
     PostApiPlaylistsSortModeBodySortMode,
 )
@@ -45,7 +49,7 @@ class LightTrack:
     presigned_url: str
     title: str
     artist: str
-    album: str  # unused, but Light makes it available
+    album: str  # unused by Light, but they make it available
 
 
 class SortMode(StrEnum):
@@ -62,7 +66,6 @@ class SortMode(StrEnum):
 class LightMusic:
     def __init__(self, light: Light) -> None:
         self._l: Light = light
-
         self._tracks: list[LightTrack]  # lazily initialized
 
     def _init_tracks(self):
@@ -79,10 +82,11 @@ class LightMusic:
             Title-based sort modes (title_asc, title_desc) are custom, local-only modes and
             cannot be detected from the API.
         """
-        resp = self._l.call_api(lambda: get_api_playlists.sync_detailed(
+        resp = self._l.call_api(
+            get_api_playlists.sync_detailed,
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_id,
-        ))
+        )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get sort mode: {resp.status_code}")
 
@@ -105,14 +109,15 @@ class LightMusic:
                     else SortMode.ARTIST_ASC
                 )
 
-            resp = self._l.call_api(lambda: post_api_playlists_sort_mode.sync_detailed(
+            resp = self._l.call_api(
+                post_api_playlists_sort_mode.sync_detailed,
                 client=self._l._api_client,
                 body=PostApiPlaylistsSortModeBody(
                     playlist_id=self._l._playlist_id,
                     device_tool_id=self._l._device_tool_id,
                     sort_mode=PostApiPlaylistsSortModeBodySortMode(sort_mode),
                 ),
-            ))
+            )
             if not (200 <= resp.status_code < 300):
                 raise RuntimeError(f"Set sort mode: {resp.status_code}")
 
@@ -127,15 +132,19 @@ class LightMusic:
         Returns:
             List of LightTracks in the current playlist order.
         """
-        resp = self._l.call_api(lambda: get_api_playlist_items.sync_detailed(
+        resp = self._l.call_api(
+            get_api_playlist_items.sync_detailed,
             client=self._l._api_client,
             playlist_ids=self._l._playlist_id,
             device_tool_id=self._l._device_tool_id,
-        ))
+        )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get tracks: {resp.status_code}")
 
         body = resp.parsed
+
+        if not body.data:
+            return []
 
         file_attrs = {
             item.id: item.attributes for item in body.included if item.type_ == "files"
@@ -164,6 +173,22 @@ class LightMusic:
             for item in items
         ]
 
+    def delete_all_tracks(self) -> None:
+        """Delete all tracks from the device.
+
+        Note: In API mode, there is NO confirmation before this happens. (In CLI/TUI there is.)
+        If you're calling this method in API mode, I assume you know what you are doing.
+        """
+        resp = self._l.call_api(
+            post_api_audios_delete_all.sync_detailed,
+            client=self._l._api_client,
+            body=PostApiAudiosDeleteAllBody(device_tool_id=self._l._device_tool_id),
+        )
+        if not (200 <= resp.status_code < 300):
+            raise RuntimeError(f"Failed to delete all tracks: {resp.status_code}")
+        log.info("All tracks deleted")
+
+
     def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
 
@@ -180,10 +205,11 @@ class LightMusic:
 
         tracks_deleted = 0
         for track in to_delete:
-            resp = self._l.call_api(lambda aid=track.audio_id: delete_api_audios_audio_id.sync_detailed(
-                audio_id=aid,
+            resp = self._l.call_api(
+                delete_api_audios_audio_id.sync_detailed,
+                audio_id=track.audio_id,
                 client=self._l._api_client,
-            ))
+            )
 
             if not (200 <= resp.status_code < 300):
                 log.warning(f"Failed to delete {track.title!r}: {resp.status_code}")
@@ -243,6 +269,8 @@ class LightMusic:
                             "metadata" (default) reads the title from the file's ID3/audio tags.
                             "filename" uses the filename (without extension) as the title.
         """
+        manual_update_cmds = []
+
         if not allow_duplicates:
             titles: list[str]
 
@@ -265,18 +293,19 @@ class LightMusic:
                 log.warning(f"File not found, skipping: {file_path}")
                 continue
 
-            create_resp = self._l.call_api(lambda fp=file_path: post_api_audios.sync_detailed(
+            create_resp = self._l.call_api(
+                post_api_audios.sync_detailed,
                 client=self._l._api_client,
                 body=PostApiAudiosBody(
                     data=PostApiAudiosBodyData(
                         type_=PostApiAudiosBodyDataType.AUDIOS,
                         attributes=PostApiAudiosBodyDataAttributes(
-                            filename=os.path.basename(fp),
+                            filename=os.path.basename(file_path),
                             device_tool_id=self._l._device_tool_id,
                         ),
                     )
                 ),
-            ))
+            )
             if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
                 raise RuntimeError(
                     f"Create audio record for {os.path.basename(file_path)}: {create_resp.status_code}"
@@ -291,17 +320,34 @@ class LightMusic:
             with open(file_path, "rb") as f:
                 data = f.read()
 
+            content_type = mimetypes.guess_type(file_path)[0] or "audio/mpeg"
+
             put_resp = self._l._fetch(
                 presigned_url,
                 method="PUT",
-                headers={"Content-Type": "audio/mpeg"},
+                headers={"Content-Type": content_type},
                 data=data,
                 timeout=300_000,
             )
 
-            self._l._check_response(put_resp, f"upload {os.path.basename(file_path)}")
+            self._l._check_response(put_resp, f"Upload {os.path.basename(file_path)}")
+
+            # The Light API (from what I've seen) has an issue where it won't set title/artist
+            # metadata properly when uploading non-mp3 files, so give user list of commands to patch it
+            # manually after tracks are uploaded. Can't do it directly in this loop bc the files are still
+            # processing so the patch will fail
+            if content_type != "audio/mpeg":
+                path = os.path.basename(file_path)
+                f = File(file_path, easy=True)
+                title = f.get("title", ["Unknown"])[0] if f else "Unknown"
+                artist = f.get("artist", ["Unknown"])[0] if f else "Unknown"
+                cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}"'
+                manual_update_cmds.append(cmd)
 
         log.info("All uploads complete")
+
+        if len(manual_update_cmds) > 0:
+            log.warning("Manual metadata fixes needed:\n" + "\n".join(f"  {cmd} ;" for cmd in manual_update_cmds))
 
     def update_track_metadata(
         self, audio_id: str, title: str | None = None, artist: str | None = None
@@ -315,7 +361,8 @@ class LightMusic:
         """
         from open_api_specification_client.types import UNSET
 
-        resp = self._l.call_api(lambda: patch_api_audios_audio_id.sync_detailed(
+        resp = self._l.call_api(
+            patch_api_audios_audio_id.sync_detailed,
             audio_id=audio_id,
             client=self._l._api_client,
             body=PatchApiAudiosAudioIdBody(
@@ -328,11 +375,61 @@ class LightMusic:
                     ),
                 )
             ),
-        ))
+        )
         if not (200 <= resp.status_code < 300):
             raise RuntimeError(f"update metadata: {resp.status_code}")
 
         log.info("Metadata updated")
+
+    def reorder_subset(self, ordered_item_ids: list[str]) -> None:
+        """Reorder a subset of tracks among the position slots they currently occupy.
+
+        Args:
+            ordered_item_ids: playlist_item_ids in the desired order. Tracks on
+                device that match these ids are rearranged among their current
+                collective position slots; all other tracks are untouched.
+                Any matched tracks not present in ordered_item_ids are appended
+                at the end of the subset.
+        """
+        tracks = self.get_tracks()
+        id_to_track = {t.playlist_item_id: t for t in tracks}
+
+        target_set = set(ordered_item_ids)
+        slots = [i for i, t in enumerate(tracks) if t.playlist_item_id in target_set]
+
+        in_order_set = set(ordered_item_ids)
+        full_order = [iid for iid in ordered_item_ids if iid in id_to_track]
+        full_order += [t.playlist_item_id for t in tracks if t.playlist_item_id in target_set and t.playlist_item_id not in in_order_set]
+
+        # Build complete final ordering: non-targets keep their slots, targets fill in desired order
+        final_order = [t.playlist_item_id for t in tracks]
+        for slot, item_id in zip(slots, full_order):
+            final_order[slot] = item_id
+
+        self.set_sort_mode(SortMode.RANK)
+
+        original_positions = {t.playlist_item_id: i for i, t in enumerate(tracks)}
+
+        for new_position, item_id in enumerate(final_order):
+            if original_positions[item_id] == new_position:
+                continue
+            track = id_to_track[item_id]
+            resp = self._l.call_api(
+                patch_api_playlist_items_playlist_item_id.sync_detailed,
+                playlist_item_id=track.playlist_item_id,
+                client=self._l._api_client,
+                body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                        id=track.playlist_item_id,
+                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                            position=new_position,
+                        ),
+                    )
+                ),
+            )
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(f"reorder_subset position {new_position}: {resp.status_code}")
 
     def _sort_by_title(self, descending: bool = False) -> None:
         """Sort tracks on device by title.
@@ -362,7 +459,8 @@ class LightMusic:
             if original_positions[track.audio_id] == new_position:
                 continue
 
-            resp = patch_api_playlist_items_playlist_item_id.sync_detailed(
+            resp = self._l.call_api(
+                patch_api_playlist_items_playlist_item_id.sync_detailed,
                 playlist_item_id=track.playlist_item_id,
                 client=self._l._api_client,
                 body=PatchApiPlaylistItemsPlaylistItemIdBody(

@@ -102,15 +102,12 @@ class Light:
             headers=API_HEADERS,
         )
 
-    def call_api(self, func: "Callable[[], Any]") -> "Any":
-        """Call an API function, re-authenticating once on 401.
-
-        Usage: resp = self._l.call_api(lambda: get_api_foo.sync_detailed(...))
-        """
-        resp = func()
+    def call_api(self, func: "Callable[[], Any]", **kwargs: "Any") -> "Any":
+        """Call an API function, re-authenticating once on 401."""
+        resp = func(**kwargs)
         if resp.status_code == 401:
             self.reauth()
-            resp = func()
+            resp = func(**kwargs)
         return resp
 
     def __enter__(self) -> Light:
