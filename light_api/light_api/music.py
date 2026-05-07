@@ -167,7 +167,6 @@ class LightMusic:
             LightTrack(
                 playlist_item_id=item.id,
                 audio_id=(audio_id := item.relationships.audio.data.id),
-                or "",
                 title=audio_info[audio_id]["attrs"].title or "",
                 artist=audio_info[audio_id]["attrs"].artist or "",
                 album=audio_info[audio_id]["attrs"].album or "",
