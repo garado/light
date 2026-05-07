@@ -8,8 +8,10 @@ from typing import Any, Callable
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.containers import Horizontal
 from textual.screen import ModalScreen
-from textual.widgets import Button, DataTable, Input, Label, Static
+from textual.widget import Widget
+from textual.widgets import Button, ContentSwitcher, DataTable, Input, Label, Static
 
 from light_api.client import Light
 from light_api.music import LightTrack, SortMode
@@ -20,6 +22,8 @@ SORT_CYCLE: list[SortMode] = [
     SortMode.ARTIST_DESC,
     SortMode.TITLE_ASC,
     SortMode.TITLE_DESC,
+    SortMode.ARTIST_ALBUM_ASC,
+    SortMode.ARTIST_ALBUM_DESC,
 ]
 
 SORT_LABELS: dict[SortMode, str] = {
@@ -28,7 +32,11 @@ SORT_LABELS: dict[SortMode, str] = {
     SortMode.ARTIST_DESC: "artist z-a",
     SortMode.TITLE_ASC: "title a-z",
     SortMode.TITLE_DESC: "title z-a",
+    SortMode.ARTIST_ALBUM_ASC: "artist+album a-z",
+    SortMode.ARTIST_ALBUM_DESC: "artist+album z-a",
 }
+
+TABS = ["music", "notes", "podcasts"]
 
 
 @dataclass
@@ -41,12 +49,8 @@ class LightConfig:
     phone_file: str | None = None
 
 
-class PlaywrightThread:
-    """Runs a Light instance in a dedicated thread.
-
-    Playwright's sync API uses greenlets tied to the thread they were created on.
-    All Light/Playwright calls must be submitted to this thread via submit().
-    """
+class LightThread:
+    """Runs a Light instance in a dedicated background thread."""
 
     def __init__(self, config: LightConfig) -> None:
         self._config = config
@@ -88,7 +92,6 @@ class PlaywrightThread:
             self._ready.set()
 
     def submit(self, func: Callable[[Light], Any]) -> Any:
-        """Submit a function to run on the Playwright thread. Blocks until done."""
         future: Future[Any] = Future()
         self._queue.put((func, future))
         return future.result()
@@ -100,9 +103,7 @@ class PlaywrightThread:
 
 class ConfirmScreen(ModalScreen[bool]):
     CSS = """
-    ConfirmScreen {
-        align: center middle;
-    }
+    ConfirmScreen { align: center middle; }
     #dialog {
         padding: 1 3;
         background: $surface;
@@ -110,20 +111,8 @@ class ConfirmScreen(ModalScreen[bool]):
         width: auto;
         height: auto;
     }
-    #buttons {
-        margin-top: 1;
-        align: center middle;
-        width: auto;
-    }
-    Button {
-        margin: 0 1;
-    }
-    #header {
-        height: 3;
-        padding: 1 2;
-        background: $surface;
-        border-bottom: tall $primary;
-    }
+    #buttons { margin-top: 1; align: center middle; width: auto; }
+    Button { margin: 0 1; }
     """
 
     def __init__(self, message: str) -> None:
@@ -143,9 +132,7 @@ class ConfirmScreen(ModalScreen[bool]):
 
 class EditScreen(ModalScreen[tuple[str, str, str] | None]):
     CSS = """
-    EditScreen {
-        align: center middle;
-    }
+    EditScreen { align: center middle; }
     #dialog {
         padding: 1 3;
         background: $surface;
@@ -153,17 +140,9 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
         width: 50;
         height: auto;
     }
-    Input {
-        margin-top: 1;
-    }
-    #buttons {
-        margin-top: 1;
-        align: center middle;
-        width: auto;
-    }
-    Button {
-        margin: 0 1;
-    }
+    Input { margin-top: 1; }
+    #buttons { margin-top: 1; align: center middle; width: auto; }
+    Button { margin: 0 1; }
     """
 
     def __init__(self, track: LightTrack) -> None:
@@ -184,10 +163,7 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
         self.query_one("#title", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "save":
-            self.dismiss(self._get_values())
-        else:
-            self.dismiss(None)
+        self.dismiss(self._get_values() if event.button.id == "save" else None)
 
     def on_key(self, event) -> None:
         if event.key == "enter":
@@ -203,124 +179,190 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
         )
 
 
-class LightApp(App):
-    CSS = """
-    LightApp {
-        layout: vertical;
-    }
-    #header {
-        height: 3;
-        min-height: 3;
-        padding: 1 2;
-        background: $boost;
-        border-bottom: tall $primary;
-        color: $text;
-    }
-    DataTable {
-        height: 1fr;
-    }
-    #status {
-        height: 1;
-        padding: 0 1;
-        color: $text-muted;
-    }
-    """
-
-    BINDINGS = [
-        Binding("r", "refresh", "refresh"),
-        Binding("s", "sort", "sort"),
-        Binding("d", "delete", "delete"),
-        Binding("e", "edit", "edit"),
-        Binding("q", "quit", "quit"),
-        Binding("j", "cursor_down", show=False),
-        Binding("k", "cursor_up", show=False),
-        Binding("g", "scroll_home", show=False),
-        Binding("G", "scroll_end", show=False),
-        Binding("ctrl+d", "scroll_page_down", show=False),
-        Binding("ctrl+u", "scroll_page_up", show=False),
-        Binding("ctrl+f", "scroll_page_down", show=False),
-        Binding("ctrl+b", "scroll_page_up", show=False),
-        Binding("J", "move_down", show=False),
-        Binding("K", "move_up", show=False),
-    ]
-
-    def __init__(self, config: LightConfig) -> None:
-        super().__init__()
-        self._config = config
-        self._pw: PlaywrightThread | None = None
+class MusicPane(Widget):
+    def __init__(self) -> None:
+        super().__init__(id="music")
         self._tracks: list[LightTrack] = []
+        self._filtered_tracks: list[LightTrack] = []
         self._sort_index: int = 0
-        self._pending_sort_index: int | None = (
-            None  # set while cycling, not yet applied
-        )
+        self._pending_sort_index: int | None = None
+        self._last_key: str = ""
+        self._count_str: str = ""
+        self._search_mode: bool = False
+
+    @property
+    def _pw(self) -> LightThread | None:
+        return self.app._pw  # type: ignore[attr-defined]
 
     def compose(self) -> ComposeResult:
-        yield Static("", id="header")
+        yield Static("", id="music-header")
         yield DataTable()
-        yield Static("connecting...", id="status")
+        yield Input(placeholder="/  search...", id="search-bar")
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
         table.cursor_type = "row"
-        table.show_header = False
-        table.add_columns("title", "artist")
-        self.run_worker(self._init_playwright, exclusive=True, thread=True)
+        table.show_header = True
+        table.add_columns("title", "artist", "album")
+        self.query_one("#search-bar", Input).display = False
+        table.focus()
 
     def _set_status(self, text: str) -> None:
-        self.query_one("#status", Static).update(text)
+        self.app.query_one("#status", Static).update(text)
 
     def _set_header(self, track: LightTrack | None) -> None:
         if track is None:
-            self.query_one("#header", Static).update("")
+            self.query_one("#music-header", Static).update("")
             return
         parts = [track.title, track.artist]
         if track.album:
             parts.append(track.album)
-        self.query_one("#header", Static).update("  ·  ".join(parts))
+        self.query_one("#music-header", Static).update("  ·  ".join(parts))
 
     def _populate_table(self, tracks: list[LightTrack]) -> None:
         table = self.query_one(DataTable)
         table.clear()
         for track in tracks:
-            table.add_row(track.title, track.artist, key=track.audio_id)
+            table.add_row(track.title, track.artist, track.album, key=track.audio_id)
 
-    # --- playwright init ---
+    # --- search ---
 
-    def _init_playwright(self) -> None:
-        pw = PlaywrightThread(self._config)
-        pw.start()
-        self._pw = pw
-        self.call_from_thread(self.action_refresh)
+    def _start_search(self) -> None:
+        self._search_mode = True
+        search = self.query_one("#search-bar", Input)
+        search.display = True
+        search.value = ""
+        search.focus()
 
-    def on_unmount(self) -> None:
-        if self._pw is not None:
-            self.run_worker(self._pw.shutdown, thread=True)
+    def _stop_search(self) -> None:
+        self._search_mode = False
+        search = self.query_one("#search-bar", Input)
+        search.display = False
+        search.value = ""
+        self._filtered_tracks = list(self._tracks)
+        self._populate_table(self._filtered_tracks)
+        self.query_one(DataTable).focus()
 
-    # --- vim navigation ---
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id != "search-bar":
+            return
+        q = event.value.lower()
+        self._filtered_tracks = (
+            [
+                t for t in self._tracks
+                if q in t.title.lower() or q in t.artist.lower() or q in t.album.lower()
+            ]
+            if q else list(self._tracks)
+        )
+        self._populate_table(self._filtered_tracks)
 
-    def action_cursor_down(self) -> None:
-        self.query_one(DataTable).action_cursor_down()
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "search-bar":
+            self._stop_search()
 
-    def action_cursor_up(self) -> None:
-        self.query_one(DataTable).action_cursor_up()
+    # --- key handling ---
 
-    def action_scroll_home(self) -> None:
-        self.query_one(DataTable).action_scroll_home()
+    def on_key(self, event) -> None:
+        if self._search_mode:
+            if event.key == "escape":
+                self._stop_search()
+                event.stop()
+            return
 
-    def action_scroll_end(self) -> None:
-        self.query_one(DataTable).action_scroll_end()
+        key = event.key
+        table = self.query_one(DataTable)
 
-    def action_scroll_page_down(self) -> None:
-        self.query_one(DataTable).action_scroll_page_down()
+        if self._pending_sort_index is not None:
+            if key == "enter":
+                event.stop()
+                pending = self._pending_sort_index
+                sort_mode = SORT_CYCLE[pending]
+                label = SORT_LABELS[sort_mode]
 
-    def action_scroll_page_up(self) -> None:
-        self.query_one(DataTable).action_scroll_page_up()
+                def on_confirm(confirmed: bool) -> None:
+                    if not confirmed:
+                        self._pending_sort_index = None
+                        self._update_status()
+                        return
+                    self._sort_index = pending
+                    self._pending_sort_index = None
+                    self._set_status(f"sorting by {label}...")
+                    self.app.run_worker(
+                        lambda: self._do_sort(sort_mode), exclusive=True, thread=True
+                    )
 
-    def action_move_down(self) -> None:
-        self._move_track(1)
+                self.app.push_screen(ConfirmScreen(f"apply sort: {label}?"), on_confirm)
+                self._last_key = key
+                return
+            elif key == "escape":
+                event.stop()
+                self._pending_sort_index = None
+                self._update_status()
+                self._last_key = key
+                return
 
-    def action_move_up(self) -> None:
-        self._move_track(-1)
+        if key.isdigit():
+            self._count_str += key
+            event.stop()
+            return
+
+        count = int(self._count_str) if self._count_str else 1
+        self._count_str = ""
+
+        if key == "j":
+            for _ in range(count):
+                table.action_cursor_down()
+            event.stop()
+        elif key == "k":
+            for _ in range(count):
+                table.action_cursor_up()
+            event.stop()
+        elif key == "g":
+            if self._last_key == "g":
+                table.move_cursor(row=0)
+                self._last_key = ""
+            else:
+                self._last_key = key
+            event.stop()
+            return
+        elif key == "G":
+            table.move_cursor(row=table.row_count - 1)
+            event.stop()
+        elif key in ("ctrl+d", "ctrl+f"):
+            table.action_scroll_page_down()
+            event.stop()
+        elif key in ("ctrl+u", "ctrl+b"):
+            table.action_scroll_page_up()
+            event.stop()
+        elif key == "J":
+            self._move_track(1)
+            event.stop()
+        elif key == "K":
+            self._move_track(-1)
+            event.stop()
+        elif key == "r":
+            self.action_refresh()
+            event.stop()
+        elif key == "s":
+            self._cycle_sort()
+            event.stop()
+        elif key == "d":
+            self.action_delete()
+            event.stop()
+        elif key == "e":
+            self.action_edit()
+            event.stop()
+        elif key == "slash":
+            self._start_search()
+            event.stop()
+        elif key == "h":
+            self.app.action_prev_tab()  # type: ignore[attr-defined]
+            event.stop()
+        elif key == "l":
+            self.app.action_next_tab()  # type: ignore[attr-defined]
+            event.stop()
+
+        self._last_key = key
 
     def _move_track(self, direction: int) -> None:
         if self._pw is None:
@@ -328,33 +370,26 @@ class LightApp(App):
         table = self.query_one(DataTable)
         row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
         audio_id = str(row_key.value)
-        i = next(
-            (idx for idx, t in enumerate(self._tracks) if t.audio_id == audio_id), None
-        )
+        i = next((idx for idx, t in enumerate(self._tracks) if t.audio_id == audio_id), None)
         if i is None:
             return
         j = i + direction
         if j < 0 or j >= len(self._tracks):
             return
-
         track = self._tracks[i]
         self._tracks[i], self._tracks[j] = self._tracks[j], self._tracks[i]
         self._populate_table(self._tracks)
         table.move_cursor(row=j)
-
-        self.run_worker(lambda: self._do_move(track, j), exclusive=True, thread=True)
+        self.app.run_worker(lambda: self._do_move(track, j), exclusive=True, thread=True)
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
-        from open_api_specification_client.api.default import (
-            patch_api_playlist_items_playlist_item_id,
-        )
+        from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
         from open_api_specification_client.models import (
             PatchApiPlaylistItemsPlaylistItemIdBody,
             PatchApiPlaylistItemsPlaylistItemIdBodyData,
             PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
             PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
         )
-
         assert self._pw is not None
 
         def _move(light):
@@ -376,22 +411,24 @@ class LightApp(App):
 
         self._pw.submit(_move)
 
-    # --- actions ---
-
     def action_refresh(self) -> None:
         if self._pw is None:
             return
         self._set_status("loading...")
-        self.run_worker(self._load_tracks, exclusive=True, thread=True)
+        self.app.run_worker(self._load_tracks, exclusive=True, thread=True)
 
     def _load_tracks(self) -> None:
         assert self._pw is not None
         tracks = self._pw.submit(lambda light: light.music.get_tracks())
-        self.call_from_thread(self._on_tracks_loaded, tracks)
+        sort_mode = self._pw.submit(lambda light: light.music.get_sort_mode())
+        self.app.call_from_thread(self._on_tracks_loaded, tracks, sort_mode)
 
-    def _on_tracks_loaded(self, tracks: list[LightTrack]) -> None:
+    def _on_tracks_loaded(self, tracks: list[LightTrack], sort_mode: SortMode | None = None) -> None:
         self._tracks = tracks
+        self._filtered_tracks = list(tracks)
         self._pending_sort_index = None
+        if sort_mode is not None and sort_mode in SORT_CYCLE:
+            self._sort_index = SORT_CYCLE.index(sort_mode)
         self._populate_table(tracks)
         self._update_status()
         self._set_header(tracks[0] if tracks else None)
@@ -412,51 +449,21 @@ class LightApp(App):
             )
         else:
             self._set_status(
-                f"{len(self._tracks)} tracks  |  sort: {sort_label}  |  r refresh  s sort  d delete  e edit  q quit"
+                f"{len(self._tracks)} tracks  |  sort: {sort_label}  |  r refresh  s sort  d delete  e edit  / search  h/l tabs  q quit"
             )
 
-    def action_sort(self) -> None:
+    def _cycle_sort(self) -> None:
         if self._pw is None:
             return
-        base = (
-            self._pending_sort_index
-            if self._pending_sort_index is not None
-            else self._sort_index
-        )
+        base = self._pending_sort_index if self._pending_sort_index is not None else self._sort_index
         self._pending_sort_index = (base + 1) % len(SORT_CYCLE)
         self._update_status()
-
-    def on_key(self, event) -> None:
-        if self._pending_sort_index is not None:
-            if event.key == "enter":
-                event.stop()
-                pending = self._pending_sort_index
-                sort_mode = SORT_CYCLE[pending]
-                label = SORT_LABELS[sort_mode]
-
-                def on_confirm(confirmed: bool) -> None:
-                    if not confirmed:
-                        self._pending_sort_index = None
-                        self._update_status()
-                        return
-                    self._sort_index = pending
-                    self._pending_sort_index = None
-                    self._set_status(f"sorting by {label}...")
-                    self.run_worker(
-                        lambda: self._do_sort(sort_mode), exclusive=True, thread=True
-                    )
-
-                self.push_screen(ConfirmScreen(f"apply sort: {label}?"), on_confirm)
-            elif event.key == "escape":
-                event.stop()
-                self._pending_sort_index = None
-                self._update_status()
 
     def _do_sort(self, sort_mode: SortMode) -> None:
         assert self._pw is not None
         self._pw.submit(lambda light: light.music.set_sort_mode(sort_mode))
         tracks = self._pw.submit(lambda light: light.music.get_tracks())
-        self.call_from_thread(self._on_tracks_loaded, tracks)
+        self.app.call_from_thread(self._on_tracks_loaded, tracks)
 
     def action_delete(self) -> None:
         if self._pw is None:
@@ -470,7 +477,7 @@ class LightApp(App):
         if track is None:
             return
         self._set_status(f"deleting: {track.title}...")
-        self.run_worker(lambda: self._do_delete(track), exclusive=True, thread=True)
+        self.app.run_worker(lambda: self._do_delete(track), exclusive=True, thread=True)
 
     def _do_delete(self, track: LightTrack) -> None:
         assert self._pw is not None
@@ -480,7 +487,7 @@ class LightApp(App):
             )
         )
         tracks = self._pw.submit(lambda light: light.music.get_tracks())
-        self.call_from_thread(self._on_tracks_loaded, tracks)
+        self.app.call_from_thread(self._on_tracks_loaded, tracks)
 
     def action_edit(self) -> None:
         if self._pw is None:
@@ -499,13 +506,13 @@ class LightApp(App):
                 return
             new_title, new_artist, new_album = result
             self._set_status(f"saving: {new_title}...")
-            self.run_worker(
+            self.app.run_worker(
                 lambda: self._do_edit(track, new_title, new_artist, new_album),
                 exclusive=True,
                 thread=True,
             )
 
-        self.push_screen(EditScreen(track), on_edit)
+        self.app.push_screen(EditScreen(track), on_edit)
 
     def _do_edit(self, track: LightTrack, title: str, artist: str, album: str) -> None:
         assert self._pw is not None
@@ -515,7 +522,125 @@ class LightApp(App):
             )
         )
         tracks = self._pw.submit(lambda light: light.music.get_tracks())
-        self.call_from_thread(self._on_tracks_loaded, tracks)
+        self.app.call_from_thread(self._on_tracks_loaded, tracks)
+
+
+class NotesPane(Widget):
+    def __init__(self) -> None:
+        super().__init__(id="notes")
+
+    def compose(self) -> ComposeResult:
+        yield Static("notes coming soon")
+
+
+class PodcastsPane(Widget):
+    def __init__(self) -> None:
+        super().__init__(id="podcasts")
+
+    def compose(self) -> ComposeResult:
+        yield Static("podcasts coming soon")
+
+
+class LightApp(App):
+    CSS = """
+    LightApp { layout: vertical; }
+
+    #tab-bar {
+        height: 1;
+        background: $surface;
+    }
+    .tab-label {
+        padding: 0 2;
+        color: $text-muted;
+    }
+    .tab-label.active {
+        color: $text;
+        background: $boost;
+    }
+
+    #music-header {
+        height: 2;
+        padding: 0 1;
+        background: $boost;
+        color: $text;
+    }
+    ContentSwitcher { height: 1fr; margin: 0; padding: 0; }
+    MusicPane { layout: vertical; height: 1fr; margin: 0; padding: 0; overflow: hidden hidden; }
+    DataTable { height: 1fr; }
+    #search-bar {
+        height: 1;
+        border: none;
+        padding: 0 1;
+    }
+
+    #status {
+        height: 1;
+        padding: 0 1;
+        color: $text-muted;
+    }
+    """
+
+    BINDINGS = [
+        Binding("q", "quit", "quit"),
+        Binding("ctrl+c", "quit", "quit", show=False),
+        Binding("h", "prev_tab", show=False),
+        Binding("l", "next_tab", show=False),
+    ]
+
+    def __init__(self, config: LightConfig) -> None:
+        super().__init__()
+        self._config = config
+        self._pw: LightThread | None = None
+        self._tab_index: int = 0
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="tab-bar"):
+            for tab in TABS:
+                yield Static(tab, id=f"tab-{tab}", classes="tab-label")
+        with ContentSwitcher(initial="music"):
+            yield MusicPane()
+            yield NotesPane()
+            yield PodcastsPane()
+        yield Static("connecting...", id="status")
+
+    def on_mount(self) -> None:
+        self._update_tab_bar()
+        self.run_worker(self._init_light, exclusive=True, thread=True)
+
+    def _update_tab_bar(self) -> None:
+        for i, tab in enumerate(TABS):
+            label = self.query_one(f"#tab-{tab}", Static)
+            if i == self._tab_index:
+                label.add_class("active")
+            else:
+                label.remove_class("active")
+
+    def _init_light(self) -> None:
+        pw = LightThread(self._config)
+        pw.start()
+        self._pw = pw
+        self.call_from_thread(self._on_light_ready)
+
+    def _on_light_ready(self) -> None:
+        self.query_one(MusicPane).action_refresh()
+
+    def on_unmount(self) -> None:
+        if self._pw is not None:
+            self.run_worker(self._pw.shutdown, thread=True)
+
+    def action_prev_tab(self) -> None:
+        self._tab_index = (self._tab_index - 1) % len(TABS)
+        self._switch_tab()
+
+    def action_next_tab(self) -> None:
+        self._tab_index = (self._tab_index + 1) % len(TABS)
+        self._switch_tab()
+
+    def _switch_tab(self) -> None:
+        self.query_one(ContentSwitcher).current = TABS[self._tab_index]
+        self._update_tab_bar()
+        if TABS[self._tab_index] == "music":
+            self.query_one(MusicPane).query_one(DataTable).focus()
 
 
 def run_tui(config: LightConfig) -> None:
