@@ -72,6 +72,7 @@ class Light:
         if not resp.is_success:
             raise RuntimeError(f"Login failed: {resp.status_code}")
 
+        # search for bearer token in response
         token = next(
             (
                 i["attributes"]["token"]
@@ -107,6 +108,7 @@ class Light:
         return resp
 
     def __enter__(self) -> Light:
+        """Sets up API session."""
         log.info("Authenticating")
 
         if self._load_cache() and self._validate_cache():
@@ -140,6 +142,7 @@ class Light:
         pass
 
     def _load_cache(self) -> bool:
+        """Load cached data from keyring."""
         log.debug("Loading cache")
 
         try:
@@ -166,6 +169,7 @@ class Light:
             return False
 
     def _save_cache(self) -> None:
+        """Cache data to keyring."""
         try:
             keyring.set_password(
                 KEYRING_SERVICE,
@@ -184,6 +188,7 @@ class Light:
             log.warning(f"Keyring error: {e}")
 
     def _validate_cache(self) -> bool:
+        """Check if cached auth token is valid."""
         client = AuthenticatedClient(
             base_url=API_BASE,
             token=self._api_token,

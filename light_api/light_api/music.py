@@ -47,10 +47,9 @@ log = logging.getLogger(f"light.{__name__}")
 class LightTrack:
     playlist_item_id: str
     audio_id: str
-    presigned_url: str
     title: str
     artist: str
-    album: str  # unused by Light, but they make it available
+    album: str  # unused by dashboard, but they make it available
 
 
 class SortMode(StrEnum):
@@ -79,11 +78,10 @@ class LightMusic:
         """Get the current sort mode.
 
         Returns:
-            The currently-applied sort mode: artists_asc, artists_desc, or rank (unsorted).
+            The currently-applied stock sort mode: artists_asc, artists_desc, or rank (unsorted).
 
         Note:
-            Title-based sort modes (title_asc, title_desc) are custom, local-only modes and
-            cannot be detected from the API.
+            Doesn't report custom sort modes like artist-album or title.
         """
         resp = self._l.call_api(
             get_api_playlists.sync_detailed,
@@ -169,7 +167,6 @@ class LightMusic:
             LightTrack(
                 playlist_item_id=item.id,
                 audio_id=(audio_id := item.relationships.audio.data.id),
-                presigned_url=file_attrs[audio_info[audio_id]["file_id"]].presigned_url
                 or "",
                 title=audio_info[audio_id]["attrs"].title or "",
                 artist=audio_info[audio_id]["attrs"].artist or "",
