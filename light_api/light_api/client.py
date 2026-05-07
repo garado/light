@@ -67,6 +67,7 @@ class Light:
             f"{API_BASE}/api/authorizations",
             json={"email": self.email, "password": self.password},
             headers=API_HEADERS,
+            timeout=30,
         )
 
         if not resp.is_success:
