@@ -59,20 +59,11 @@ class LightPodcasts:
     def __init__(self, light: "Light") -> None:
         self._l = light
 
-    def _ensure_device_tool_id(self) -> str:
-        if self._l._podcast_device_tool_id is None:
-            self._l._fetch_podcast_device_tool_id()
-            self._l._save_cache()
-        assert self._l._podcast_device_tool_id is not None
-        return self._l._podcast_device_tool_id
-
     def get_podcasts(self) -> list[LightPodcast]:
         """Fetch all followed podcasts for this device."""
-        device_tool_id = self._ensure_device_tool_id()
-
         resp = get_api_followed_podcasts.sync_detailed(
             client=self._l._api_client,
-            device_tool_id=device_tool_id,
+            device_tool_id=self._l._device_tool_ids["podcast"],
         )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get podcasts: {resp.status_code}")
@@ -126,7 +117,7 @@ class LightPodcasts:
 
         Registers the podcast globally then follows it on the device.
         """
-        device_tool_id = self._ensure_device_tool_id()
+        device_tool_id = self._l._device_tool_ids["podcast"]
 
         create_resp = post_api_podcasts.sync_detailed(
             client=self._l._api_client,

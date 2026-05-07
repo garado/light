@@ -46,10 +46,8 @@ class Light:
         )
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
-        self._device_tool_id: str | None = None
+        self._device_tool_ids: dict[str, str] = {}
         self._playlist_id: str | None = None
-        self._podcast_device_tool_id: str | None = None
-        self._notes_device_tool_id: str | None = None
 
         self.music: LightMusic
         self.podcast: LightPodcasts
@@ -66,22 +64,15 @@ class Light:
         resp = httpx.post(
             f"{API_BASE}/api/authorizations",
             json={"email": self.email, "password": self.password},
-            headers=API_HEADERS,
+            headers={**API_HEADERS, "Content-Type": "application/vnd.api+json"},
             timeout=30,
         )
 
         if not resp.is_success:
             raise RuntimeError(f"Login failed: {resp.status_code}")
 
-        # search for bearer token in response
-        token = next(
-            (
-                i["attributes"]["token"]
-                for i in resp.json()["included"]
-                if i["type"] == "tokens"
-            ),
-            None,
-        )
+        included = resp.json()["included"][0]
+        token = included["attributes"]["token"]
 
         if token is None:
             raise RuntimeError("Login succeeded but no token found in response")
@@ -124,8 +115,10 @@ class Light:
             headers=API_HEADERS,
         )
 
-        if not self._device_tool_id or not self._playlist_id:
-            self._fetch_device_tool_id()
+        expected = {"music", "notes", "podcast"}
+        if not expected.issubset(self._device_tool_ids) or not self._playlist_id:
+            self._fetch_device_tool_ids()
+            self._fetch_playlist_id()
             self._save_cache()
 
         from light_api.music import LightMusic
@@ -159,10 +152,8 @@ class Light:
         try:
             data = json.loads(raw)
             self._api_token = data["api_token"]
-            self._device_tool_id = data["device_tool_id"]
+            self._device_tool_ids = data["device_tool_ids"]
             self._playlist_id = data["playlist_id"]
-            self._podcast_device_tool_id = data.get("podcast_device_tool_id")
-            self._notes_device_tool_id = data.get("notes_device_tool_id")
             log.debug("Cache loaded successfully")
             return True
         except (KeyError, json.JSONDecodeError) as e:
@@ -178,10 +169,8 @@ class Light:
                 json.dumps(
                     {
                         "api_token": self._api_token,
-                        "device_tool_id": self._device_tool_id,
+                        "device_tool_ids": self._device_tool_ids,
                         "playlist_id": self._playlist_id,
-                        "podcast_device_tool_id": self._podcast_device_tool_id,
-                        "notes_device_tool_id": self._notes_device_tool_id,
                     }
                 ),
             )
@@ -197,40 +186,50 @@ class Light:
         )
         resp = get_api_playlists.sync_detailed(
             client=client,
-            device_tool_id=self._device_tool_id,
+            device_tool_id=self._device_tool_ids.get("music"),
         )
         return resp.status_code == 200
 
-    def _fetch_device_tool_id(self) -> None:
-        """Fetch music device_tool_id and playlist_id from the playlists API."""
-        resp = get_api_playlists.sync_detailed(client=self._api_client)
+    def _fetch_playlist_id(self) -> None:
+        music_id = self._device_tool_ids.get("music")
+        if not music_id:
+            raise RuntimeError("Could not find music device_tool_id in /api/devices")
+        resp = get_api_playlists.sync_detailed(
+            client=self._api_client,
+            device_tool_id=music_id,
+        )
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(f"Could not fetch device_tool_id: {resp.status_code}")
-        playlist = resp.parsed.data[0]
-        self._playlist_id = playlist.id
-        self._device_tool_id = playlist.attributes.device_tool_id
+            raise RuntimeError(f"Could not fetch playlists: {resp.status_code}")
+        self._playlist_id = resp.parsed.data[0].id
 
-    def _fetch_notes_device_tool_id(self) -> None:
-        """Fetch notes device_tool_id from the notes API."""
-        from open_api_specification_client.api.default import get_api_notes
+    def _fetch_device_tool_ids(self) -> None:
+        """Populate _device_tool_ids by cross-referencing /api/devices and /api/tools."""
+        from open_api_specification_client.api.default import get_api_devices, get_api_tools
+        from open_api_specification_client.types import Unset
 
-        resp = get_api_notes.sync_detailed(client=self._api_client)
-        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(
-                "Could not fetch notes device_tool_id: no notes on device - add a note first"
-            )
-        self._notes_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
+        devices_resp = get_api_devices.sync_detailed(client=self._api_client)
+        if devices_resp.status_code != 200 or not devices_resp.parsed or not devices_resp.parsed.data:
+            raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
+        device_id = devices_resp.parsed.data[0].id
 
-    def _fetch_podcast_device_tool_id(self) -> None:
-        """Fetch podcast device_tool_id from the followed podcasts API."""
-        from open_api_specification_client.api.default import get_api_followed_podcasts
+        tools_resp = get_api_tools.sync_detailed(client=self._api_client, device_id=device_id)
+        if tools_resp.status_code != 200 or not tools_resp.parsed:
+            raise RuntimeError(f"Could not fetch tools: {tools_resp.status_code}")
 
-        resp = get_api_followed_podcasts.sync_detailed(client=self._api_client)
-        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(
-                "Could not fetch podcast device_tool_id: no podcasts on device - add one first"
-            )
-        self._podcast_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
+        tool_ns: dict[str, str] = {
+            t.id: t.attributes.namespace.lower() for t in tools_resp.parsed.data
+        }
+
+        for item in devices_resp.parsed.included:
+            if isinstance(item.relationships.tool, Unset):
+                continue
+            ns = tool_ns.get(item.relationships.tool.data.id, "")
+            if "note" in ns:
+                self._device_tool_ids["notes"] = item.id
+            elif "podcast" in ns:
+                self._device_tool_ids["podcast"] = item.id
+            elif "music" in ns or "playlist" in ns:
+                self._device_tool_ids["music"] = item.id
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str | None:

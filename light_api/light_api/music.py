@@ -86,7 +86,7 @@ class LightMusic:
         resp = self._l.call_api(
             get_api_playlists.sync_detailed,
             client=self._l._api_client,
-            device_tool_id=self._l._device_tool_id,
+            device_tool_id=self._l._device_tool_ids["music"],
         )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get sort mode: {resp.status_code}")
@@ -115,7 +115,7 @@ class LightMusic:
                 client=self._l._api_client,
                 body=PostApiPlaylistsSortModeBody(
                     playlist_id=self._l._playlist_id,
-                    device_tool_id=self._l._device_tool_id,
+                    device_tool_id=self._l._device_tool_ids["music"],
                     sort_mode=PostApiPlaylistsSortModeBodySortMode(sort_mode),
                 ),
             )
@@ -139,7 +139,7 @@ class LightMusic:
             get_api_playlist_items.sync_detailed,
             client=self._l._api_client,
             playlist_ids=self._l._playlist_id,
-            device_tool_id=self._l._device_tool_id,
+            device_tool_id=self._l._device_tool_ids["music"],
         )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Get tracks: {resp.status_code}")
@@ -183,7 +183,7 @@ class LightMusic:
         resp = self._l.call_api(
             post_api_audios_delete_all.sync_detailed,
             client=self._l._api_client,
-            body=PostApiAudiosDeleteAllBody(device_tool_id=self._l._device_tool_id),
+            body=PostApiAudiosDeleteAllBody(device_tool_id=self._l._device_tool_ids["music"]),
         )
         if not (200 <= resp.status_code < 300):
             raise RuntimeError(f"Failed to delete all tracks: {resp.status_code}")
@@ -301,7 +301,7 @@ class LightMusic:
                         type_=PostApiAudiosBodyDataType.AUDIOS,
                         attributes=PostApiAudiosBodyDataAttributes(
                             filename=os.path.basename(file_path),
-                            device_tool_id=self._l._device_tool_id,
+                            device_tool_id=self._l._device_tool_ids["music"],
                         ),
                     )
                 ),

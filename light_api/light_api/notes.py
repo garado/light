@@ -1,5 +1,6 @@
 """Notes management for Light devices."""
 
+import httpx
 import logging
 import os
 from collections import Counter
@@ -30,7 +31,6 @@ log = logging.getLogger(f"light.{__name__}")
 class LightNote:
     id: str
     file_id: str
-    presigned_url: str  # PUT URL for uploading content
     note_type: str
     title: str
     updated_at: str
@@ -39,13 +39,6 @@ class LightNote:
 class LightNotes:
     def __init__(self, light: "Light") -> None:
         self._l = light
-
-    def _ensure_device_tool_id(self) -> str:
-        if self._l._notes_device_tool_id is None:
-            self._l._fetch_notes_device_tool_id()
-            self._l._save_cache()
-        assert self._l._notes_device_tool_id is not None
-        return self._l._notes_device_tool_id
 
     def get_note_content(self, note: LightNote) -> bytes:
         """Fetch the content of a note as raw bytes.
@@ -59,25 +52,21 @@ class LightNotes:
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Presigned get URL for {note.id}: {resp.status_code}")
 
-        content_resp = self._l._fetch(resp.parsed.presigned_get_url, method="GET")
-        return content_resp.body()
+        content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
+        if not content_resp.is_success:
+            raise RuntimeError(f"Download note {note.id}: {content_resp.status_code}")
+        return content_resp.content
 
     def get_notes(self) -> list["LightNote"]:
         """Fetch metadata for all notes."""
-        device_tool_id = self._ensure_device_tool_id()
-
         resp = get_api_notes.sync_detailed(
             client=self._l._api_client,
-            device_tool_id=device_tool_id,
+            device_tool_id=self._l._device_tool_ids["notes"],
         )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"List notes: {resp.status_code}")
 
         body = resp.parsed
-        if len(body.data) != len(body.included):
-            raise RuntimeError(
-                f"Expected {len(body.data)} included items, got {len(body.included)}"
-            )
 
         return [
             LightNote(
@@ -86,19 +75,16 @@ class LightNotes:
                 note_type=data.attributes.note_type,
                 title=data.attributes.title,
                 updated_at=data.attributes.updated_at,
-                presigned_url=included.attributes.presigned_url,
             )
-            for data, included in zip(body.data, body.included)
+            for data in body.data
         ]
 
     def get_note_metadata(self, note_id: str) -> "LightNote":
         """Fetch metadata for a single note."""
-        device_tool_id = self._ensure_device_tool_id()
-
         resp = get_api_notes_note_id.sync_detailed(
             note_id=note_id,
             client=self._l._api_client,
-            device_tool_id=device_tool_id,
+            device_tool_id=self._l._device_tool_ids["notes"],
         )
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Fetching note {note_id}: {resp.status_code}")
@@ -110,7 +96,6 @@ class LightNotes:
             note_type=body.data.attributes.note_type,
             title=body.data.attributes.title,
             updated_at=body.data.attributes.updated_at,
-            presigned_url=body.included[0].attributes.presigned_url,
         )
 
     def download_notes(self, dest: str) -> None:
@@ -152,15 +137,13 @@ class LightNotes:
             content: Note content, or a file path if content_is_path is True.
             content_is_path: If True, read content from the given path.
         """
-        device_tool_id = self._ensure_device_tool_id()
-
         resp = post_api_notes.sync_detailed(
             client=self._l._api_client,
             body=PostApiNotesBody(
                 data=PostApiNotesBodyData(
                     type_=PostApiNotesBodyDataType.NOTES,
                     attributes=PostApiNotesBodyDataAttributes(
-                        device_tool_id=device_tool_id,
+                        device_tool_id=self._l._device_tool_ids["notes"],
                         filename="note.txt",
                         note_type=PostApiNotesBodyDataAttributesNoteType.TEXT,
                         title=title,
@@ -179,6 +162,9 @@ class LightNotes:
         else:
             _content = content
 
-        self._l._fetch(presigned_url, method="PUT", data=_content)
+        body = _content.encode() if isinstance(_content, str) else _content
+        put_resp = httpx.put(presigned_url, content=body, timeout=30)
+        if not put_resp.is_success:
+            raise RuntimeError(f"Upload note content: {put_resp.status_code}")
 
         log.info("Note saved")
