@@ -10,6 +10,7 @@ dependencies = [
     "rich_click",
     "rich",
     "textual",
+    "pyperclip",
     "light_api",
 ]
 

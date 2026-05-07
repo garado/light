@@ -598,7 +598,7 @@ class NotesPane(Widget):
 
     def update_status(self) -> None:
         self._set_status(
-            f"{len(self._notes)} notes  |  j/k nav  enter load note  p play/stop audio  r refresh  h/l tabs  q quit"
+            f"{len(self._notes)} notes  |  j/k nav  enter load  y copy  e editor  p play/stop  r refresh  h/l tabs  q quit"
         )
 
     def refresh_header(self) -> None:
@@ -752,6 +752,12 @@ class NotesPane(Widget):
         elif key == "p":
             self._toggle_audio()
             event.stop()
+        elif key == "y":
+            self._copy_to_clipboard()
+            event.stop()
+        elif key == "e":
+            self._open_in_editor()
+            event.stop()
         elif key == "r":
             self.action_refresh()
             event.stop()
@@ -765,6 +771,44 @@ class NotesPane(Widget):
             event.stop()
 
         self._last_key = key
+
+    def _copy_to_clipboard(self) -> None:
+        import pyperclip
+        note = self._current_note()
+        if note is None or note.note_type == "audio":
+            self._set_status("clipboard: no text content")
+            return
+        content = self._content_cache.get(note.id)
+        if content is None:
+            self._set_status("load note first with enter")
+            self.set_timer(2, self.update_status)
+            return
+        pyperclip.copy(content.decode("utf-8", errors="replace"))
+        self._set_status("copied to clipboard")
+        self.set_timer(2, self.update_status)
+
+    def _open_in_editor(self) -> None:
+        note = self._current_note()
+        if note is None or note.note_type == "audio":
+            self._set_status("editor: no text content")
+            return
+        content = self._content_cache.get(note.id)
+        if content is None:
+            self._set_status("load note first with enter")
+            self.set_timer(2, self.update_status)
+            return
+        editor = os.environ.get("EDITOR", "nano")
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False, mode="wb") as f:
+            f.write(content)
+            tmpfile = f.name
+        try:
+            with self.app.suspend():
+                subprocess.run([editor, tmpfile])
+        finally:
+            try:
+                os.unlink(tmpfile)
+            except OSError:
+                pass
 
     def _set_status(self, text: str) -> None:
         if self.app._active_pane == "notes":  # type: ignore[attr-defined]
