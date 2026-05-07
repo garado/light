@@ -3883,6 +3883,138 @@
       }
     }
   },
+  "/api/device_tools": {
+    "post": {
+      "summary": "Install a tool on a device",
+      "description": "**Host**: http://production.lightphonecloud.com",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["device_tools"]
+                    },
+                    "attributes": {
+                      "type": "object",
+                      "properties": {
+                        "device_id": { "type": "string" },
+                        "tool_id": { "type": "string" },
+                        "calendar": { "type": "boolean" }
+                      },
+                      "required": ["device_id", "tool_id"]
+                    }
+                  },
+                  "required": ["type", "attributes"]
+                }
+              },
+              "required": ["data"]
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Tool installed",
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "type": { "type": "string" },
+                      "attributes": {
+                        "type": "object",
+                        "properties": {
+                          "config": { "type": "object" },
+                          "deleted_at": { "type": "string", "nullable": true }
+                        }
+                      },
+                      "relationships": {
+                        "type": "object",
+                        "properties": {
+                          "device": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string" },
+                                  "type": { "type": "string" }
+                                },
+                                "required": ["id", "type"]
+                              }
+                            }
+                          },
+                          "tool": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string" },
+                                  "type": { "type": "string" }
+                                },
+                                "required": ["id", "type"]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "required": ["id", "type"]
+                  },
+                  "jsonapi": {
+                    "type": "object",
+                    "properties": {
+                      "version": { "type": "string" }
+                    }
+                  }
+                },
+                "required": ["data"]
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        { "bearer": [] },
+        { "apikey_header_authorization": [] }
+      ]
+    }
+  },
+  "/api/device_tools/{device_tool_id}": {
+    "delete": {
+      "summary": "Uninstall a tool from a device",
+      "description": "**Host**: http://production.lightphonecloud.com",
+      "parameters": [
+        {
+          "name": "device_tool_id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Tool uninstalled"
+        }
+      },
+      "security": [
+        { "bearer": [] },
+        { "apikey_header_authorization": [] }
+      ]
+    }
+  },
   "components": {
     "securitySchemes": {
       "bearer": {
