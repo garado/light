@@ -792,23 +792,37 @@ class NotesPane(Widget):
         if note is None or note.note_type == "audio":
             self._set_status("editor: no text content")
             return
-        content = self._content_cache.get(note.id)
-        if content is None:
+        original = self._content_cache.get(note.id)
+        if original is None:
             self._set_status("load note first with enter")
             self.set_timer(2, self.update_status)
             return
         editor = os.environ.get("EDITOR", "nano")
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False, mode="wb") as f:
-            f.write(content)
+            f.write(original)
             tmpfile = f.name
         try:
             with self.app.suspend():
                 subprocess.run([editor, tmpfile])
+            with open(tmpfile, "rb") as f:
+                updated = f.read()
         finally:
             try:
                 os.unlink(tmpfile)
             except OSError:
                 pass
+        if updated == original:
+            return
+        self._set_status("saving...")
+        self.app.run_worker(lambda: self._save_note(note, updated), thread=True)
+
+    def _save_note(self, note: LightNote, content: bytes) -> None:
+        assert self._pw is not None
+        self._pw.submit(lambda light: light.notes.update_note_content(note, content))
+        self._content_cache[note.id] = content
+        self.app.call_from_thread(self._show_text, content)
+        self.app.call_from_thread(self._set_status, "saved")
+        self.app.call_from_thread(self.set_timer, 2, self.update_status)
 
     def _set_status(self, text: str) -> None:
         if self.app._active_pane == "notes":  # type: ignore[attr-defined]

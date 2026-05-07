@@ -168,3 +168,18 @@ class LightNotes:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
 
         log.info("Note saved")
+
+    def update_note_content(self, note: "LightNote", content: bytes) -> None:
+        """Overwrite the content of an existing text note via its presigned upload URL."""
+        from open_api_specification_client.api.default import get_api_notes_note_id_generate_presigned_put_url
+        resp = self._l.call_api(
+            get_api_notes_note_id_generate_presigned_put_url.sync_detailed,
+            client=self._l._api_client,
+            note_id=note.id,
+        )
+        if resp.status_code != 200 or resp.parsed is None:
+            raise RuntimeError(f"Presigned put URL for {note.id}: {resp.status_code}")
+        put_resp = httpx.put(resp.parsed.presigned_put_url, content=content, timeout=30)
+        if not put_resp.is_success:
+            raise RuntimeError(f"Upload note content: {put_resp.status_code}")
+        log.info(f"Note {note.id} updated")
