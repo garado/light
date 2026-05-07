@@ -514,6 +514,32 @@ def notes_watch(light: Light, note_id: str):
             last_updated_at = note.updated_at
 
 
+# -- Tools commands ------------------------------------------------------------
+
+
+@cli.group()
+def tools():
+    """Installed tools introspection."""
+    pass
+
+
+@tools.command("list")
+@with_light
+def tools_list(light: Light):
+    """List all tools installed on your device."""
+    all_tools = light.tools.get_tools()
+
+    table = Table(show_header=True)
+    table.add_column("Title")
+    table.add_column("Namespace")
+    table.add_column("Device Tool ID", style="dim")
+
+    for t in all_tools:
+        table.add_row(t.title, t.namespace, t.device_tool_id)
+
+    console.print(table)
+
+
 # -- TUI ------------------------------------------------------------------------
 
 

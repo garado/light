@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from light_api.music import LightMusic
     from light_api.podcast import LightPodcasts
     from light_api.notes import LightNotes
+    from light_api.tools import LightTools
 
 KEYRING_SERVICE = "unofficial-light-api"
 KEYRING_USER = "session"
@@ -52,6 +53,7 @@ class Light:
         self.music: LightMusic
         self.podcast: LightPodcasts
         self.notes: LightNotes
+        self.tools: LightTools
 
     def login(self) -> None:
         """Authenticate via the authorizations API and store the bearer token."""
@@ -124,10 +126,12 @@ class Light:
         from light_api.music import LightMusic
         from light_api.podcast import LightPodcasts
         from light_api.notes import LightNotes
+        from light_api.tools import LightTools
 
         self.music = LightMusic(self)
         self.podcast = LightPodcasts(self)
         self.notes = LightNotes(self)
+        self.tools = LightTools(self)
 
         log.info("Authentication complete")
         return self
