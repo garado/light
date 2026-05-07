@@ -108,11 +108,12 @@ class LightThread:
 
 class ConfirmScreen(ModalScreen[bool]):
     CSS = """
-    ConfirmScreen { align: center middle; }
+    ConfirmScreen { align: center middle; background: transparent; }
     #dialog {
         padding: 1 3;
-        background: $surface;
-        border: tall $primary;
+        background: transparent;
+        border: solid $surface-lighten-2;
+        border-title-color: $text-muted;
         width: auto;
         height: auto;
     }
@@ -131,21 +132,30 @@ class ConfirmScreen(ModalScreen[bool]):
                 yield Button("yes", variant="error", id="yes")
                 yield Button("no", variant="default", id="no")
 
+    def on_mount(self) -> None:
+        self.query_one("#dialog").border_title = "confirm"
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(event.button.id == "yes")
 
 
 class EditScreen(ModalScreen[tuple[str, str, str] | None]):
     CSS = """
-    EditScreen { align: center middle; }
+    EditScreen { align: center middle; background: transparent; }
     #dialog {
         padding: 1 3;
-        background: $surface;
-        border: tall $primary;
+        background: transparent;
+        border: solid $surface-lighten-2;
+        border-title-color: $text-muted;
         width: 50;
         height: auto;
     }
-    Input { margin-top: 1; }
+    EditScreen Input {
+        margin-top: 1;
+        border: solid $surface-lighten-2;
+        background: transparent;
+    }
+    EditScreen Input:focus { border: solid $accent; }
     #buttons { margin-top: 1; align: center middle; width: auto; }
     Button { margin: 0 1; }
     """
@@ -156,7 +166,6 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
 
     def compose(self) -> ComposeResult:
         with Static(id="dialog"):
-            yield Label("edit track")
             yield Input(value=self._track.title, placeholder="title", id="title")
             yield Input(value=self._track.artist, placeholder="artist", id="artist")
             yield Input(value=self._track.album, placeholder="album", id="album")
@@ -165,6 +174,7 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
                 yield Button("cancel", variant="default", id="cancel")
 
     def on_mount(self) -> None:
+        self.query_one("#dialog").border_title = "edit track"
         self.query_one("#title", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -839,13 +849,20 @@ class PodcastsPane(Widget):
 
 class LightApp(App):
     CSS = """
-    LightApp { layout: vertical; }
+    Screen { background: transparent; }
+    LightApp { layout: vertical; background: transparent; }
 
-    ContentSwitcher { height: 1fr; margin: 0; padding: 0; }
+    ContentSwitcher { height: 1fr; margin: 0; padding: 0; background: transparent; }
+    DataTable { background: transparent; }
+    Static { background: transparent; }
+    VerticalScroll { background: transparent; }
+    VerticalScroll > * { background: transparent; }
+    Widget { background: transparent; }
 
     MusicPane {
         layout: vertical;
         height: 1fr;
+        background: transparent;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         border-subtitle-color: $text-muted;
@@ -857,21 +874,23 @@ class LightApp(App):
         height: 1;
         border: none;
         padding: 0 1;
-        background: $surface;
+        background: transparent;
     }
 
-    NotesPane { layout: horizontal; height: 1fr; }
+    NotesPane { layout: horizontal; height: 1fr; background: transparent; }
     #notes-sidebar {
         width: 34;
         height: 1fr;
+        background: transparent;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         border-subtitle-color: $text-muted;
     }
-    #notes-list { height: 1fr; }
+    #notes-list { height: 1fr; background: transparent; }
     #note-content {
         width: 1fr;
         height: 1fr;
+        background: transparent;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         padding: 1 2;
@@ -880,7 +899,7 @@ class LightApp(App):
     #status {
         height: 1;
         padding: 0 1;
-        background: $surface;
+        background: transparent;
         color: $text-muted;
     }
     """
