@@ -15,6 +15,7 @@ from typing import Any, Callable
 
 from light_api.client import Light
 from light_api.music import SortMode
+from light_api.tools import ToolName
 from light_cli_tui.tui import LightConfig, run_tui
 
 
@@ -532,12 +533,35 @@ def tools_list(light: Light):
     table = Table(show_header=True)
     table.add_column("Title")
     table.add_column("Namespace")
-    table.add_column("Device Tool ID", style="dim")
 
     for t in all_tools:
-        table.add_row(t.title, t.namespace, t.device_tool_id)
+        table.add_row(t.title, t.namespace)
 
     console.print(table)
+
+
+@tools.command("add")
+@with_light
+@click.argument(
+    "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
+)
+def tools_add(light: Light, name: str):
+    """Install a tool on your device."""
+    tool = light.tools.add_tool(name)
+    console.print(f"[green]Installed:[/green] {tool.title}")
+
+
+@tools.command("remove")
+@with_light
+@click.argument(
+    "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
+)
+def tools_remove(light: Light, name: str):
+    """Uninstall a tool from your device."""
+    if not click.confirm(f"Remove {name}?"):
+        return
+    light.tools.remove_tool(name)
+    console.print("[green]Removed.[/green]")
 
 
 # -- TUI ------------------------------------------------------------------------
