@@ -183,7 +183,9 @@ class LightMusic:
         resp = self._l.call_api(
             post_api_audios_delete_all.sync_detailed,
             client=self._l._api_client,
-            body=PostApiAudiosDeleteAllBody(device_tool_id=self._l._device_tool_ids["music"]),
+            body=PostApiAudiosDeleteAllBody(
+                device_tool_id=self._l._device_tool_ids["music"]
+            ),
         )
         if not (200 <= resp.status_code < 300):
             raise RuntimeError(f"Failed to delete all tracks: {resp.status_code}")

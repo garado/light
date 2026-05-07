@@ -203,16 +203,38 @@ class Light:
         self._playlist_id = resp.parsed.data[0].id
 
     def _fetch_device_tool_ids(self) -> None:
-        """Populate _device_tool_ids by cross-referencing /api/devices and /api/tools."""
-        from open_api_specification_client.api.default import get_api_devices, get_api_tools
+        """Populate _device_tool_ids for all installed tools.
+
+        The Light API has two relevant endpoints:
+          - GET /api/devices: returns the device record plus "included" items which are
+            device_tool records (one per installed tool). Each has a unique `id` (the
+            device_tool_id used in subsequent API calls) and a relationship pointing to
+            its global tool ID.
+          - GET /api/tools?device_id=...: returns the global tool catalog with human-readable
+            namespace strings (e.g. "com.light.music", "com.light.notes").
+
+        To get each device tool id, cross-reference the two: build a map of global_tool_id -> namespace
+        from /api/tools, then walk the /api/devices included items, look up each item's global tool ID in
+        that map, and classify it as "music", "notes", or "podcast" based on the namespace string.
+        """
+        from open_api_specification_client.api.default import (
+            get_api_devices,
+            get_api_tools,
+        )
         from open_api_specification_client.types import Unset
 
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
-        if devices_resp.status_code != 200 or not devices_resp.parsed or not devices_resp.parsed.data:
+        if (
+            devices_resp.status_code != 200
+            or not devices_resp.parsed
+            or not devices_resp.parsed.data
+        ):
             raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
         device_id = devices_resp.parsed.data[0].id
 
-        tools_resp = get_api_tools.sync_detailed(client=self._api_client, device_id=device_id)
+        tools_resp = get_api_tools.sync_detailed(
+            client=self._api_client, device_id=device_id
+        )
         if tools_resp.status_code != 200 or not tools_resp.parsed:
             raise RuntimeError(f"Could not fetch tools: {tools_resp.status_code}")
 
