@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import httpx
 import json
 import keyring
 import logging
 import os
 
-from typing import Any, Callable, final
-from urllib.error import URLError
-from urllib.request import Request, urlopen
+from typing import TYPE_CHECKING, Any, Callable, final
 
 from open_api_specification_client.api.default import get_api_playlists
 from open_api_specification_client.client import AuthenticatedClient
+
+if TYPE_CHECKING:
+    from light_api.music import LightMusic
+    from light_api.podcast import LightPodcasts
+    from light_api.notes import LightNotes
 
 KEYRING_SERVICE = "unofficial-light-api"
 KEYRING_USER = "session"
@@ -18,27 +22,6 @@ API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
 
 log = logging.getLogger(f"light.{__name__}")
-
-
-class _RawResponse:
-    """Wraps urllib responses to provide a consistent interface (.status, .ok, .json(), etc)."""
-
-    def __init__(self, status: int, content: bytes) -> None:
-        self.status = status
-        self._content = content
-
-    @property
-    def ok(self) -> bool:
-        return 200 <= self.status < 300
-
-    def body(self) -> bytes:
-        return self._content
-
-    def text(self) -> str:
-        return self._content.decode()
-
-    def json(self) -> Any:
-        return json.loads(self._content)
 
 
 @final
@@ -53,6 +36,7 @@ class Light:
         password_file: str | None = None,
         phone: str | None = None,
         phone_file: str | None = None,
+        headless: bool = True,  # kept for backwards compat, unused
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(password_file, "LIGHT_PASSWORD")
@@ -64,10 +48,6 @@ class Light:
         self._podcast_device_tool_id: str | None = None
         self._notes_device_tool_id: str | None = None
 
-        # import here to prevent circular imports
-        from light_api.music import LightMusic
-        from light_api.podcast import LightPodcasts
-        from light_api.notes import LightNotes
         self.music: LightMusic
         self.podcast: LightPodcasts
         self.notes: LightNotes
@@ -80,19 +60,17 @@ class Light:
         if not self.email or not self.password:
             raise RuntimeError("No cached session - provide email and password")
 
-        resp = self._fetch(
+        resp = httpx.post(
             f"{API_BASE}/api/authorizations",
-            method="POST",
-            headers={"Content-Type": "application/json", **API_HEADERS},
-            data=json.dumps({"email": self.email, "password": self.password}).encode(),
+            json={"email": self.email, "password": self.password},
+            headers=API_HEADERS,
         )
 
-        if not resp.ok:
-            raise RuntimeError(f"Login failed: {resp.status}")
+        if not resp.is_success:
+            raise RuntimeError(f"Login failed: {resp.status_code}")
 
-        body = resp.json()
         token = next(
-            (i["attributes"]["token"] for i in body["included"] if i["type"] == "tokens"),
+            (i["attributes"]["token"] for i in resp.json()["included"] if i["type"] == "tokens"),
             None,
         )
 
@@ -113,7 +91,7 @@ class Light:
             headers=API_HEADERS,
         )
 
-    def call_api(self, func: "Callable[..., Any]", **kwargs: Any) -> Any:
+    def call_api(self, func: Callable[..., Any], **kwargs: Any) -> Any:
         """Call an API function, re-authenticating once on 401."""
         resp = func(**kwargs)
         if resp.status_code == 401:
@@ -153,25 +131,6 @@ class Light:
 
     def __exit__(self, *_: object) -> None:
         pass
-
-    def _fetch(
-        self,
-        url: str,
-        method: str = "GET",
-        headers: dict[str, str] | None = None,
-        data: bytes | str | None = None,
-        timeout: int = 30_000,
-    ) -> _RawResponse:
-        """Make a raw HTTP request (used for auth and presigned S3 URLs)."""
-        if isinstance(data, str):
-            data = data.encode()
-        req = Request(url, method=method, headers=headers or {}, data=data)
-        try:
-            with urlopen(req, timeout=timeout / 1000) as resp:
-                return _RawResponse(resp.status, resp.read())
-        except URLError as e:
-            code = e.code if hasattr(e, "code") else 0
-            return _RawResponse(code, b"")
 
     def _load_cache(self) -> bool:
         log.debug("Loading cache")
@@ -248,10 +207,6 @@ class Light:
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
             raise RuntimeError("Could not fetch podcast device_tool_id: no podcasts on device - add one first")
         self._podcast_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
-
-    def _check_response(self, response: _RawResponse, context: str = "") -> None:
-        if not response.ok:
-            raise RuntimeError(f"{context}: {response.status} {response.text()}")
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str | None:

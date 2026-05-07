@@ -24,6 +24,7 @@
       src = ./light_api;
       build-system = [ python.pkgs.hatchling ];
       dependencies = with python.pkgs; [
+        httpx
         keyring
         mutagen
         light-client

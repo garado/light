@@ -1,5 +1,6 @@
 """Music management for Light devices."""
 
+import httpx
 import logging
 import mimetypes
 import os
@@ -317,20 +318,18 @@ class LightMusic:
                 if item.type_ == "files"
             )
 
-            with open(file_path, "rb") as f:
-                data = f.read()
-
             content_type = mimetypes.guess_type(file_path)[0] or "audio/mpeg"
 
-            put_resp = self._l._fetch(
-                presigned_url,
-                method="PUT",
-                headers={"Content-Type": content_type},
-                data=data,
-                timeout=300_000,
-            )
+            with open(file_path, "rb") as f:
+                put_resp = httpx.put(
+                    presigned_url,
+                    content=f.read(),
+                    headers={"Content-Type": content_type},
+                    timeout=300,
+                )
 
-            self._l._check_response(put_resp, f"Upload {os.path.basename(file_path)}")
+            if not put_resp.is_success:
+                raise RuntimeError(f"Upload {os.path.basename(file_path)}: {put_resp.status_code} {put_resp.text}")
 
             # The Light API (from what I've seen) has an issue where it won't set title/artist
             # metadata properly when uploading non-mp3 files, so give user list of commands to patch it

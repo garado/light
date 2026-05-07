@@ -6,6 +6,7 @@ authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "httpx",
     "keyring",
     "mutagen",
     "light_client",
