@@ -36,11 +36,14 @@ class Light:
         password_file: str | None = None,
         phone: str | None = None,
         phone_file: str | None = None,
-        headless: bool = True,  # kept for backwards compat, unused
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
-        self.password: str | None = password or self._resolve(password_file, "LIGHT_PASSWORD")
-        self.phone: str | None = phone or self._resolve(phone_file, "LIGHT_PHONE_NUMBER")
+        self.password: str | None = password or self._resolve(
+            password_file, "LIGHT_PASSWORD"
+        )
+        self.phone: str | None = phone or self._resolve(
+            phone_file, "LIGHT_PHONE_NUMBER"
+        )
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_id: str | None = None
@@ -70,7 +73,11 @@ class Light:
             raise RuntimeError(f"Login failed: {resp.status_code}")
 
         token = next(
-            (i["attributes"]["token"] for i in resp.json()["included"] if i["type"] == "tokens"),
+            (
+                i["attributes"]["token"]
+                for i in resp.json()["included"]
+                if i["type"] == "tokens"
+            ),
             None,
         )
 
@@ -134,14 +141,17 @@ class Light:
 
     def _load_cache(self) -> bool:
         log.debug("Loading cache")
+
         try:
             raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
         except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
             log.debug(f"Keyring error: {e}")
             return False
+
         if raw is None:
             log.debug("Keyring: no entry found")
             return False
+
         try:
             data = json.loads(raw)
             self._api_token = data["api_token"]
@@ -160,13 +170,15 @@ class Light:
             keyring.set_password(
                 KEYRING_SERVICE,
                 KEYRING_USER,
-                json.dumps({
-                    "api_token": self._api_token,
-                    "device_tool_id": self._device_tool_id,
-                    "playlist_id": self._playlist_id,
-                    "podcast_device_tool_id": self._podcast_device_tool_id,
-                    "notes_device_tool_id": self._notes_device_tool_id,
-                }),
+                json.dumps(
+                    {
+                        "api_token": self._api_token,
+                        "device_tool_id": self._device_tool_id,
+                        "playlist_id": self._playlist_id,
+                        "podcast_device_tool_id": self._podcast_device_tool_id,
+                        "notes_device_tool_id": self._notes_device_tool_id,
+                    }
+                ),
             )
         except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
             log.warning(f"Keyring error: {e}")
@@ -195,17 +207,23 @@ class Light:
     def _fetch_notes_device_tool_id(self) -> None:
         """Fetch notes device_tool_id from the notes API."""
         from open_api_specification_client.api.default import get_api_notes
+
         resp = get_api_notes.sync_detailed(client=self._api_client)
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError("Could not fetch notes device_tool_id: no notes on device - add a note first")
+            raise RuntimeError(
+                "Could not fetch notes device_tool_id: no notes on device - add a note first"
+            )
         self._notes_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
 
     def _fetch_podcast_device_tool_id(self) -> None:
         """Fetch podcast device_tool_id from the followed podcasts API."""
         from open_api_specification_client.api.default import get_api_followed_podcasts
+
         resp = get_api_followed_podcasts.sync_detailed(client=self._api_client)
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError("Could not fetch podcast device_tool_id: no podcasts on device - add one first")
+            raise RuntimeError(
+                "Could not fetch podcast device_tool_id: no podcasts on device - add one first"
+            )
         self._podcast_device_tool_id = resp.parsed.data[0].attributes.device_tool_id
 
     @staticmethod

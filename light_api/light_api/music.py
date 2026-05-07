@@ -6,7 +6,7 @@ import mimetypes
 import os
 import re
 from enum import StrEnum
-from typing import Any, Callable, Literal
+from typing import Callable, Literal
 
 from dataclasses import dataclass
 from mutagen._file import File
@@ -119,10 +119,11 @@ class LightMusic:
                     sort_mode=PostApiPlaylistsSortModeBodySortMode(sort_mode),
                 ),
             )
+
             if not (200 <= resp.status_code < 300):
                 raise RuntimeError(f"Set sort mode: {resp.status_code}")
 
-            log.info("Sort mode set")
+            log.info(f"Sort mode set")
 
         else:
             self._sort_by_title(sort_mode == SortMode.TITLE_DESC)
@@ -188,7 +189,6 @@ class LightMusic:
         if not (200 <= resp.status_code < 300):
             raise RuntimeError(f"Failed to delete all tracks: {resp.status_code}")
         log.info("All tracks deleted")
-
 
     def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
@@ -329,7 +329,9 @@ class LightMusic:
                 )
 
             if not put_resp.is_success:
-                raise RuntimeError(f"Upload {os.path.basename(file_path)}: {put_resp.status_code} {put_resp.text}")
+                raise RuntimeError(
+                    f"Upload {os.path.basename(file_path)}: {put_resp.status_code} {put_resp.text}"
+                )
 
             # The Light API (from what I've seen) has an issue where it won't set title/artist
             # metadata properly when uploading non-mp3 files, so give user list of commands to patch it
@@ -346,7 +348,10 @@ class LightMusic:
         log.info("All uploads complete")
 
         if len(manual_update_cmds) > 0:
-            log.warning("Manual metadata fixes needed:\n" + "\n".join(f"  {cmd} ;" for cmd in manual_update_cmds))
+            log.warning(
+                "Manual metadata fixes needed:\n"
+                + "\n".join(f"  {cmd} ;" for cmd in manual_update_cmds)
+            )
 
     def update_track_metadata(
         self, audio_id: str, title: str | None = None, artist: str | None = None
@@ -398,7 +403,12 @@ class LightMusic:
 
         in_order_set = set(ordered_item_ids)
         full_order = [iid for iid in ordered_item_ids if iid in id_to_track]
-        full_order += [t.playlist_item_id for t in tracks if t.playlist_item_id in target_set and t.playlist_item_id not in in_order_set]
+        full_order += [
+            t.playlist_item_id
+            for t in tracks
+            if t.playlist_item_id in target_set
+            and t.playlist_item_id not in in_order_set
+        ]
 
         # Build complete final ordering: non-targets keep their slots, targets fill in desired order
         final_order = [t.playlist_item_id for t in tracks]
@@ -428,7 +438,9 @@ class LightMusic:
                 ),
             )
             if not (200 <= resp.status_code < 300):
-                raise RuntimeError(f"reorder_subset position {new_position}: {resp.status_code}")
+                raise RuntimeError(
+                    f"reorder_subset position {new_position}: {resp.status_code}"
+                )
 
     def _sort_by_title(self, descending: bool = False) -> None:
         """Sort tracks on device by title.
