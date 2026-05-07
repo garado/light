@@ -262,11 +262,12 @@ def music_delete_all(light: Light):
     """Delete ALL tracks on device."""
     if not click.confirm("This will delete ALL tracks on the device. Proceed?"):
         return
-    
+
     if input('Type "yes i am sure" to confirm: ') != "yes i am sure":
         return
 
     light.music.delete_all_tracks()
+
 
 @music.command("delete")
 @with_light
@@ -527,7 +528,6 @@ def tui(ctx):
             password_file=obj.get("password_file"),
             phone=obj.get("phone_number"),
             phone_file=obj.get("phone_number_file"),
-            headless=not obj.get("no_headless", False),
         )
     )
 
