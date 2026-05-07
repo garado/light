@@ -345,7 +345,8 @@ class LightMusic:
                 f = File(file_path, easy=True)
                 title = f.get("title", ["Unknown"])[0] if f else "Unknown"
                 artist = f.get("artist", ["Unknown"])[0] if f else "Unknown"
-                cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}"'
+                album = f.get("album", [""])[0] if f else ""
+                cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}" --new-album "{album}"'
                 manual_update_cmds.append(cmd)
 
         log.info("All uploads complete")
@@ -357,16 +358,28 @@ class LightMusic:
             )
 
     def update_track_metadata(
-        self, audio_id: str, title: str | None = None, artist: str | None = None
+        self,
+        audio_id: str,
+        title: str | None = None,
+        artist: str | None = None,
+        album: str | None = None,
     ):
-        """Update metadata (title, artist) for a track.
+        """Update metadata (title, artist, album) for a track.
 
         Args:
             audio_id: The audio_id for the track to edit.
             title: The new title, or None for no changes.
             artist: The new artist, or None for no changes.
+            album: The new album, or None for no changes.
         """
         from open_api_specification_client.types import UNSET
+
+        attrs = PatchApiAudiosAudioIdBodyDataAttributes(
+            title=title if title is not None else UNSET,
+            artist=artist if artist is not None else UNSET,
+        )
+        if album is not None:
+            attrs["album"] = album
 
         resp = self._l.call_api(
             patch_api_audios_audio_id.sync_detailed,
@@ -376,10 +389,7 @@ class LightMusic:
                 data=PatchApiAudiosAudioIdBodyData(
                     id=audio_id,
                     type_=PatchApiAudiosAudioIdBodyDataType.PLAYLIST_ITEMS,
-                    attributes=PatchApiAudiosAudioIdBodyDataAttributes(
-                        title=title if title is not None else UNSET,
-                        artist=artist if artist is not None else UNSET,
-                    ),
+                    attributes=attrs,
                 )
             ),
         )

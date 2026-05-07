@@ -118,6 +118,12 @@ class ConfirmScreen(ModalScreen[bool]):
     Button {
         margin: 0 1;
     }
+    #header {
+        height: 3;
+        padding: 1 2;
+        background: $surface;
+        border-bottom: tall $primary;
+    }
     """
 
     def __init__(self, message: str) -> None:
@@ -135,7 +141,7 @@ class ConfirmScreen(ModalScreen[bool]):
         self.dismiss(event.button.id == "yes")
 
 
-class EditScreen(ModalScreen[tuple[str, str] | None]):
+class EditScreen(ModalScreen[tuple[str, str, str] | None]):
     CSS = """
     EditScreen {
         align: center middle;
@@ -169,6 +175,7 @@ class EditScreen(ModalScreen[tuple[str, str] | None]):
             yield Label("edit track")
             yield Input(value=self._track.title, placeholder="title", id="title")
             yield Input(value=self._track.artist, placeholder="artist", id="artist")
+            yield Input(value=self._track.album, placeholder="album", id="album")
             with Static(id="buttons"):
                 yield Button("save", variant="primary", id="save")
                 yield Button("cancel", variant="default", id="cancel")
@@ -178,23 +185,37 @@ class EditScreen(ModalScreen[tuple[str, str] | None]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":
-            title = self.query_one("#title", Input).value
-            artist = self.query_one("#artist", Input).value
-            self.dismiss((title, artist))
+            self.dismiss(self._get_values())
         else:
             self.dismiss(None)
 
     def on_key(self, event) -> None:
         if event.key == "enter":
-            title = self.query_one("#title", Input).value
-            artist = self.query_one("#artist", Input).value
-            self.dismiss((title, artist))
+            self.dismiss(self._get_values())
         elif event.key == "escape":
             self.dismiss(None)
+
+    def _get_values(self) -> tuple[str, str, str]:
+        return (
+            self.query_one("#title", Input).value,
+            self.query_one("#artist", Input).value,
+            self.query_one("#album", Input).value,
+        )
 
 
 class LightApp(App):
     CSS = """
+    LightApp {
+        layout: vertical;
+    }
+    #header {
+        height: 3;
+        min-height: 3;
+        padding: 1 2;
+        background: $boost;
+        border-bottom: tall $primary;
+        color: $text;
+    }
     DataTable {
         height: 1fr;
     }
@@ -234,6 +255,7 @@ class LightApp(App):
         )
 
     def compose(self) -> ComposeResult:
+        yield Static("", id="header")
         yield DataTable()
         yield Static("connecting...", id="status")
 
@@ -246,6 +268,15 @@ class LightApp(App):
 
     def _set_status(self, text: str) -> None:
         self.query_one("#status", Static).update(text)
+
+    def _set_header(self, track: LightTrack | None) -> None:
+        if track is None:
+            self.query_one("#header", Static).update("")
+            return
+        parts = [track.title, track.artist]
+        if track.album:
+            parts.append(track.album)
+        self.query_one("#header", Static).update("  ·  ".join(parts))
 
     def _populate_table(self, tracks: list[LightTrack]) -> None:
         table = self.query_one(DataTable)
@@ -315,7 +346,7 @@ class LightApp(App):
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
         from open_api_specification_client.api.default import (
-            patch_api_playlist_items_playlist_item_id
+            patch_api_playlist_items_playlist_item_id,
         )
         from open_api_specification_client.models import (
             PatchApiPlaylistItemsPlaylistItemIdBody,
@@ -363,6 +394,14 @@ class LightApp(App):
         self._pending_sort_index = None
         self._populate_table(tracks)
         self._update_status()
+        self._set_header(tracks[0] if tracks else None)
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if event.row_key is None:
+            return
+        audio_id = str(event.row_key.value)
+        track = next((t for t in self._tracks if t.audio_id == audio_id), None)
+        self._set_header(track)
 
     def _update_status(self) -> None:
         sort_label = SORT_LABELS[SORT_CYCLE[self._sort_index]]
@@ -455,24 +494,24 @@ class LightApp(App):
         if track is None:
             return
 
-        def on_edit(result: tuple[str, str] | None) -> None:
+        def on_edit(result: tuple[str, str, str] | None) -> None:
             if result is None:
                 return
-            new_title, new_artist = result
+            new_title, new_artist, new_album = result
             self._set_status(f"saving: {new_title}...")
             self.run_worker(
-                lambda: self._do_edit(track, new_title, new_artist),
+                lambda: self._do_edit(track, new_title, new_artist, new_album),
                 exclusive=True,
                 thread=True,
             )
 
         self.push_screen(EditScreen(track), on_edit)
 
-    def _do_edit(self, track: LightTrack, title: str, artist: str) -> None:
+    def _do_edit(self, track: LightTrack, title: str, artist: str, album: str) -> None:
         assert self._pw is not None
         self._pw.submit(
             lambda light: light.music.update_track_metadata(
-                track.audio_id, title=title, artist=artist
+                track.audio_id, title=title, artist=artist, album=album or None
             )
         )
         tracks = self._pw.submit(lambda light: light.music.get_tracks())

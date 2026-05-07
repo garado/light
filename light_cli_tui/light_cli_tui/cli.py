@@ -300,7 +300,7 @@ def music_delete(light: Light, songs):
 
 @music.command("sort")
 @with_light
-@click.argument("field", type=click.Choice(["artist", "title", "none"]))
+@click.argument("field", type=click.Choice(["artist", "title", "artist-album", "none"]))
 @click.option(
     "--asc",
     "order",
@@ -332,6 +332,10 @@ def music_sort(light: Light, field, order):
         light.music.set_sort_mode(
             SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
         )
+    elif field == "artist-album":
+        light.music.set_sort_mode(
+            SortMode.ARTIST_ALBUM_DESC if descending else SortMode.ARTIST_ALBUM_ASC
+        )
     elif field == "none":
         light.music.set_sort_mode(SortMode.RANK)
 
@@ -341,14 +345,15 @@ def music_sort(light: Light, field, order):
 @click.argument("title")
 @click.option("--new-title", default=None, help="New track title.")
 @click.option("--new-artist", default=None, help="New artist name.")
-def music_update(light: Light, title, new_title, new_artist):
+@click.option("--new-album", default=None, help="New album name.")
+def music_update(light: Light, title, new_title, new_artist, new_album):
     """Update metadata for a track.
 
-    Matches by exact title. At least one of `--new-title` or `--new-artist` must be provided.
+    Matches by exact title. At least one of `--new-title`, `--new-artist`, or `--new-album` must be provided.
 
     **Example:**
 
-    `light music update "Old Title" --new-title "New Title" --new-artist "Artist"`
+    `light music update "Old Title" --new-title "New Title" --new-artist "Artist" --new-album "Album"`
     """
     tracks = light.music.get_tracks()
     matches = [t for t in tracks if t.title == title]
@@ -359,7 +364,7 @@ def music_update(light: Light, title, new_title, new_artist):
 
     for track in matches:
         light.music.update_track_metadata(
-            track.audio_id, title=new_title, artist=new_artist
+            track.audio_id, title=new_title, artist=new_artist, album=new_album
         )
 
 
@@ -373,9 +378,10 @@ def music_list(light: Light):
     table.add_column("#", style="dim", width=4)
     table.add_column("Title")
     table.add_column("Artist")
+    table.add_column("Album")
 
     for i, track in enumerate(tracks, 1):
-        table.add_row(str(i), track.title, track.artist)
+        table.add_row(str(i), track.title, track.artist, track.album)
 
     console.print(table)
 

@@ -1,7 +1,9 @@
 
 # Light API/CLI/TUI
 
-An unofficial, community-maintained API and CLI/TUI for interacting with Light devices.
+An unofficial, community-maintained API and CLI/TUI for managing music, notes, and podcasts on Light devices.
+
+This was made by reverse-engineering the API endpoints from the official dashboard. (I have obtained Light's blessing for this!)
 
 ## Installation
 
@@ -20,6 +22,7 @@ Nix users:
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     light.url = "github:garado/light";
   };
+
   outputs = { nixpkgs, light, ... }: {
     nixosConfigurations.YOURHOST = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
@@ -54,6 +57,8 @@ light --email=... --password=... --phone-number=... <command>
 light --email-file=... --password-file=... --phone-number-file=... <command>
 ```
 
+After the first login, your auth token will be cached. Tokens are good for 30 days.
+
 ## Getting started
 
 ### Music
@@ -62,16 +67,16 @@ Supported features:
 
 - Uploading songs, optionally overwriting existing tracks
 - Deleting tracks
-- Sorting tracks by title/artist
+- Sorting tracks by title/artist/artist-album
 - Clear all tracks
 
 ```sh
 # Upload tracks
-# Overwrite existing matching tracks; match on file title metadata
+# Overwrite existing matching tracks (match on file title metadata)
 light music upload song1 song2 song3 --match-title-by metadata
 
 # Upload tracks
-# Overwrite existing matching tracks; match on filename
+# Overwrite existing matching tracks (match on filename)
 light music upload song1 song2 song3 --match-title-by filename
 
 # Upload tracks
@@ -81,8 +86,8 @@ light music upload --allow-duplicates song1 song2 song3
 # Delete tracks
 light music delete song
 
-# Clear all tracks
-light music clear
+# Delete all tracks (multiple confirmation steps, don't worry)
+light music delete-all
 
 # Sort tracks by title (!!!)
 light music sort title --asc
@@ -91,6 +96,11 @@ light music sort title --desc
 # Sort tracks by artist
 light music sort artist --asc
 light music sort artist --desc
+
+# Sort tracks by artist and album (!!!)
+# (Track numbers not supported)
+light music sort artist-album --asc
+light music sort artist-album --desc
 ```
 
 ### Notes
