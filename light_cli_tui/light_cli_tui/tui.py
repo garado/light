@@ -13,6 +13,7 @@ from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
+from textual.coordinate import Coordinate
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import Button, ContentSwitcher, DataTable, Input, Label, Static
@@ -204,6 +205,9 @@ class MusicPane(Widget):
         self._last_key: str = ""
         self._count_str: str = ""
         self._search_mode: bool = False
+        self._visual_mode: bool = False
+        self._visual_anchor: int = 0
+        self._cursor_row: int = 0
 
     @property
     def _pw(self) -> LightThread | None:
@@ -241,7 +245,8 @@ class MusicPane(Widget):
         table = self.query_one(DataTable)
         table.clear()
         for track in tracks:
-            table.add_row(str(positions.get(track.audio_id, "")), track.title, track.artist, track.album, key=track.audio_id)
+            pos = str(positions.get(track.audio_id, ""))
+            table.add_row(pos, track.title, track.artist, track.album, key=track.audio_id)
 
     # --- search ---
 
@@ -327,24 +332,59 @@ class MusicPane(Widget):
         count = int(self._count_str) if self._count_str else 1
         self._count_str = ""
 
-        if key == "j":
-            for _ in range(count):
-                table.action_cursor_down()
+        if key == "escape":
+            if self._visual_mode:
+                self._visual_mode = False
+                self._clear_visual_highlight()
+                self._update_status()
+            event.stop()
+        elif key == "v":
+            if self._visual_mode:
+                self._visual_mode = False
+                self._clear_visual_highlight()
+            else:
+                self._visual_mode = True
+                self._visual_anchor = self._cursor_row
+                self._refresh_visual(self._cursor_row)
+            self._update_status()
+            event.stop()
+        elif key == "j":
+            new_row = min(self._cursor_row + count, table.row_count - 1)
+            self._cursor_row = new_row
+            if self._visual_mode:
+                self._refresh_visual(new_row)
+            else:
+                table.move_cursor(row=new_row)
             event.stop()
         elif key == "k":
-            for _ in range(count):
-                table.action_cursor_up()
+            new_row = max(self._cursor_row - count, 0)
+            self._cursor_row = new_row
+            if self._visual_mode:
+                self._refresh_visual(new_row)
+            else:
+                table.move_cursor(row=new_row)
             event.stop()
         elif key == "g":
             if self._last_key == "g":
-                table.move_cursor(row=0)
+                if self._visual_mode:
+                    lo, hi = self._get_visual_range()
+                    self._move_block(-1, lo)
+                else:
+                    self._cursor_row = 0
+                    table.move_cursor(row=0)
                 self._last_key = ""
             else:
                 self._last_key = key
             event.stop()
             return
         elif key == "G":
-            table.move_cursor(row=table.row_count - 1)
+            if self._visual_mode:
+                lo, hi = self._get_visual_range()
+                self._move_block(1, len(self._tracks) - 1 - hi)
+            else:
+                new_row = table.row_count - 1
+                self._cursor_row = new_row
+                table.move_cursor(row=new_row)
             event.stop()
         elif key in ("ctrl+d", "ctrl+f"):
             table.action_scroll_page_down()
@@ -353,30 +393,43 @@ class MusicPane(Widget):
             table.action_scroll_page_up()
             event.stop()
         elif key == "J":
-            self._move_track(1)
+            if self._visual_mode:
+                self._move_block(1, count)
+            else:
+                self._move_track(1)
             event.stop()
         elif key == "K":
-            self._move_track(-1)
+            if self._visual_mode:
+                self._move_block(-1, count)
+            else:
+                self._move_track(-1)
             event.stop()
         elif key == "r":
+            self._visual_mode = False
             self.action_refresh()
             event.stop()
         elif key == "s":
-            self._cycle_sort()
+            if not self._visual_mode:
+                self._cycle_sort()
             event.stop()
         elif key == "d":
-            self.action_delete()
+            if not self._visual_mode:
+                self.action_delete()
             event.stop()
         elif key == "e":
-            self.action_edit()
+            if not self._visual_mode:
+                self.action_edit()
             event.stop()
         elif key == "slash":
-            self._start_search()
+            if not self._visual_mode:
+                self._start_search()
             event.stop()
         elif key == "h":
+            self._visual_mode = False
             self.app.action_prev_tab()  # type: ignore[attr-defined]
             event.stop()
         elif key == "l":
+            self._visual_mode = False
             self.app.action_next_tab()  # type: ignore[attr-defined]
             event.stop()
 
@@ -396,9 +449,97 @@ class MusicPane(Widget):
             return
         track = self._tracks[i]
         self._tracks[i], self._tracks[j] = self._tracks[j], self._tracks[i]
+        self._cursor_row = j
         self._populate_table(self._tracks)
         table.move_cursor(row=j)
         self.app.run_worker(lambda: self._do_move(track, j), exclusive=True, thread=True)
+
+    def _get_visual_range(self, cursor: int | None = None) -> tuple[int, int]:
+        if cursor is None:
+            cursor = self._cursor_row
+        lo = min(self._visual_anchor, cursor)
+        hi = max(self._visual_anchor, cursor)
+        return lo, hi
+
+    def _refresh_visual(self, cursor: int) -> None:
+        lo, hi = self._get_visual_range(cursor)
+        selected = set(range(lo, hi + 1))
+        positions = {t.audio_id: i for i, t in enumerate(self._tracks, 1)}
+        table = self.query_one(DataTable)
+        for row_idx, track in enumerate(self._filtered_tracks):
+            pos = str(positions.get(track.audio_id, ""))
+            vals = [pos, track.title, track.artist, track.album]
+            style = "bold reverse" if row_idx in selected else ""
+            for col_idx, val in enumerate(vals):
+                table.update_cell_at(
+                    Coordinate(row_idx, col_idx),
+                    Text(val, style=style) if style else val,
+                )
+        table.move_cursor(row=cursor)
+
+    def _clear_visual_highlight(self) -> None:
+        positions = {t.audio_id: i for i, t in enumerate(self._tracks, 1)}
+        table = self.query_one(DataTable)
+        for row_idx, track in enumerate(self._filtered_tracks):
+            pos = str(positions.get(track.audio_id, ""))
+            for col_idx, val in enumerate([pos, track.title, track.artist, track.album]):
+                table.update_cell_at(Coordinate(row_idx, col_idx), val)
+
+    def _move_block(self, direction: int, count: int) -> None:
+        if self._pw is None:
+            return
+        if len(self._filtered_tracks) != len(self._tracks):
+            return
+        lo, hi = self._get_visual_range()
+        block_size = hi - lo + 1
+        new_lo = max(0, min(lo + direction * count, len(self._tracks) - block_size))
+        if new_lo == lo:
+            return
+        block = self._tracks[lo:hi + 1]
+        rest = self._tracks[:lo] + self._tracks[hi + 1:]
+        self._tracks = rest[:new_lo] + block + rest[new_lo:]
+        self._filtered_tracks = list(self._tracks)
+        cursor_offset = self._cursor_row - lo
+        self._visual_anchor = new_lo + (self._visual_anchor - lo)
+        new_cursor = new_lo + cursor_offset
+        self._cursor_row = new_cursor
+        self._populate_table(self._filtered_tracks)
+        self._refresh_visual(new_cursor)
+        self.app.run_worker(
+            lambda: self._do_move_block(block, new_lo, direction),
+            exclusive=True,
+            thread=True,
+        )
+
+    def _do_move_block(self, block: list[LightTrack], new_lo: int, direction: int) -> None:
+        from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
+        from open_api_specification_client.models import (
+            PatchApiPlaylistItemsPlaylistItemIdBody,
+            PatchApiPlaylistItemsPlaylistItemIdBodyData,
+            PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
+            PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
+        )
+        assert self._pw is not None
+        # Move from the outside in to avoid position conflicts:
+        # moving down → patch last track first; moving up → patch first track first
+        ordered = reversed(list(enumerate(block))) if direction > 0 else enumerate(block)
+        for i, track in ordered:
+            pos = new_lo + i
+            def _patch(light, t=track, p=pos):
+                resp = patch_api_playlist_items_playlist_item_id.sync_detailed(
+                    playlist_item_id=t.playlist_item_id,
+                    client=light._api_client,
+                    body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                        data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                            id=t.playlist_item_id,
+                            type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                            attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(position=p),
+                        )
+                    ),
+                )
+                if not (200 <= resp.status_code < 300):
+                    raise RuntimeError(f"move track: {resp.status_code}")
+            self._pw.submit(_patch)
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
         from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
@@ -445,6 +586,7 @@ class MusicPane(Widget):
         self._tracks = tracks
         self._filtered_tracks = list(tracks)
         self._pending_sort_index = None
+        self._visual_mode = False
         if sort_mode is not None and sort_mode in SORT_CYCLE:
             self._sort_index = SORT_CYCLE.index(sort_mode)
         self._populate_table(tracks)
@@ -454,6 +596,7 @@ class MusicPane(Widget):
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key is None:
             return
+        self._cursor_row = self.query_one(DataTable).cursor_row
         audio_id = str(event.row_key.value)
         track = next((t for t in self._tracks if t.audio_id == audio_id), None)
         self._set_header(track)
@@ -474,6 +617,12 @@ class MusicPane(Widget):
             pass
 
     def _update_status(self) -> None:
+        if self._visual_mode:
+            lo, hi = self._get_visual_range()
+            self._set_status(
+                f"-- VISUAL --  {hi - lo + 1} selected  |  j/k select  J/K move  v/esc exit"
+            )
+            return
         sort_label = SORT_LABELS[SORT_CYCLE[self._sort_index]]
         if self._pending_sort_index is not None:
             pending_label = SORT_LABELS[SORT_CYCLE[self._pending_sort_index]]
