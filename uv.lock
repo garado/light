@@ -350,7 +350,6 @@ dependencies = [
     { name = "light-client" },
     { name = "mutagen" },
     { name = "playwright" },
-    { name = "rich" },
 ]
 
 [package.metadata]
@@ -359,7 +358,6 @@ requires-dist = [
     { name = "light-client", editable = "light_client" },
     { name = "mutagen" },
     { name = "playwright" },
-    { name = "rich" },
 ]
 
 [[package]]
