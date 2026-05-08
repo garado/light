@@ -21,6 +21,11 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
+      - name: Copy README into packages
+        run: |
+          cp README.md light_api/README.md
+          cp README.md light_cli_tui/README.md
+
       - name: Build
         run: uv build --all
 
