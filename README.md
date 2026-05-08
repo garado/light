@@ -245,15 +245,7 @@ uv run pytest
 
 As this is an **unofficial** tool, it could break at any time if Light changes the API format. Smoke tests should be added and run regularly (home server nightly cronjob?) to catch any breaking API changes asap.
 
-# Developer stuff
+# To do
 
-## Regenerate API from spec
-
-The source of truth is the OpenAPI JSON. Python API bindings are automatically generated from that JSON using `openapi-python-client`.
-
-```
-cd light_api
-openapi-python-client generate --path openapi-spec.json
-# this will generate open-api-specification-client (kebab case)
-# delete the existing open_api_specification_client contents and copy the kebab-case dir contents to the snake-case dir
-```
+- Fancier `light notes watch`
+- Contacts management
