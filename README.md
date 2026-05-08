@@ -123,11 +123,37 @@ light music sort artist-album --desc
 ### Notes
 
 ```sh
+# List all notes (with optional content preview)
+light notes list
+light notes list --content-preview
+
+# List notes with file IDs (needed for `watch` cmd)
+light notes list --id
+
+# Create a new text note
+light notes add "Shopping list" "eggs, milk, bread"
+light notes add "Meeting notes" --file notes.txt  # copy contents from notes.txt
+
+# Download all notes to a directory
+# Text notes saved as .txt, audio notes as .m4a
+light notes download ~/my-notes
+
+# Watch a note for changes (polls every 5s, prints when updated_at changes)
+# Useful for more advanced custom integrations (happy hacking!)
+light notes watch <note-id>
 ```
 
 ### Podcasts
 
 ```sh
+# Subscribe to a podcast by RSS feed URL
+light podcast add https://feeds.simplecast.com/FO6kxYGj
+
+# List followed podcasts
+light podcast list
+
+# Unfollow a podcast by title
+light podcast delete "My Podcast"
 ```
 
 ### Tools
