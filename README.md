@@ -225,7 +225,7 @@ TUI-specific features:
 
 ## Getting started: API
 
-Minimal API usage examples are in [`examples/`](https://github.com/garado/light/tree/main/examples).
+Minimal API usage examples are in [`examples/`](https://github.com/garado/light/tree/main/examples). Happy hacking!
 
 ## Tests
 
