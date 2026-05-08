@@ -6,11 +6,7 @@ An unofficial, community-maintained API and CLI/TUI for managing music, notes, p
 This was made by reverse-engineering the API endpoints from the official dashboard. (I have obtained Light's blessing for this.)
 
 > [!CAUTION]
-> This software is **unreleased and actively in development.** It is public because I need to test package publishing and installation.
->
-> The README is being actively updated to prep for the initial beta release. Tests and examples still being written.
-> 
-> Usage is not yet recommended!
+> This is beta software and is **actively in development.** Bugs are expected, and bug reports are welcome!
 
 > [!WARNING]
 > Because this is an **unofficial** set of tools created through reverse-engineering, this could break at any time if Light decides to change the structure of their API.
@@ -229,7 +225,7 @@ TUI-specific features:
 
 ## Getting started: API
 
-Minimal API usage examples are in `examples/`.
+Minimal API usage examples are in [`examples/`](https://github.com/garado/light/tree/main/examples).
 
 ## Tests
 
