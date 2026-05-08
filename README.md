@@ -229,7 +229,7 @@ TUI-specific features:
 
 ## Getting started: API
 
-Examples coming soon!
+Minimal API usage examples are in `examples/`.
 
 ## Tests
 
