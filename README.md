@@ -13,7 +13,7 @@ This was made by reverse-engineering the API endpoints from the official dashboa
 
 ## Installation
 
-This repo bundles two separate packages `light-api` and `light-cli-tui`. Install whichever suits your needs.
+This repo bundles two separate packages `light-phone-api` and `light-phone-cli-tui`. Install whichever suits your needs.
 
 From PyPI:
 
@@ -37,8 +37,8 @@ Nix users:
       modules = [
         ({ pkgs, ... }: {
           environment.systemPackages = [
-            light.packages.x86_64-linux.light-cli-tui
-            light.packages.x86_64-linux.light-api
+            light.packages.x86_64-linux.light-phone-cli-tui
+            light.packages.x86_64-linux.light-phone-api
           ]
         }
       ];
