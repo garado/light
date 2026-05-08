@@ -3,4 +3,4 @@ __pycache__
 _build
 .env
 .venv
-texts/fixtures
+tests/fixtures/
