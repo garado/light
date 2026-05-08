@@ -296,6 +296,7 @@ class MusicPane(Widget):
         super().__init__(id="music")
         self._tracks: list[LightTrack] = []
         self._filtered_tracks: list[LightTrack] = []
+        self._positions: dict[str, int] = {}
         self._sort_index: int = 0
         self._pending_sort_index: int | None = None
         self._last_key: str = ""
@@ -337,7 +338,7 @@ class MusicPane(Widget):
         self.border_subtitle = "  ·  ".join(parts)
 
     def _populate_table(self, tracks: list[LightTrack]) -> None:
-        positions = {t.audio_id: i for i, t in enumerate(self._tracks, 1)}
+        positions = self._positions
         table = self.query_one(DataTable)
         table.clear()
         for track in tracks:
@@ -572,7 +573,7 @@ class MusicPane(Widget):
     def _refresh_visual(self, cursor: int) -> None:
         lo, hi = self._get_visual_range(cursor)
         selected = set(range(lo, hi + 1))
-        positions = {t.audio_id: i for i, t in enumerate(self._tracks, 1)}
+        positions = self._positions
         table = self.query_one(DataTable)
         for row_idx, track in enumerate(self._filtered_tracks):
             pos = str(positions.get(track.audio_id, ""))
@@ -586,7 +587,7 @@ class MusicPane(Widget):
         table.move_cursor(row=cursor)
 
     def _clear_visual_highlight(self) -> None:
-        positions = {t.audio_id: i for i, t in enumerate(self._tracks, 1)}
+        positions = self._positions
         table = self.query_one(DataTable)
         for row_idx, track in enumerate(self._filtered_tracks):
             pos = str(positions.get(track.audio_id, ""))
@@ -696,6 +697,7 @@ class MusicPane(Widget):
     def _on_tracks_loaded(self, tracks: list[LightTrack], sort_mode: SortMode | None = None, restore_id: str | None = None) -> None:
         self._tracks = tracks
         self._filtered_tracks = list(tracks)
+        self._positions = {t.audio_id: i for i, t in enumerate(tracks, 1)}
         self._pending_sort_index = None
         self._visual_mode = False
         if sort_mode is not None and sort_mode in SORT_CYCLE:

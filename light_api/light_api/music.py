@@ -377,10 +377,10 @@ class LightMusic:
                 # upload since files are still processing and a patch immediately after will fail.
                 if content_type != "audio/mpeg":
                     path = os.path.basename(upload_path)
-                    f = File(upload_path, easy=True)
-                    title = f.get("title", ["Unknown"])[0] if f else "Unknown"
-                    artist = f.get("artist", ["Unknown"])[0] if f else "Unknown"
-                    album = f.get("album", [""])[0] if f else ""
+                    tags = File(upload_path, easy=True)
+                    title = tags.get("title", ["Unknown"])[0] if tags else "Unknown"
+                    artist = tags.get("artist", ["Unknown"])[0] if tags else "Unknown"
+                    album = tags.get("album", [""])[0] if tags else ""
                     cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}" --new-album "{album}"'
                     manual_update_cmds.append(cmd)
             finally:
@@ -493,6 +493,29 @@ class LightMusic:
                     f"reorder_subset position {new_position}: {resp.status_code}"
                 )
 
+    def _apply_sort_positions(self, sorted_tracks: list[LightTrack], original_tracks: list[LightTrack]) -> None:
+        """PATCH playlist item positions to match the given sort order."""
+        original_positions = {t.audio_id: i for i, t in enumerate(original_tracks)}
+        for new_position, track in enumerate(sorted_tracks):
+            if original_positions[track.audio_id] == new_position:
+                continue
+            resp = self._l.call_api(
+                patch_api_playlist_items_playlist_item_id.sync_detailed,
+                playlist_item_id=track.playlist_item_id,
+                client=self._l._api_client,
+                body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                        id=track.playlist_item_id,
+                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                            position=new_position,
+                        ),
+                    )
+                ),
+            )
+            if not (200 <= resp.status_code < 300):
+                raise RuntimeError(f"Apply sort position {new_position}: {resp.status_code}")
+
     def _sort_by_title(self, descending: bool = False) -> None:
         """Sort tracks on device by title.
 
@@ -505,40 +528,12 @@ class LightMusic:
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
         """
-        tracks: list[LightTrack] = self.get_tracks()
-        sorted_tracks: list[LightTrack] = sorted(
-            tracks, key=lambda t: t.title.casefold(), reverse=descending
-        )
-
-        # our custom sort is a subset of rank
+        tracks = self.get_tracks()
         self.set_sort_mode(SortMode.RANK)
-
-        original_positions: dict[str, int] = {
-            t.audio_id: i for i, t in enumerate(tracks)
-        }
-
-        for new_position, track in enumerate(sorted_tracks):
-            if original_positions[track.audio_id] == new_position:
-                continue
-
-            resp = self._l.call_api(
-                patch_api_playlist_items_playlist_item_id.sync_detailed,
-                playlist_item_id=track.playlist_item_id,
-                client=self._l._api_client,
-                body=PatchApiPlaylistItemsPlaylistItemIdBody(
-                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
-                        id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
-                            position=new_position,
-                        ),
-                    )
-                ),
-            )
-            if not (200 <= resp.status_code < 300):
-                raise RuntimeError(
-                    f"Sort by title position {new_position}: {resp.status_code}"
-                )
+        self._apply_sort_positions(
+            sorted(tracks, key=lambda t: t.title.casefold(), reverse=descending),
+            tracks,
+        )
 
     def _sort_by_artist_album(self, descending: bool = False) -> None:
         """Sort tracks on device by artist, then by album.
@@ -549,41 +544,9 @@ class LightMusic:
         Args:
             descending: True to sort descending; False for ascending.
         """
-        tracks: list[LightTrack] = self.get_tracks()
-        sorted_tracks: list[LightTrack] = sorted(
-            tracks,
-            key=lambda t: (t.artist.casefold(), t.album.casefold()),
-            reverse=descending,
-        )
-
-        # TODO abstract the below to a helper
-
-        # our custom sort is a subset of rank
+        tracks = self.get_tracks()
         self.set_sort_mode(SortMode.RANK)
-
-        original_positions: dict[str, int] = {
-            t.audio_id: i for i, t in enumerate(tracks)
-        }
-
-        for new_position, track in enumerate(sorted_tracks):
-            if original_positions[track.audio_id] == new_position:
-                continue
-
-            resp = self._l.call_api(
-                patch_api_playlist_items_playlist_item_id.sync_detailed,
-                playlist_item_id=track.playlist_item_id,
-                client=self._l._api_client,
-                body=PatchApiPlaylistItemsPlaylistItemIdBody(
-                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
-                        id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
-                            position=new_position,
-                        ),
-                    )
-                ),
-            )
-            if not (200 <= resp.status_code < 300):
-                raise RuntimeError(
-                    f"Sort by artist/album position {new_position}: {resp.status_code}"
-                )
+        self._apply_sort_positions(
+            sorted(tracks, key=lambda t: (t.artist.casefold(), t.album.casefold()), reverse=descending),
+            tracks,
+        )

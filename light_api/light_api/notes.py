@@ -44,6 +44,16 @@ class LightNote:
     updated_at: str
 
 
+def _make_light_note(data) -> "LightNote":
+    return LightNote(
+        id=data.id,
+        file_id=data.attributes.file_id,
+        note_type=data.attributes.note_type,
+        title=data.attributes.title,
+        updated_at=data.attributes.updated_at,
+    )
+
+
 class LightNotes:
     def __init__(self, light: "Light") -> None:
         self._l = light
@@ -76,16 +86,7 @@ class LightNotes:
 
         body = resp.parsed
 
-        return [
-            LightNote(
-                id=data.id,
-                file_id=data.attributes.file_id,
-                note_type=data.attributes.note_type,
-                title=data.attributes.title,
-                updated_at=data.attributes.updated_at,
-            )
-            for data in body.data
-        ]
+        return [_make_light_note(data) for data in body.data]
 
     def get_note_metadata(self, note_id: str) -> "LightNote":
         """Fetch metadata for a single note."""
@@ -97,14 +98,7 @@ class LightNotes:
         if resp.status_code != 200 or resp.parsed is None:
             raise RuntimeError(f"Fetching note {note_id}: {resp.status_code}")
 
-        body = resp.parsed
-        return LightNote(
-            id=body.data.id,
-            file_id=body.data.attributes.file_id,
-            note_type=body.data.attributes.note_type,
-            title=body.data.attributes.title,
-            updated_at=body.data.attributes.updated_at,
-        )
+        return _make_light_note(resp.parsed.data)
 
     def download_notes(self, dest: str) -> None:
         """Download all notes to dest directory.
@@ -169,14 +163,7 @@ class LightNotes:
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
 
-        d = resp.parsed.data
-        note = LightNote(
-            id=d.id,
-            file_id=d.attributes.file_id,
-            note_type=d.attributes.note_type,
-            title=d.attributes.title,
-            updated_at=d.attributes.updated_at,
-        )
+        note = _make_light_note(resp.parsed.data)
         log.info(f"Note {note.id} created")
         return note
 
