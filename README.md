@@ -135,9 +135,31 @@ light tools remove <tool>
 
 ### TUI
 
-The TUI offers 
+The TUI offers an easier way of managing music and notes.
 
-- Vim bindings
+```sh
+# Launch
+light tui
+```
+
+TUI-specific features:
+- First-class support for Vim bindings
+- Music
+   - Reorder tracks individually or in visual block mode
+- Notes
+   - Content preview for both text and audio notes
+   - Press `e` to edit text note content in `$EDITOR`
+
+#### Screenshots
+
+<img height="600" alt="image" src="https://github.com/user-attachments/assets/6a98a91c-63e7-4673-8e37-91c280774ef8" />
+
+<img height="600" alt="image" src="https://github.com/user-attachments/assets/10612e61-1dc3-4e4f-95d3-302d95f15bad" />
+
+
+## Getting started: API
+
+Examples coming soon!
 
 ---
 
