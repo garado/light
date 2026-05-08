@@ -278,6 +278,7 @@ class LightMusic:
         allow_duplicates: bool = False,
         match_title_by: Literal["metadata", "filename"] = "metadata",
         convert_flac: bool = True,
+        on_progress: "Callable[[str, int, int], None] | None" = None,
     ) -> None:
         """Upload tracks to device.
 
@@ -347,14 +348,24 @@ class LightMusic:
                 )
 
                 content_type = mimetypes.guess_type(upload_path)[0] or "audio/mpeg"
+                total = os.path.getsize(upload_path)
+                filename = os.path.basename(upload_path)
 
-                with open(upload_path, "rb") as f:
-                    put_resp = httpx.put(
-                        presigned_url,
-                        content=f.read(),
-                        headers={"Content-Type": content_type},
-                        timeout=300,
-                    )
+                def _chunks(path: str, total: int, filename: str):
+                    sent = 0
+                    with open(path, "rb") as f:
+                        while chunk := f.read(65536):
+                            sent += len(chunk)
+                            if on_progress:
+                                on_progress(filename, sent, total)
+                            yield chunk
+
+                put_resp = httpx.put(
+                    presigned_url,
+                    content=_chunks(upload_path, total, filename),
+                    headers={"Content-Type": content_type, "Content-Length": str(total)},
+                    timeout=300,
+                )
 
                 if not put_resp.is_success:
                     raise RuntimeError(
