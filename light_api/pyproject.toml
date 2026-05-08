@@ -1,6 +1,6 @@
 [project]
 name = "light-phone-api"
-version = "0.1.0"
+version = "0.1.1"
 description = "Unofficial Python API for the Light Phone"
 authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
