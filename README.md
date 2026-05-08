@@ -176,11 +176,14 @@ Unit tests use request playback with `respx`.
 ```py
 # This will populate `tests/fixtures/` with the response JSON to test against
 python scripts/capture_fixture.py
+
+# Run tests
+uv run pytest
 ```
 
 ### Smoke tests (TODO)
 
-As this is an unofficial API, Light could change the format at any time. Smoke tests should be added and run regularly (home server nightly cronjob?) to catch any breaking API changes asap.
+As this is an **unofficial** tool, it could break at any time if Light changes the API format. Smoke tests should be added and run regularly (home server nightly cronjob?) to catch any breaking API changes asap.
 
 # Developer stuff
 
@@ -189,8 +192,8 @@ As this is an unofficial API, Light could change the format at any time. Smoke t
 The source of truth is the OpenAPI JSON. Python API bindings are automatically generated from that JSON using `openapi-python-client`.
 
 ```
-cd light_client
-openapi-python-client generate --path light_client/openapi-spec.json
+cd light_api
+openapi-python-client generate --path openapi-spec.json
 # this will generate open-api-specification-client (kebab case)
 # delete the existing open_api_specification_client contents and copy the kebab-case dir contents to the snake-case dir
 ```
