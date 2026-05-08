@@ -6,10 +6,11 @@ authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "httpx",
+    "httpx>=0.23.0,<0.29.0",
+    "attrs>=22.2.0",
+    "python-dateutil>=2.8.0",
     "keyring",
     "mutagen",
-    "light_client",
 ]
 
 [build-system]
@@ -17,4 +18,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["light_api"]
+packages = ["light_api", "open_api_specification_client"]

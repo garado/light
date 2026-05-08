@@ -1,8 +1,7 @@
 [tool.uv.workspace]
-members = ["light_client", "light_api", "light_cli_tui"]
+members = ["light_api", "light_cli_tui"]
 
 [tool.uv.sources]
-light_client = { workspace = true }
 light_api = { workspace = true }
 
 [dependency-groups]

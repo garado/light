@@ -6,7 +6,6 @@ requires-python = ">=3.11"
 members = [
     "light-api",
     "light-cli-tui",
-    "light-client",
 ]
 
 [manifest.dependency-groups]
@@ -409,18 +408,20 @@ name = "light-api"
 version = "0.1.0"
 source = { editable = "light_api" }
 dependencies = [
+    { name = "attrs" },
     { name = "httpx" },
     { name = "keyring" },
-    { name = "light-client" },
     { name = "mutagen" },
+    { name = "python-dateutil" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "httpx" },
+    { name = "attrs", specifier = ">=22.2.0" },
+    { name = "httpx", specifier = ">=0.23.0,<0.29.0" },
     { name = "keyring" },
-    { name = "light-client", editable = "light_client" },
     { name = "mutagen" },
+    { name = "python-dateutil", specifier = ">=2.8.0" },
 ]
 
 [[package]]
@@ -444,23 +445,6 @@ requires-dist = [
     { name = "rich" },
     { name = "rich-click" },
     { name = "textual" },
-]
-
-[[package]]
-name = "light-client"
-version = "1.0.0"
-source = { editable = "light_client" }
-dependencies = [
-    { name = "attrs" },
-    { name = "httpx" },
-    { name = "python-dateutil" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "attrs", specifier = ">=22.2.0" },
-    { name = "httpx", specifier = ">=0.23.0,<0.29.0" },
-    { name = "python-dateutil", specifier = ">=2.8.0" },
 ]
 
 [[package]]
