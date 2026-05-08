@@ -8,8 +8,8 @@
     pkgs = nixpkgs.legacyPackages.${system};
     python = pkgs.python312;
 
-    light-api = python.pkgs.buildPythonPackage {
-      pname = "light-api";
+    light-phone-api = python.pkgs.buildPythonPackage {
+      pname = "light-phone-api";
       version = "0.1.1";
       pyproject = true;
       src = ./light_api;
@@ -23,8 +23,8 @@
       ];
     };
 
-    light-cli-tui = python.pkgs.buildPythonPackage {
-      pname = "light-cli-tui";
+    light-phone-cli-tui = python.pkgs.buildPythonPackage {
+      pname = "light-phone-cli-tui";
       version = "0.1.1";
       pyproject = true;
       src = ./light_cli_tui;
@@ -35,19 +35,19 @@
         rich
         textual
         pyperclip
-        light-api
+        light-phone-api
       ];
     };
 
   in {
     packages.${system} = {
-      inherit light-api light-cli-tui;
-      default = light-cli-tui;
+      inherit light-phone-api light-phone-cli-tui;
+      default = light-phone-cli-tui;
     };
 
     apps.${system}.default = {
       type = "app";
-      program = "${light-cli-tui}/bin/light";
+      program = "${light-phone-cli-tui}/bin/light";
     };
 
     devShells.${system}.default = pkgs.mkShell {
