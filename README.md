@@ -1,13 +1,19 @@
 
 # Light API/CLI/TUI
 
-An unofficial, community-maintained API and CLI/TUI for managing music, notes, and podcasts on Light devices.
+An unofficial, community-maintained API and CLI/TUI for managing music, notes, podcasts, and tools on Light devices.
 
-This was made by reverse-engineering the API endpoints from the official dashboard. I have obtained Light's blessing for this. You can see the resulting OpenAPI spec in `light_client/`.
+This was made by reverse-engineering the API endpoints from the official dashboard. (I have obtained Light's blessing for this.)
 
-## Warning
+> [!CAUTION]
+> This software is **unreleased and actively in development.** It is public because I need to test package publishing and installation.
+>
+> The README is being actively updated to prep for the initial beta release. Tests and examples still being written.
+> 
+> Usage is not yet recommended!
 
-Because this is an **unofficial** set of tools created through reverse-engineering, this could break at any time if Light decides to change the structure of their API.
+> [!WARNING]
+> Because this is an **unofficial** set of tools created through reverse-engineering, this could break at any time if Light decides to change the structure of their API.
 
 ## Installation
 
@@ -161,16 +167,6 @@ TUI-specific features:
 
 Examples coming soon!
 
----
-
-# Dev stuff
-
-## Regenerate API from spec
-
-```
-openapi-python-client generate --path light_client/openapi-spec.json
-```
-
 ## Tests
 
 ### Unit tests
@@ -184,4 +180,17 @@ python scripts/capture_fixture.py
 
 ### Smoke tests (TODO)
 
-As this is an unofficial API, Light could change the format at any time. Smoke tests should be added and run regularly (homeserver nightly cronjob?) to catch any breaking API changes asap.
+As this is an unofficial API, Light could change the format at any time. Smoke tests should be added and run regularly (home server nightly cronjob?) to catch any breaking API changes asap.
+
+# Developer stuff
+
+## Regenerate API from spec
+
+The source of truth is the OpenAPI JSON. Python API bindings are automatically generated from that JSON using `openapi-python-client`.
+
+```
+cd light_client
+openapi-python-client generate --path light_client/openapi-spec.json
+# this will generate open-api-specification-client (kebab case)
+# delete the existing open_api_specification_client contents and copy the kebab-case dir contents to the snake-case dir
+```
