@@ -3,15 +3,21 @@
 
 An unofficial, community-maintained API and CLI/TUI for managing music, notes, and podcasts on Light devices.
 
-This was made by reverse-engineering the API endpoints from the official dashboard. (I have obtained Light's blessing for this!)
+This was made by reverse-engineering the API endpoints from the official dashboard. I have obtained Light's blessing for this. You can see the resulting OpenAPI spec in `light_client/`.
+
+## Warning
+
+Because this is an **unofficial** set of tools created through reverse-engineering, this could break at any time if Light decides to change the structure of their API.
 
 ## Installation
+
+This repo bundles two separate packages `light-api` and `light-cli-tui`. Install whichever suits your needs.
 
 From PyPI:
 
 ```
-pip install light-api  # for developers
-pip install light-cli-tui  # for users
+pip install light-api
+pip install light-cli-tui
 ```
 
 Nix users:
@@ -59,7 +65,9 @@ light --email-file=... --password-file=... --phone-number-file=... <command>
 
 After the first login, your auth token will be cached. Tokens are good for 30 days.
 
-## Getting started
+## Getting started: CLI/TUI
+
+**Note:** As is the case with the official Light dashboard, any changes made through these tools may take a few moments to propagate to the device.
 
 ### Music
 
@@ -113,46 +121,45 @@ light music sort artist-album --desc
 ```sh
 ```
 
-# Sample use cases
+### Tools
 
-Here's a few of my custom integrations which I think are pretty neat:
+Available tools: `alarm album calculator calendar camera directions directory hotspot music notes podcasts timer`
 
-## Auto-import Light notes into personal knowledge management system
+```sh
+light tools list
 
-I use a [Markdown-based note-taking app](https://github.com/silverbulletmd/silverbullet) which is hosted on my home server.
+light tools add <tool>
 
-## Auto update music on device
+light tools remove <tool>
+```
 
-I use a custom music player. In my player, I have added the ability to designate a specific playlist for syncing to the Light Phone. Whenever I make a change to that playlist, the player uses this Light API to didff what's on-device and what's in the playlist and upload/delete songs accordingly.
+### TUI
 
-## Automated music management
+The TUI offers 
 
-# Technical stuff
-
-This uses browser automation to grab the bearer token, then uses Light's API endpoints - spec generated with [OpenAPI devtools](https://github.com/AndrewWalsh/openapi-devtools), and implemented with [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) to perform dashboard functions.
-
-## How your credentials stay safe
-
-### 1. Entering your credentials
-
-As mentioned above in the quickstart, this tool offers three ways to enter your credentials. From best to worst, they are: password file, environment variables, plaintext in the command line.
-
-I leave it up to the user to be as secure as you want. I will always recommend using an encrypted password file.
-
-### 2. Using your credentials
-
-This uses [Playwright](https://github.com/microsoft/playwright) for the browser automation to log in to the dashboard with your user/pass to get an auth token. It's open-source, industry standard, and widely trusted.
-
-### 3. Storing your credentials
-
-The bearer token is cached in the system keyring, which is the system's native password manager that you are probably already using - Keychain on MacOS, Credential Manager on Windows, whatever-you-installed on Linux.
+- Vim bindings
 
 ---
 
-dev stuff
+# Dev stuff
 
-to regenerate the openapi helpers
+## Regenerate API from spec
 
 ```
 openapi-python-client generate --path light_client/openapi-spec.json
 ```
+
+## Tests
+
+### Unit tests
+
+Unit tests use request playback with `respx`.
+
+```py
+# This will populate `tests/fixtures/` with the response JSON to test against
+python scripts/capture_fixture.py
+```
+
+### Smoke tests (TODO)
+
+As this is an unofficial API, Light could change the format at any time. Smoke tests should be added and run regularly (homeserver nightly cronjob?) to catch any breaking API changes asap.
