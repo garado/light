@@ -188,7 +188,13 @@ def podcast_delete(light: Light, title):
     show_default=True,
     help="How to match existing tracks when checking for duplicates.",
 )
-def music_upload(light: Light, songs, allow_duplicates, match_title_by):
+@click.option(
+    "--no-convert-flac",
+    is_flag=True,
+    default=False,
+    help="Skip FLAC to MP3 conversion (conversion is on by default to preserve metadata).",
+)
+def music_upload(light: Light, songs, allow_duplicates, match_title_by, no_convert_flac):
     """Upload one or more audio files to your device.
 
     Duplicate detection is on by default - existing tracks with a matching
@@ -230,6 +236,7 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by):
         files,
         allow_duplicates=allow_duplicates,
         match_title_by=match_title_by,
+        convert_flac=not no_convert_flac,
     )
 
 

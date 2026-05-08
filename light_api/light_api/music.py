@@ -5,6 +5,7 @@ import logging
 import mimetypes
 import os
 import re
+import tempfile
 from enum import StrEnum
 from typing import Callable, Literal
 
@@ -63,6 +64,22 @@ class SortMode(StrEnum):
     TITLE_DESC = "title_desc"
     ARTIST_ALBUM_ASC = "aa_asc"
     ARTIST_ALBUM_DESC = "aa_desc"
+
+
+def _flac_to_mp3(flac_path: str) -> str:
+    """Convert a FLAC file to MP3 in a tempfile, preserving metadata. Returns the temp path."""
+    import subprocess
+    tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+    tmp.close()
+    result = subprocess.run(
+        ["ffmpeg", "-y", "-i", flac_path, "-map_metadata", "0", "-ab", "320k", tmp.name],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if result.returncode != 0:
+        os.unlink(tmp.name)
+        raise RuntimeError(f"ffmpeg conversion failed for {flac_path}")
+    return tmp.name
 
 
 class LightMusic:
@@ -260,6 +277,7 @@ class LightMusic:
         files: list[str],
         allow_duplicates: bool = False,
         match_title_by: Literal["metadata", "filename"] = "metadata",
+        convert_flac: bool = True,
     ) -> None:
         """Upload tracks to device.
 
@@ -295,57 +313,68 @@ class LightMusic:
                 log.warning(f"File not found, skipping: {file_path}")
                 continue
 
-            create_resp = self._l.call_api(
-                post_api_audios.sync_detailed,
-                client=self._l._api_client,
-                body=PostApiAudiosBody(
-                    data=PostApiAudiosBodyData(
-                        type_=PostApiAudiosBodyDataType.AUDIOS,
-                        attributes=PostApiAudiosBodyDataAttributes(
-                            filename=os.path.basename(file_path),
-                            device_tool_id=self._l._device_tool_ids["music"],
-                        ),
+            tmp_path = None
+            try:
+                if convert_flac and file_path.lower().endswith(".flac"):
+                    log.info(f"Converting {file_path} to MP3")
+                    tmp_path = _flac_to_mp3(file_path)
+                    upload_path = tmp_path
+                else:
+                    upload_path = file_path
+
+                create_resp = self._l.call_api(
+                    post_api_audios.sync_detailed,
+                    client=self._l._api_client,
+                    body=PostApiAudiosBody(
+                        data=PostApiAudiosBodyData(
+                            type_=PostApiAudiosBodyDataType.AUDIOS,
+                            attributes=PostApiAudiosBodyDataAttributes(
+                                filename=os.path.basename(upload_path),
+                                device_tool_id=self._l._device_tool_ids["music"],
+                            ),
+                        )
+                    ),
+                )
+                if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
+                    raise RuntimeError(
+                        f"Create audio record for {os.path.basename(upload_path)}: {create_resp.status_code}"
                     )
-                ),
-            )
-            if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
-                raise RuntimeError(
-                    f"Create audio record for {os.path.basename(file_path)}: {create_resp.status_code}"
+
+                presigned_url = next(
+                    item.attributes.presigned_url
+                    for item in create_resp.parsed.included
+                    if item.type_ == "files"
                 )
 
-            presigned_url = next(
-                item.attributes.presigned_url
-                for item in create_resp.parsed.included
-                if item.type_ == "files"
-            )
+                content_type = mimetypes.guess_type(upload_path)[0] or "audio/mpeg"
 
-            content_type = mimetypes.guess_type(file_path)[0] or "audio/mpeg"
+                with open(upload_path, "rb") as f:
+                    put_resp = httpx.put(
+                        presigned_url,
+                        content=f.read(),
+                        headers={"Content-Type": content_type},
+                        timeout=300,
+                    )
 
-            with open(file_path, "rb") as f:
-                put_resp = httpx.put(
-                    presigned_url,
-                    content=f.read(),
-                    headers={"Content-Type": content_type},
-                    timeout=300,
-                )
+                if not put_resp.is_success:
+                    raise RuntimeError(
+                        f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
+                    )
 
-            if not put_resp.is_success:
-                raise RuntimeError(
-                    f"Upload {os.path.basename(file_path)}: {put_resp.status_code} {put_resp.text}"
-                )
-
-            # The Light API (from what I've seen) has an issue where it won't set title/artist
-            # metadata properly when uploading non-mp3 files, so give user list of commands to patch it
-            # manually after tracks are uploaded. Can't do it directly in this loop bc the files are still
-            # processing so the patch will fail
-            if content_type != "audio/mpeg":
-                path = os.path.basename(file_path)
-                f = File(file_path, easy=True)
-                title = f.get("title", ["Unknown"])[0] if f else "Unknown"
-                artist = f.get("artist", ["Unknown"])[0] if f else "Unknown"
-                album = f.get("album", [""])[0] if f else ""
-                cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}" --new-album "{album}"'
-                manual_update_cmds.append(cmd)
+                # The Light API has an issue where it won't set title/artist metadata properly
+                # when uploading non-mp3 files. Give user list of commands to patch manually after
+                # upload since files are still processing and a patch immediately after will fail.
+                if content_type != "audio/mpeg":
+                    path = os.path.basename(upload_path)
+                    f = File(upload_path, easy=True)
+                    title = f.get("title", ["Unknown"])[0] if f else "Unknown"
+                    artist = f.get("artist", ["Unknown"])[0] if f else "Unknown"
+                    album = f.get("album", [""])[0] if f else ""
+                    cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}" --new-album "{album}"'
+                    manual_update_cmds.append(cmd)
+            finally:
+                if tmp_path:
+                    os.unlink(tmp_path)
 
         log.info("All uploads complete")
 
