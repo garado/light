@@ -12,11 +12,33 @@ from typing import Any, Callable
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
 from textual.coordinate import Coordinate
 from textual.screen import ModalScreen
+from textual.theme import Theme
 from textual.widget import Widget
 from textual.widgets import Button, ContentSwitcher, DataTable, Input, Label, Static
+
+NORD = Theme(
+    name="nord",
+    dark=True,
+    background="#1e2127",
+    surface="#282c34",
+    panel="#2c313a",
+    primary="#61afef",
+    secondary="#56b6c2",
+    accent="#61afef",
+    foreground="#abb2bf",
+    error="#e06c75",
+    warning="#e5c07b",
+    success="#98c379",
+    variables={
+        "text-muted": "#5c6370",
+        "surface-lighten-1": "#2c313a",
+        "surface-lighten-2": "#3e4451",
+        "text-disabled": "#3e4451",
+    },
+)
 
 from light_api.client import Light
 from light_api.music import LightTrack, SortMode
@@ -42,7 +64,7 @@ SORT_LABELS: dict[SortMode, str] = {
     SortMode.ARTIST_ALBUM_DESC: "artist+album z-a",
 }
 
-TABS = ["music", "notes", "podcasts"]
+TABS = ["music", "notes"]
 
 
 @dataclass
@@ -109,10 +131,10 @@ class LightThread:
 
 class ConfirmScreen(ModalScreen[bool]):
     CSS = """
-    ConfirmScreen { align: center middle; background: transparent; }
+    ConfirmScreen { align: center middle; background: $background 80%; }
     #dialog {
         padding: 1 3;
-        background: transparent;
+        background: $background;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         width: auto;
@@ -142,22 +164,30 @@ class ConfirmScreen(ModalScreen[bool]):
 
 class EditScreen(ModalScreen[tuple[str, str, str] | None]):
     CSS = """
-    EditScreen { align: center middle; background: transparent; }
+    EditScreen { align: center middle; background: $background 80%; }
     #dialog {
         padding: 1 3;
-        background: transparent;
+        background: $background;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         width: 50;
         height: auto;
     }
-    EditScreen Input {
+    EditScreen Label {
+        color: $text-muted;
         margin-top: 1;
-        border: solid $surface-lighten-2;
-        background: transparent;
     }
-    EditScreen Input:focus { border: solid $accent; }
-    #buttons { margin-top: 1; align: center middle; width: auto; }
+    EditScreen Input {
+        border: solid $surface-lighten-2;
+        background: $background;
+    }
+    EditScreen Input:focus {
+        border: solid $accent;
+        background: $background;
+    }
+    EditScreen Input.-valid { background: $background; }
+    EditScreen Input.-invalid { background: $background; }
+    #buttons { margin-top: 1; align: center middle; width: 100%; height: auto; }
     Button { margin: 0 1; }
     """
 
@@ -167,10 +197,13 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
 
     def compose(self) -> ComposeResult:
         with Static(id="dialog"):
-            yield Input(value=self._track.title, placeholder="title", id="title")
-            yield Input(value=self._track.artist, placeholder="artist", id="artist")
-            yield Input(value=self._track.album, placeholder="album", id="album")
-            with Static(id="buttons"):
+            yield Label("title")
+            yield Input(value=self._track.title, id="title")
+            yield Label("artist")
+            yield Input(value=self._track.artist, id="artist")
+            yield Label("album")
+            yield Input(value=self._track.album, id="album")
+            with Horizontal(id="buttons"):
                 yield Button("save", variant="primary", id="save")
                 yield Button("cancel", variant="default", id="cancel")
 
@@ -183,7 +216,14 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
 
     def on_key(self, event) -> None:
         if event.key == "enter":
-            self.dismiss(self._get_values())
+            focused = self.focused
+            if isinstance(focused, Button):
+                if focused.id == "cancel":
+                    self.dismiss(None)
+                else:
+                    self.dismiss(self._get_values())
+            else:
+                self.dismiss(self._get_values())
         elif event.key == "escape":
             self.dismiss(None)
 
@@ -193,6 +233,59 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
             self.query_one("#artist", Input).value,
             self.query_one("#album", Input).value,
         )
+
+
+class RenameNoteScreen(ModalScreen[str | None]):
+    CSS = """
+    RenameNoteScreen { align: center middle; background: $background 80%; }
+    #dialog {
+        padding: 1 3;
+        background: $background;
+        border: solid $surface-lighten-2;
+        border-title-color: $text-muted;
+        width: 50;
+        height: auto;
+    }
+    RenameNoteScreen Label { color: $text-muted; margin-top: 1; }
+    RenameNoteScreen Input {
+        border: solid $surface-lighten-2;
+        background: $background;
+    }
+    RenameNoteScreen Input:focus { border: solid $accent; background: $background; }
+    #buttons { margin-top: 1; align: center middle; width: 100%; height: auto; }
+    Button { margin: 0 1; }
+    """
+
+    def __init__(self, current_title: str) -> None:
+        super().__init__()
+        self._current_title = current_title
+
+    def compose(self) -> ComposeResult:
+        with Static(id="dialog"):
+            yield Label("title")
+            yield Input(value=self._current_title, id="title")
+            with Horizontal(id="buttons"):
+                yield Button("save", variant="primary", id="save")
+                yield Button("cancel", variant="default", id="cancel")
+
+    def on_mount(self) -> None:
+        inp = self.query_one("#title", Input)
+        self.query_one("#dialog").border_title = "rename note"
+        inp.focus()
+        inp.action_end()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(self.query_one("#title", Input).value if event.button.id == "save" else None)
+
+    def on_key(self, event) -> None:
+        if event.key == "enter":
+            focused = self.focused
+            if isinstance(focused, Button) and focused.id == "cancel":
+                self.dismiss(None)
+            else:
+                self.dismiss(self.query_one("#title", Input).value)
+        elif event.key == "escape":
+            self.dismiss(None)
 
 
 class MusicPane(Widget):
@@ -281,7 +374,9 @@ class MusicPane(Widget):
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id == "search-bar":
-            self._stop_search()
+            self._search_mode = False
+            self.query_one("#search-bar", Input).display = False
+            self.query_one(DataTable).focus()
 
     # --- key handling ---
 
@@ -435,8 +530,14 @@ class MusicPane(Widget):
 
         self._last_key = key
 
+    def _can_rearrange(self) -> bool:
+        return SORT_CYCLE[self._sort_index] not in (SortMode.ARTIST_ASC, SortMode.ARTIST_DESC)
+
     def _move_track(self, direction: int) -> None:
         if self._pw is None:
+            return
+        if not self._can_rearrange():
+            self._set_status("rearranging not available in artist sort mode  |  switch to manual/title/artist+album first")
             return
         table = self.query_one(DataTable)
         row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
@@ -487,6 +588,9 @@ class MusicPane(Widget):
 
     def _move_block(self, direction: int, count: int) -> None:
         if self._pw is None:
+            return
+        if not self._can_rearrange():
+            self._set_status("rearranging not available in artist sort mode  |  switch to manual/title/artist+album first")
             return
         if len(self._filtered_tracks) != len(self._tracks):
             return
@@ -731,7 +835,7 @@ class NotesPane(Widget):
         table = self.query_one("#notes-list", DataTable)
         table.cursor_type = "row"
         table.show_header = False
-        table.add_column("note", width=28)
+        table.add_column("note", width=28, key="note")
         sidebar = self.query_one("#notes-sidebar")
         sidebar.border_title = "Notes"
         self.query_one("#note-content").border_title = "Content"
@@ -759,7 +863,7 @@ class NotesPane(Widget):
 
     def update_status(self) -> None:
         self._set_status(
-            f"{len(self._notes)} notes  |  j/k nav  enter load  y copy  e editor  p play/stop  r refresh  h/l tabs  q quit"
+            f"{len(self._notes)} notes  |  j/k nav  enter load  n new  y copy  e editor  R rename  dd delete  p play/stop  r refresh  h/l tabs  q quit"
         )
 
     def refresh_header(self) -> None:
@@ -922,6 +1026,20 @@ class NotesPane(Widget):
         elif key == "r":
             self.action_refresh()
             event.stop()
+        elif key == "R":
+            self._rename_note()
+            event.stop()
+        elif key == "n":
+            self._new_note()
+            event.stop()
+        elif key == "d":
+            if self._last_key == "d":
+                self._confirm_delete_note()
+                self._last_key = ""
+            else:
+                self._last_key = key
+            event.stop()
+            return
         elif key == "h":
             self._stop_audio_proc()
             self.app.action_prev_tab()  # type: ignore[attr-defined]
@@ -932,6 +1050,59 @@ class NotesPane(Widget):
             event.stop()
 
         self._last_key = key
+
+    def _new_note(self) -> None:
+        def on_title(title: str | None) -> None:
+            if not title:
+                return
+            self._set_status("creating...")
+            self.app.run_worker(lambda: self._do_create_note(title), thread=True)
+
+        self.app.push_screen(RenameNoteScreen(""), on_title)
+
+    def _do_create_note(self, title: str) -> None:
+        assert self._pw is not None
+        note = self._pw.submit(lambda light: light.notes.create_text_note(title, ""))
+        self.app.call_from_thread(self._on_note_created, note)
+
+    def _on_note_created(self, note: LightNote) -> None:
+        self._notes.insert(0, note)
+        self._content_cache[note.id] = b""
+        table = self.query_one("#notes-list", DataTable)
+        prefix = "✎"
+        label = f"{prefix} {note.title or '(untitled)'}"
+        table.add_row(label, key=note.id)
+        table.move_cursor(row=table.row_count - 1)
+        self._set_status("created — opening editor...")
+        self._open_in_editor()
+
+    def _confirm_delete_note(self) -> None:
+        note = self._current_note()
+        if note is None:
+            return
+
+        def on_result(confirmed: bool) -> None:
+            if confirmed:
+                self._set_status("deleting...")
+                self.app.run_worker(lambda: self._do_delete_note(note), thread=True)
+
+        self.app.push_screen(ConfirmScreen(f"delete '{note.title or note.id}'?"), on_result)
+
+    def _do_delete_note(self, note: LightNote) -> None:
+        assert self._pw is not None
+        self._pw.submit(lambda light: light.notes.delete_note(note.id))
+        self.app.call_from_thread(self._on_note_deleted, note)
+
+    def _on_note_deleted(self, note: LightNote) -> None:
+        self._notes = [n for n in self._notes if n.id != note.id]
+        self._content_cache.pop(note.id, None)
+        table = self.query_one("#notes-list", DataTable)
+        table.remove_row(note.id)
+        self.query_one("#notes-sidebar").border_subtitle = ""
+        self.query_one("#note-content").border_title = "Content"
+        self.query_one("#note-text", Static).update("")
+        self._set_status("deleted")
+        self.set_timer(2, self.update_status)
 
     def _copy_to_clipboard(self) -> None:
         import pyperclip
@@ -977,6 +1148,37 @@ class NotesPane(Widget):
         self._set_status("saving...")
         self.app.run_worker(lambda: self._save_note(note, updated), thread=True)
 
+    def _rename_note(self) -> None:
+        note = self._current_note()
+        if note is None:
+            return
+
+        def on_result(new_title: str | None) -> None:
+            if new_title is None or new_title == note.title:
+                return
+            self._set_status("renaming...")
+            self.app.run_worker(lambda: self._do_rename(note, new_title), thread=True)
+
+        self.app.push_screen(RenameNoteScreen(note.title or ""), on_result)
+
+    def _do_rename(self, note: LightNote, title: str) -> None:
+        assert self._pw is not None
+        self._pw.submit(lambda light: light.notes.update_note_title(note, title))
+        self.app.call_from_thread(self._on_renamed, note)
+
+    def _on_renamed(self, note: LightNote) -> None:
+        table = self.query_one("#notes-list", DataTable)
+        prefix = "♪" if note.note_type == "audio" else "✎"
+        label = f"{prefix} {note.title or '(untitled)'}"
+        table.update_cell(note.id, "note", label)
+        self.query_one("#notes-sidebar").border_subtitle = label
+        if note.id in self._content_cache:
+            self.query_one("#note-content").border_title = (
+                f"Content  ·  {label}  ({note.updated_at})"
+            )
+        self._set_status("renamed")
+        self.set_timer(2, self.update_status)
+
     def _save_note(self, note: LightNote, content: bytes) -> None:
         assert self._pw is not None
         self._pw.submit(lambda light: light.notes.update_note_content(note, content))
@@ -990,30 +1192,34 @@ class NotesPane(Widget):
             self.app.query_one("#status", Static).update(text)
 
 
-class PodcastsPane(Widget):
-    def __init__(self) -> None:
-        super().__init__(id="podcasts")
-
-    def compose(self) -> ComposeResult:
-        yield Static("podcasts coming soon")
-
 
 class LightApp(App):
     CSS = """
-    Screen { background: transparent; }
-    LightApp { layout: vertical; background: transparent; }
+    Screen { background: $background; }
+    LightApp { layout: vertical; background: $background; }
 
-    ContentSwitcher { height: 1fr; margin: 0; padding: 0; background: transparent; }
-    DataTable { background: transparent; }
-    Static { background: transparent; }
-    VerticalScroll { background: transparent; }
-    VerticalScroll > * { background: transparent; }
-    Widget { background: transparent; }
+    ContentSwitcher { height: 1fr; margin: 0; padding: 0; background: $background; }
+
+    DataTable { background: $background; }
+    DataTable > .datatable--header { background: $surface; color: $text-muted; }
+    DataTable > .datatable--cursor { background: $accent 25%; }
+    DataTable > .datatable--hover { background: $surface; }
+
+    ScrollBar { background: $background; }
+    ScrollBar > .scrollbar--bar { background: $background; }
+    ScrollBar > .scrollbar--slider { background: $surface-lighten-2; }
+
+    Input { background: $surface; border: solid $surface-lighten-2; }
+    Input:focus { background: $surface; border: solid $accent; }
+
+    Button { background: $panel; }
+    Button:hover { background: $panel-lighten-1; }
+    Button.-primary { background: $primary; }
+    Button.-error { background: $error; }
 
     MusicPane {
         layout: vertical;
         height: 1fr;
-        background: transparent;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         border-subtitle-color: $text-muted;
@@ -1025,23 +1231,20 @@ class LightApp(App):
         height: 1;
         border: none;
         padding: 0 1;
-        background: transparent;
     }
 
-    NotesPane { layout: horizontal; height: 1fr; background: transparent; }
+    NotesPane { layout: horizontal; height: 1fr; }
     #notes-sidebar {
         width: 34;
         height: 1fr;
-        background: transparent;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         border-subtitle-color: $text-muted;
     }
-    #notes-list { height: 1fr; background: transparent; }
+    #notes-list { height: 1fr; }
     #note-content {
         width: 1fr;
         height: 1fr;
-        background: transparent;
         border: solid $surface-lighten-2;
         border-title-color: $text-muted;
         padding: 1 2;
@@ -1050,7 +1253,6 @@ class LightApp(App):
     #status {
         height: 1;
         padding: 0 1;
-        background: transparent;
         color: $text-muted;
     }
     """
@@ -1073,10 +1275,11 @@ class LightApp(App):
         with ContentSwitcher(initial="music"):
             yield MusicPane()
             yield NotesPane()
-            yield PodcastsPane()
         yield Static("connecting...", id="status")
 
     def on_mount(self) -> None:
+        self.register_theme(NORD)
+        self.theme = "nord"
         self.query_one(MusicPane).query_one(DataTable).focus()
         self.run_worker(self._init_light, exclusive=True, thread=True)
 
