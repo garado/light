@@ -11,9 +11,16 @@ from open_api_specification_client.api.default import (
     get_api_notes,
     get_api_notes_note_id,
     get_api_notes_note_id_generate_presigned_get_url,
+    patch_api_notes_note_id,
     post_api_notes,
 )
 from open_api_specification_client.models import (
+    PatchApiNotesNoteIdBody,
+    PatchApiNotesNoteIdBodyData,
+    PatchApiNotesNoteIdBodyDataAttributes,
+    PatchApiNotesNoteIdBodyDataRelationships,
+    PatchApiNotesNoteIdBodyDataRelationshipsFile,
+    PatchApiNotesNoteIdBodyDataRelationshipsFileData,
     PostApiNotesBody,
     PostApiNotesBodyData,
     PostApiNotesBodyDataAttributes,
@@ -169,9 +176,12 @@ class LightNotes:
 
         log.info("Note saved")
 
-    def update_note_content(self, note: "LightNote", content: bytes) -> None:
+    def update_note_content(self, note: LightNote, content: bytes) -> None:
         """Overwrite the content of an existing text note via its presigned upload URL."""
-        from open_api_specification_client.api.default import get_api_notes_note_id_generate_presigned_put_url
+        from open_api_specification_client.api.default import (
+            get_api_notes_note_id_generate_presigned_put_url,
+        )
+
         resp = self._l.call_api(
             get_api_notes_note_id_generate_presigned_put_url.sync_detailed,
             client=self._l._api_client,
@@ -183,3 +193,34 @@ class LightNotes:
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
         log.info(f"Note {note.id} updated")
+
+    def update_note_title(self, note: LightNote, title: str) -> None:
+        """Update the title of an existing note."""
+        resp = self._l.call_api(
+            patch_api_notes_note_id.sync_detailed,
+            client=self._l._api_client,
+            note_id=note.id,
+            body=PatchApiNotesNoteIdBody(
+                data=PatchApiNotesNoteIdBodyData(
+                    id=note.id,
+                    type_="notes",
+                    attributes=PatchApiNotesNoteIdBodyDataAttributes(
+                        title=title,
+                        updated_at=note.updated_at,
+                        note_type=note.note_type,
+                    ),
+                    relationships=PatchApiNotesNoteIdBodyDataRelationships(
+                        file=PatchApiNotesNoteIdBodyDataRelationshipsFile(
+                            data=PatchApiNotesNoteIdBodyDataRelationshipsFileData(
+                                type_="files",
+                                id=note.file_id,
+                            )
+                        )
+                    ),
+                )
+            ),
+        )
+        if resp.status_code not in (200, 204):
+            raise RuntimeError(f"Update note title: {resp.status_code}")
+        note.title = title
+        log.info(f"Note {note.id} title updated to {title!r}")
