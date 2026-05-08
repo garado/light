@@ -137,14 +137,8 @@ class LightNotes:
 
     def create_text_note(
         self, title: str, content: str, content_is_path: bool = False
-    ) -> None:
-        """Create a new text note.
-
-        Args:
-            title: The title of the note to create.
-            content: Note content, or a file path if content_is_path is True.
-            content_is_path: If True, read content from the given path.
-        """
+    ) -> "LightNote":
+        """Create a new text note and return the resulting LightNote."""
         resp = post_api_notes.sync_detailed(
             client=self._l._api_client,
             body=PostApiNotesBody(
@@ -175,7 +169,16 @@ class LightNotes:
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
 
-        log.info("Note saved")
+        d = resp.parsed.data
+        note = LightNote(
+            id=d.id,
+            file_id=d.attributes.file_id,
+            note_type=d.attributes.note_type,
+            title=d.attributes.title,
+            updated_at=d.attributes.updated_at,
+        )
+        log.info(f"Note {note.id} created")
+        return note
 
     def update_note_content(self, note: LightNote, content: bytes) -> None:
         """Overwrite the content of an existing text note via its presigned upload URL."""
