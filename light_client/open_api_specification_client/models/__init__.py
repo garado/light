@@ -294,6 +294,15 @@ from .patch_api_audios_audio_id_response_200_included_item_attributes import (
     PatchApiAudiosAudioIdResponse200IncludedItemAttributes,
 )
 from .patch_api_audios_audio_id_response_200_jsonapi import PatchApiAudiosAudioIdResponse200Jsonapi
+from .patch_api_notes_note_id_body import PatchApiNotesNoteIdBody
+from .patch_api_notes_note_id_body_data import PatchApiNotesNoteIdBodyData
+from .patch_api_notes_note_id_body_data_attributes import PatchApiNotesNoteIdBodyDataAttributes
+from .patch_api_notes_note_id_body_data_relationships import PatchApiNotesNoteIdBodyDataRelationships
+from .patch_api_notes_note_id_body_data_relationships_file import PatchApiNotesNoteIdBodyDataRelationshipsFile
+from .patch_api_notes_note_id_body_data_relationships_file_data import PatchApiNotesNoteIdBodyDataRelationshipsFileData
+from .patch_api_notes_note_id_response_200 import PatchApiNotesNoteIdResponse200
+from .patch_api_notes_note_id_response_200_data import PatchApiNotesNoteIdResponse200Data
+from .patch_api_notes_note_id_response_200_data_attributes import PatchApiNotesNoteIdResponse200DataAttributes
 from .patch_api_playlist_items_playlist_item_id_body import PatchApiPlaylistItemsPlaylistItemIdBody
 from .patch_api_playlist_items_playlist_item_id_body_data import PatchApiPlaylistItemsPlaylistItemIdBodyData
 from .patch_api_playlist_items_playlist_item_id_body_data_attributes import (
@@ -600,6 +609,15 @@ __all__ = (
     "PatchApiAudiosAudioIdResponse200IncludedItem",
     "PatchApiAudiosAudioIdResponse200IncludedItemAttributes",
     "PatchApiAudiosAudioIdResponse200Jsonapi",
+    "PatchApiNotesNoteIdBody",
+    "PatchApiNotesNoteIdBodyData",
+    "PatchApiNotesNoteIdBodyDataAttributes",
+    "PatchApiNotesNoteIdBodyDataRelationships",
+    "PatchApiNotesNoteIdBodyDataRelationshipsFile",
+    "PatchApiNotesNoteIdBodyDataRelationshipsFileData",
+    "PatchApiNotesNoteIdResponse200",
+    "PatchApiNotesNoteIdResponse200Data",
+    "PatchApiNotesNoteIdResponse200DataAttributes",
     "PatchApiPlaylistItemsPlaylistItemIdBody",
     "PatchApiPlaylistItemsPlaylistItemIdBodyData",
     "PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes",
