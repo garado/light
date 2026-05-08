@@ -693,7 +693,7 @@ class MusicPane(Widget):
         sort_mode = self._pw.submit(lambda light: light.music.get_sort_mode())
         self.app.call_from_thread(self._on_tracks_loaded, tracks, sort_mode)
 
-    def _on_tracks_loaded(self, tracks: list[LightTrack], sort_mode: SortMode | None = None) -> None:
+    def _on_tracks_loaded(self, tracks: list[LightTrack], sort_mode: SortMode | None = None, restore_id: str | None = None) -> None:
         self._tracks = tracks
         self._filtered_tracks = list(tracks)
         self._pending_sort_index = None
@@ -701,6 +701,13 @@ class MusicPane(Widget):
         if sort_mode is not None and sort_mode in SORT_CYCLE:
             self._sort_index = SORT_CYCLE.index(sort_mode)
         self._populate_table(tracks)
+        if restore_id is not None:
+            table = self.query_one(DataTable)
+            for i, t in enumerate(tracks):
+                if t.audio_id == restore_id:
+                    table.move_cursor(row=i, scroll=True)
+                    self._cursor_row = i
+                    break
         self._update_status()
         self._set_header(tracks[0] if tracks else None)
 
@@ -815,7 +822,7 @@ class MusicPane(Widget):
             )
         )
         tracks = self._pw.submit(lambda light: light.music.get_tracks())
-        self.app.call_from_thread(self._on_tracks_loaded, tracks)
+        self.app.call_from_thread(self._on_tracks_loaded, tracks, None, track.audio_id)
 
     def _selected_tracks(self) -> list[LightTrack]:
         lo, hi = self._get_visual_range()
@@ -894,7 +901,7 @@ class MusicPane(Widget):
                 )
             )
         updated = self._pw.submit(lambda light: light.music.get_tracks())
-        self.app.call_from_thread(self._on_tracks_loaded, updated)
+        self.app.call_from_thread(self._on_tracks_loaded, updated, None, tracks[0].audio_id)
 
 
 class NotesPane(Widget):
