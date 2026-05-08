@@ -191,24 +191,27 @@ class EditScreen(ModalScreen[tuple[str, str, str] | None]):
     Button { margin: 0 1; }
     """
 
-    def __init__(self, track: LightTrack) -> None:
+    def __init__(self, title: str = "", artist: str = "", album: str = "", border_title: str = "edit track") -> None:
         super().__init__()
-        self._track = track
+        self._title = title
+        self._artist = artist
+        self._album = album
+        self._border_title = border_title
 
     def compose(self) -> ComposeResult:
         with Static(id="dialog"):
             yield Label("title")
-            yield Input(value=self._track.title, id="title")
+            yield Input(value=self._title, id="title")
             yield Label("artist")
-            yield Input(value=self._track.artist, id="artist")
+            yield Input(value=self._artist, id="artist")
             yield Label("album")
-            yield Input(value=self._track.album, id="album")
+            yield Input(value=self._album, id="album")
             with Horizontal(id="buttons"):
                 yield Button("save", variant="primary", id="save")
                 yield Button("cancel", variant="default", id="cancel")
 
     def on_mount(self) -> None:
-        self.query_one("#dialog").border_title = "edit track"
+        self.query_one("#dialog").border_title = self._border_title
         self.query_one("#title", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -508,11 +511,15 @@ class MusicPane(Widget):
                 self._cycle_sort()
             event.stop()
         elif key == "d":
-            if not self._visual_mode:
+            if self._visual_mode:
+                self.action_bulk_delete()
+            else:
                 self.action_delete()
             event.stop()
         elif key == "e":
-            if not self._visual_mode:
+            if self._visual_mode:
+                self.action_bulk_edit()
+            else:
                 self.action_edit()
             event.stop()
         elif key == "slash":
@@ -798,7 +805,7 @@ class MusicPane(Widget):
                 thread=True,
             )
 
-        self.app.push_screen(EditScreen(track), on_edit)
+        self.app.push_screen(EditScreen(title=track.title, artist=track.artist, album=track.album), on_edit)
 
     def _do_edit(self, track: LightTrack, title: str, artist: str, album: str) -> None:
         assert self._pw is not None
@@ -809,6 +816,85 @@ class MusicPane(Widget):
         )
         tracks = self._pw.submit(lambda light: light.music.get_tracks())
         self.app.call_from_thread(self._on_tracks_loaded, tracks)
+
+    def _selected_tracks(self) -> list[LightTrack]:
+        lo, hi = self._get_visual_range()
+        return [self._filtered_tracks[i] for i in range(lo, hi + 1)]
+
+    def action_bulk_delete(self) -> None:
+        tracks = self._selected_tracks()
+        if not tracks:
+            return
+
+        def on_confirm(confirmed: bool) -> None:
+            if not confirmed:
+                return
+            self._visual_mode = False
+            self._clear_visual_highlight()
+            self._set_status(f"deleting {len(tracks)} tracks...")
+            ids = {t.audio_id for t in tracks}
+            self.app.run_worker(
+                lambda: self._do_bulk_delete(ids), exclusive=True, thread=True
+            )
+
+        self.app.push_screen(ConfirmScreen(f"delete {len(tracks)} tracks?"), on_confirm)
+
+    def _do_bulk_delete(self, ids: set[str]) -> None:
+        assert self._pw is not None
+        self._pw.submit(
+            lambda light: light.music.delete_tracks_predicate(lambda t: t.audio_id in ids)
+        )
+        tracks = self._pw.submit(lambda light: light.music.get_tracks())
+        self.app.call_from_thread(self._on_tracks_loaded, tracks)
+
+    def action_bulk_edit(self) -> None:
+        tracks = self._selected_tracks()
+        if not tracks:
+            return
+
+        def common(values: list[str]) -> str:
+            return values[0] if len(set(values)) == 1 else ""
+
+        pre_title = common([t.title for t in tracks])
+        pre_artist = common([t.artist for t in tracks])
+        pre_album = common([t.album for t in tracks])
+
+        def on_edit(result: tuple[str, str, str] | None) -> None:
+            if result is None:
+                return
+            new_title, new_artist, new_album = result
+            self._visual_mode = False
+            self._clear_visual_highlight()
+            self._set_status(f"updating {len(tracks)} tracks...")
+            self.app.run_worker(
+                lambda: self._do_bulk_edit(tracks, new_title, new_artist, new_album),
+                exclusive=True,
+                thread=True,
+            )
+
+        self.app.push_screen(
+            EditScreen(
+                title=pre_title,
+                artist=pre_artist,
+                album=pre_album,
+                border_title=f"edit {len(tracks)} tracks",
+            ),
+            on_edit,
+        )
+
+    def _do_bulk_edit(self, tracks: list[LightTrack], title: str, artist: str, album: str) -> None:
+        assert self._pw is not None
+        for track in tracks:
+            self._pw.submit(
+                lambda light, t=track: light.music.update_track_metadata(
+                    t.audio_id,
+                    title=title or None,
+                    artist=artist or None,
+                    album=album or None,
+                )
+            )
+        updated = self._pw.submit(lambda light: light.music.get_tracks())
+        self.app.call_from_thread(self._on_tracks_loaded, updated)
 
 
 class NotesPane(Widget):
