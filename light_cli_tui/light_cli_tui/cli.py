@@ -9,6 +9,7 @@ import logging
 import time
 import rich_click as click
 from rich.console import Console
+from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 
 from light_api.client import Light
@@ -232,12 +233,31 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by, no_conve
             if not click.confirm("Proceed?"):
                 return
 
-    light.music.upload_tracks(
-        files,
-        allow_duplicates=allow_duplicates,
-        match_title_by=match_title_by,
-        convert_flac=not no_convert_flac,
-    )
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        console=console,
+    ) as progress:
+        task_id: TaskID | None = None
+        current_file: str | None = None
+
+        def on_progress(filename: str, sent: int, total: int) -> None:
+            nonlocal task_id, current_file
+            if filename != current_file:
+                if task_id is not None:
+                    progress.update(task_id, completed=100)
+                current_file = filename
+                task_id = progress.add_task(f"uploading {filename}", total=100)
+            progress.update(task_id, completed=int(sent / total * 100))
+
+        light.music.upload_tracks(
+            files,
+            allow_duplicates=allow_duplicates,
+            match_title_by=match_title_by,
+            convert_flac=not no_convert_flac,
+            on_progress=on_progress,
+        )
 
 
 @music.command("delete-all")
