@@ -8,32 +8,24 @@
     pkgs = nixpkgs.legacyPackages.${system};
     python = pkgs.python312;
 
-    light-client = python.pkgs.buildPythonPackage {
-      pname = "light-client";
-      version = "1.0.0";
-      pyproject = true;
-      src = ./light_client;
-      build-system = [ python.pkgs.hatchling ];
-      dependencies = with python.pkgs; [ httpx attrs python-dateutil ];
-    };
-
     light-api = python.pkgs.buildPythonPackage {
       pname = "light-api";
-      version = "0.1.0";
+      version = "0.1.1";
       pyproject = true;
       src = ./light_api;
       build-system = [ python.pkgs.hatchling ];
       dependencies = with python.pkgs; [
         httpx
+        attrs
+        python-dateutil
         keyring
         mutagen
-        light-client
       ];
     };
 
     light-cli-tui = python.pkgs.buildPythonPackage {
       pname = "light-cli-tui";
-      version = "0.1.0";
+      version = "0.1.1";
       pyproject = true;
       src = ./light_cli_tui;
       build-system = [ python.pkgs.hatchling ];
@@ -42,9 +34,9 @@
         rich-click
         rich
         textual
+        pyperclip
         light-api
       ];
-
     };
 
   in {
