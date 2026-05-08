@@ -180,10 +180,45 @@ light tui
 TUI-specific features:
 - First-class support for Vim bindings
 - Music
-   - Reorder tracks individually or in visual block mode
+    - Reorder tracks individually or in visual block mode
+    - Bulk edit track metadata
+    - Bulk delete tracks
 - Notes
-   - Content preview for both text and audio notes
-   - Press `e` to edit text note content in `$EDITOR`
+    - Content preview for both text and audio notes
+    - Press `e` to edit in `$EDITOR`
+
+#### Music
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Navigate |
+| `gg` / `G` | Jump to top / bottom |
+| `J` / `K` | Move track up / down |
+| `5J` / `5K` | Move track up / down by 5 |
+| `v` | Enter visual mode (select a block) |
+| `J` / `K` in visual | Move selected block up / down |
+| `gg` / `G` in visual | Move selected block to top / bottom |
+| `d` in visual | Delete selected tracks |
+| `e` | Edit track metadata |
+| `e` in visual | Bulk edit metadata (shared fields pre-filled) |
+| `s` | Cycle sort mode |
+| `/` | Search |
+| `r` | Refresh |
+
+#### Notes
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Navigate |
+| `gg` / `G` | Jump to top / bottom |
+| `Enter` | Load note content |
+| `n` | New note (opens in `$EDITOR`) |
+| `e` | Edit note content in `$EDITOR` |
+| `R` | Rename note |
+| `dd` | Delete note (with confirmation) |
+| `y` | Copy content to clipboard |
+| `p` | Play / stop audio note |
+| `r` | Refresh |
 
 #### Screenshots
 
