@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from open_api_specification_client.api.default import (
+    delete_api_notes_note_id,
     get_api_notes,
     get_api_notes_note_id,
     get_api_notes_note_id_generate_presigned_get_url,
@@ -224,3 +225,14 @@ class LightNotes:
             raise RuntimeError(f"Update note title: {resp.status_code}")
         note.title = title
         log.info(f"Note {note.id} title updated to {title!r}")
+
+    def delete_note(self, note_id: str) -> None:
+        """Delete a note."""
+        resp = self._l.call_api(
+            delete_api_notes_note_id.sync_detailed,
+            client=self._l._api_client,
+            note_id=note_id,
+        )
+        if resp.status_code not in (200, 204):
+            raise RuntimeError(f"Delete note: {resp.status_code}")
+        log.info(f"Note {note_id} deleted")
