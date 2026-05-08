@@ -1,5 +1,5 @@
 [project]
-name = "light_cli_tui"
+name = "light-phone-cli-tui"
 version = "0.1.0"
 description = "Unofficial CLI/TUI for the Light Phone"
 authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
@@ -11,7 +11,7 @@ dependencies = [
     "rich",
     "textual",
     "pyperclip",
-    "light_api",
+    "light-phone-api",
 ]
 
 [project.scripts]

@@ -4,8 +4,8 @@ requires-python = ">=3.11"
 
 [manifest]
 members = [
-    "light-api",
-    "light-cli-tui",
+    "light-phone-api",
+    "light-phone-cli-tui",
 ]
 
 [manifest.dependency-groups]
@@ -404,7 +404,7 @@ wheels = [
 ]
 
 [[package]]
-name = "light-api"
+name = "light-phone-api"
 version = "0.1.0"
 source = { editable = "light_api" }
 dependencies = [
@@ -425,12 +425,12 @@ requires-dist = [
 ]
 
 [[package]]
-name = "light-cli-tui"
+name = "light-phone-cli-tui"
 version = "0.1.0"
 source = { editable = "light_cli_tui" }
 dependencies = [
     { name = "click" },
-    { name = "light-api" },
+    { name = "light-phone-api" },
     { name = "pyperclip" },
     { name = "rich" },
     { name = "rich-click" },
@@ -440,7 +440,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "click" },
-    { name = "light-api", editable = "light_api" },
+    { name = "light-phone-api", editable = "light_api" },
     { name = "pyperclip" },
     { name = "rich" },
     { name = "rich-click" },

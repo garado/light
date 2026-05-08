@@ -3,6 +3,7 @@ members = ["light_api", "light_cli_tui"]
 
 [tool.uv.sources]
 light_api = { workspace = true }
+light-phone-api = { workspace = true }
 
 [dependency-groups]
 dev = [

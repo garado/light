@@ -22,8 +22,8 @@ This repo bundles two separate packages `light-api` and `light-cli-tui`. Install
 From PyPI:
 
 ```
-pip install light-api
-pip install light-cli-tui
+pip install light-phone-api
+pip install light-phone-cli-tui
 ```
 
 Nix users:
