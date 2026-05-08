@@ -77,12 +77,7 @@ After the first login, your auth token will be cached. Tokens are good for 30 da
 
 ### Music
 
-Supported features:
-
-- Uploading songs, optionally overwriting existing tracks
-- Deleting tracks
-- Sorting tracks by title/artist/artist-album
-- Clear all tracks
+#### Upload
 
 ```sh
 # Upload tracks
@@ -96,13 +91,21 @@ light music upload song1 song2 song3 --match-title-by filename
 # Upload tracks
 # Don't overwrite existing tracks
 light music upload --allow-duplicates song1 song2 song3
+```
 
+#### Delete
+
+```sh
 # Delete tracks
 light music delete song
 
 # Delete all tracks (multiple confirmation steps, don't worry)
 light music delete-all
+```
 
+#### Sort
+
+```sh
 # Sort tracks by title (!!!)
 light music sort title --asc
 light music sort title --desc
