@@ -22,34 +22,11 @@ pip install light-phone-api
 pip install light-phone-cli-tui
 ```
 
-Nix users:
-
-```
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    light.url = "github:garado/light";
-  };
-
-  outputs = { nixpkgs, light, ... }: {
-    nixosConfigurations.YOURHOST = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        ({ pkgs, ... }: {
-          environment.systemPackages = [
-            light.packages.x86_64-linux.light-phone-cli-tui
-            light.packages.x86_64-linux.light-phone-api
-          ]
-        }
-      ];
-    };
-  };
-}
-```
-
 ## Authentication
 
 This needs your Light email, password, and phone number to authenticate into the Light dashboard and operate on the correct device.
+
+Please enter your phone number **without** the country code.
 
 Three options:
 
