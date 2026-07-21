@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 if TYPE_CHECKING:
     from ..models.get_api_devices_response_200_included_item_attributes import (
         GetApiDevicesResponse200IncludedItemAttributes,
@@ -24,14 +26,14 @@ class GetApiDevicesResponse200IncludedItem:
     Attributes:
         attributes (GetApiDevicesResponse200IncludedItemAttributes):
         id (str):
-        relationships (GetApiDevicesResponse200IncludedItemRelationships):
         type_ (str):
+        relationships (GetApiDevicesResponse200IncludedItemRelationships | Unset):
     """
 
     attributes: GetApiDevicesResponse200IncludedItemAttributes
     id: str
-    relationships: GetApiDevicesResponse200IncludedItemRelationships
     type_: str
+    relationships: GetApiDevicesResponse200IncludedItemRelationships | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -39,9 +41,11 @@ class GetApiDevicesResponse200IncludedItem:
 
         id = self.id
 
-        relationships = self.relationships.to_dict()
-
         type_ = self.type_
+
+        relationships: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.relationships, Unset):
+            relationships = self.relationships.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -49,10 +53,11 @@ class GetApiDevicesResponse200IncludedItem:
             {
                 "attributes": attributes,
                 "id": id,
-                "relationships": relationships,
                 "type": type_,
             }
         )
+        if relationships is not UNSET:
+            field_dict["relationships"] = relationships
 
         return field_dict
 
@@ -70,15 +75,20 @@ class GetApiDevicesResponse200IncludedItem:
 
         id = d.pop("id")
 
-        relationships = GetApiDevicesResponse200IncludedItemRelationships.from_dict(d.pop("relationships"))
-
         type_ = d.pop("type")
+
+        _relationships = d.pop("relationships", UNSET)
+        relationships: GetApiDevicesResponse200IncludedItemRelationships | Unset
+        if isinstance(_relationships, Unset):
+            relationships = UNSET
+        else:
+            relationships = GetApiDevicesResponse200IncludedItemRelationships.from_dict(_relationships)
 
         get_api_devices_response_200_included_item = cls(
             attributes=attributes,
             id=id,
-            relationships=relationships,
             type_=type_,
+            relationships=relationships,
         )
 
         get_api_devices_response_200_included_item.additional_properties = d

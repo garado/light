@@ -247,7 +247,7 @@ class Light:
         }
 
         for item in devices_resp.parsed.included:
-            if isinstance(item.relationships.tool, Unset):
+            if isinstance(item.relationships, Unset) or isinstance(item.relationships.tool, Unset):
                 continue
             ns = tool_ns.get(item.relationships.tool.data.id, "")
             if "note" in ns:

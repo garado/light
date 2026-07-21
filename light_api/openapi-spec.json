@@ -589,7 +589,6 @@
                         "required": [
                           "attributes",
                           "id",
-                          "relationships",
                           "type"
                         ]
                       }
