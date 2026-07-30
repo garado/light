@@ -58,7 +58,7 @@ class LightTools:
         ):
             raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
 
-        device_id = devices_resp.parsed.data[0].id
+        device_id = self._l._select_device_id(devices_resp.parsed)
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._l._api_client, device_id=device_id
@@ -74,7 +74,11 @@ class LightTools:
 
         results = []
         for item in devices_resp.parsed.included:
-            if isinstance(item.relationships.tool, Unset):
+            if isinstance(item.relationships, Unset) or isinstance(
+                item.relationships.tool, Unset
+            ):
+                continue
+            if item.relationships.device.data.id != device_id:
                 continue
             global_tool_id = item.relationships.tool.data.id
             ns, comp, title = tool_info.get(global_tool_id, ("", "", ""))
@@ -95,7 +99,7 @@ class LightTools:
         resp = self._l.call_api(get_api_devices.sync_detailed, client=self._l._api_client)
         if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
             raise RuntimeError(f"Could not fetch devices: {resp.status_code}")
-        return resp.parsed.data[0].id
+        return self._l._select_device_id(resp.parsed)
 
     def _resolve_global_tool_id(self, name: str) -> tuple[str, str]:
         """Return (global_tool_id, title) for a tool matching name (case-insensitive)."""
