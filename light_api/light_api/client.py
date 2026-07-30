@@ -6,7 +6,7 @@ import keyring
 import logging
 import os
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, NewType, final
+from typing import TYPE_CHECKING, Any, Callable, Container, Iterable, Iterator, NewType, final
 
 from open_api_specification_client.api.default import get_api_playlists
 from open_api_specification_client.client import AuthenticatedClient
@@ -123,6 +123,30 @@ class Light:
             self.reauth()
             resp = func(**kwargs)
         return resp
+
+    @staticmethod
+    def _ensure_ok(
+        resp: Any,
+        action: str,
+        ok_codes: Container[int] = (200,),
+        require_data: bool = False,
+    ) -> Any:
+        """Raise RuntimeError(f"{action}: {status}") unless resp is ok, else return resp.parsed.
+
+        Args:
+            resp: The API response to parse
+            action: Description of the API request being validated. Used in error message.
+            ok_codes: Status codes that the caller considers a success
+            require_data: True if a non-empty `resp.parsed.data` is required for success
+
+        Returns:
+            The parsed data
+        """
+        if resp.status_code not in ok_codes or (
+            require_data and not (resp.parsed and resp.parsed.data)
+        ):
+            raise RuntimeError(f"{action}: {resp.status_code}")
+        return resp.parsed
 
     def __enter__(self) -> Light:
         """Sets up API session."""
