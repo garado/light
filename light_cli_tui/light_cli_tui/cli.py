@@ -618,6 +618,32 @@ def devices_list(light: Light):
     console.print(table)
 
 
+# -- Auth -----------------------------------------------------------------------
+
+
+@cli.command()
+@click.pass_context
+def logout(ctx):
+    """Clear the cached session.
+
+    Forces a fresh login and device lookup on the next command. Does not
+    require valid credentials or network access to run.
+    """
+    obj = ctx.obj or {}
+    light = Light(
+        email=obj.get("email"),
+        email_file=obj.get("email_file"),
+        password=obj.get("password"),
+        password_file=obj.get("password_file"),
+        phone=obj.get("phone_number"),
+        phone_file=obj.get("phone_number_file"),
+        device_id=obj.get("device_id"),
+        device_id_file=obj.get("device_id_file"),
+    )
+    light.clear_cache()
+    console.print("[green]Logged out.[/green]")
+
+
 # -- TUI ------------------------------------------------------------------------
 
 

@@ -233,6 +233,22 @@ class Light:
         except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
             log.warning(f"Keyring error: {e}")
 
+    def clear_cache(self) -> None:
+        """Clear the cached session.
+
+        Forces a fresh login and device lookup on the next `with Light(...)`.
+        """
+        try:
+            keyring.delete_password(KEYRING_SERVICE, KEYRING_USER)
+        except keyring.errors.PasswordDeleteError:
+            log.debug("No cached session to clear")
+        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+            log.warning(f"Keyring error: {e}")
+
+        self._api_token = None
+        self._device_tool_ids = {}
+        self._playlist_id = None
+
     def _validate_cache(self) -> bool:
         """Check if cached auth token is valid."""
         client = AuthenticatedClient(

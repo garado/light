@@ -86,6 +86,48 @@ class TestEnsureOk:
         assert result is None
 
 
+class TestClearCache:
+    def test_deletes_keyring_entry(self):
+        from light_api.client import KEYRING_SERVICE, KEYRING_USER
+
+        light = make_light()
+        with patch("light_api.client.keyring.delete_password") as mock_delete:
+            light.clear_cache()
+        mock_delete.assert_called_once_with(KEYRING_SERVICE, KEYRING_USER)
+
+    def test_resets_in_memory_state(self):
+        light = make_light()
+        light._device_tool_ids = {"music": "abc"}
+        light._playlist_id = "some-playlist"
+
+        with patch("light_api.client.keyring.delete_password"):
+            light.clear_cache()
+
+        assert light._api_token is None
+        assert light._device_tool_ids == {}
+        assert light._playlist_id is None
+
+    def test_no_raise_when_nothing_cached(self):
+        import keyring.errors
+
+        light = make_light()
+        with patch(
+            "light_api.client.keyring.delete_password",
+            side_effect=keyring.errors.PasswordDeleteError,
+        ):
+            light.clear_cache()  # should not raise
+
+    def test_no_raise_on_keyring_error(self):
+        import keyring.errors
+
+        light = make_light()
+        with patch(
+            "light_api.client.keyring.delete_password",
+            side_effect=keyring.errors.NoKeyringError,
+        ):
+            light.clear_cache()  # should not raise
+
+
 class TestFetchDeviceToolIds:
     @respx.mock
     def test_populates_all_tool_ids(self, f_devices, f_tools):
