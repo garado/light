@@ -105,10 +105,9 @@ class LightMusic:
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["music"],
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"Get sort mode: {resp.status_code}")
+        parsed = self._l._ensure_ok(resp, "Get sort mode", require_parsed=True)
 
-        playlist = resp.parsed.data[0]
+        playlist = parsed.data[0]
         return SortMode(playlist.attributes.sort_mode)
 
     def set_sort_mode(self, sort_mode: SortMode):
@@ -137,8 +136,7 @@ class LightMusic:
                 ),
             )
 
-            if not (200 <= resp.status_code < 300):
-                raise RuntimeError(f"Set sort mode: {resp.status_code}")
+            self._l._ensure_ok(resp, "Set sort mode", ok_codes=range(200, 300))
 
             log.info(f"Sort mode set")
         elif sort_mode in (SortMode.TITLE_ASC, SortMode.TITLE_DESC):
@@ -158,10 +156,7 @@ class LightMusic:
             playlist_ids=self._l._playlist_id,
             device_tool_id=self._l._device_tool_ids["music"],
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"Get tracks: {resp.status_code}")
-
-        body = resp.parsed
+        body = self._l._ensure_ok(resp, "Get tracks", require_parsed=True)
 
         if not body.data:
             return []
@@ -204,8 +199,7 @@ class LightMusic:
                 device_tool_id=self._l._device_tool_ids["music"]
             ),
         )
-        if not (200 <= resp.status_code < 300):
-            raise RuntimeError(f"Failed to delete all tracks: {resp.status_code}")
+        self._l._ensure_ok(resp, "Failed to delete all tracks", ok_codes=range(200, 300))
         log.info("All tracks deleted")
 
     def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
@@ -336,14 +330,16 @@ class LightMusic:
                         )
                     ),
                 )
-                if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
-                    raise RuntimeError(
-                        f"Create audio record for {os.path.basename(upload_path)}: {create_resp.status_code}"
-                    )
+                created = self._l._ensure_ok(
+                    create_resp,
+                    f"Create audio record for {os.path.basename(upload_path)}",
+                    ok_codes=(200, 201),
+                    require_parsed=True,
+                )
 
                 presigned_url = next(
                     item.attributes.presigned_url
-                    for item in create_resp.parsed.included
+                    for item in created.included
                     if item.type_ == "files"
                 )
 
@@ -431,8 +427,7 @@ class LightMusic:
                 )
             ),
         )
-        if not (200 <= resp.status_code < 300):
-            raise RuntimeError(f"update metadata: {resp.status_code}")
+        self._l._ensure_ok(resp, "update metadata", ok_codes=range(200, 300))
 
         log.info("Metadata updated")
 
@@ -488,10 +483,9 @@ class LightMusic:
                     )
                 ),
             )
-            if not (200 <= resp.status_code < 300):
-                raise RuntimeError(
-                    f"reorder_subset position {new_position}: {resp.status_code}"
-                )
+            self._l._ensure_ok(
+                resp, f"reorder_subset position {new_position}", ok_codes=range(200, 300)
+            )
 
     def _apply_sort_positions(self, sorted_tracks: list[LightTrack], original_tracks: list[LightTrack]) -> None:
         """PATCH playlist item positions to match the given sort order."""
@@ -513,8 +507,9 @@ class LightMusic:
                     )
                 ),
             )
-            if not (200 <= resp.status_code < 300):
-                raise RuntimeError(f"Apply sort position {new_position}: {resp.status_code}")
+            self._l._ensure_ok(
+                resp, f"Apply sort position {new_position}", ok_codes=range(200, 300)
+            )
 
     def _sort_by_title(self, descending: bool = False) -> None:
         """Sort tracks on device by title.

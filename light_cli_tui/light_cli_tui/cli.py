@@ -29,7 +29,8 @@ console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 
-@click.group()
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password", default=None, help="Light account password.")
@@ -37,6 +38,14 @@ log = logging.getLogger(f"light.{__name__}")
 @click.option("--phone-number", default=None, help="Phone number.")
 @click.option(
     "--phone-number-file", default=None, help="Path to file containing phone number."
+)
+@click.option(
+    "--device-id",
+    default=None,
+    help="Device UUID to operate on. Mutually exclusive with --phone-number.",
+)
+@click.option(
+    "--device-id-file", default=None, help="Path to file containing device UUID."
 )
 @click.option(
     "--log-level",
@@ -53,6 +62,8 @@ def cli(
     password_file,
     phone_number,
     phone_number_file,
+    device_id,
+    device_id_file,
     log_level,
 ):
     """**Unofficial CLI for the Light Phone.**
@@ -60,8 +71,16 @@ def cli(
     Manages music, podcasts, and notes on your Light device from the terminal.
 
     Credentials can be provided via options, files, or environment variables
-    (`LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`).
+    (`LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`, `LIGHT_DEVICE_ID`).
+
+    On accounts with multiple devices, select one via `--phone-number` or
+    `--device-id` (mutually exclusive).
     """
+    if (phone_number or phone_number_file) and (device_id or device_id_file):
+        raise click.UsageError(
+            "--phone-number and --device-id are mutually exclusive."
+        )
+
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
 
@@ -74,6 +93,8 @@ def cli(
             "password_file": password_file,
             "phone_number": phone_number,
             "phone_number_file": phone_number_file,
+            "device_id": device_id,
+            "device_id_file": device_id_file,
         }
     )
 
@@ -88,7 +109,7 @@ def music():
 
 
 @cli.group()
-def podcast():
+def podcasts():
     """Podcast management.
 
     Add podcasts by RSS feed URL and remove ones you no longer want.
@@ -105,20 +126,29 @@ def notes():
     pass
 
 
+@cli.group()
+def devices():
+    """Device introspection.
+
+    Shows device id, phone number, SKU, and serial number.
+    """
+    pass
+
+
 # -- Podcast commands ----------------------------------------------------------
 
 
-@podcast.command("add")
+@podcasts.command("add")
 @with_light
 @click.argument("rss_feed_url")
-def podcast_add(light: Light, rss_feed_url):
+def podcasts_add(light: Light, rss_feed_url):
     """Subscribe to a podcast by RSS feed URL.
 
     The server resolves the title and publisher automatically from the feed.
 
     **Example:**
 
-    `light podcast add https://feeds.simplecast.com/FO6kxYGj`
+    `light podcasts add https://feeds.simplecast.com/FO6kxYGj`
     """
     p = light.podcast.add_podcast(rss_feed_url)
     console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
@@ -126,9 +156,9 @@ def podcast_add(light: Light, rss_feed_url):
         console.print(f"[dim]Publisher:[/dim] {p.publisher}")
 
 
-@podcast.command("list")
+@podcasts.command("list")
 @with_light
-def podcast_list(light: Light):
+def podcasts_list(light: Light):
     """List all followed podcasts on your device."""
     podcasts = light.podcast.get_podcasts()
 
@@ -147,13 +177,13 @@ def podcast_list(light: Light):
     console.print(table)
 
 
-@podcast.command("delete")
+@podcasts.command("delete")
 @with_light
 @click.argument("title")
-def podcast_delete(light: Light, title):
+def podcasts_delete(light: Light, title):
     """Unfollow a podcast by title.
 
-    Uses exact title matching. Run `light podcast list` to see titles.
+    Uses exact title matching. Run `light podcasts list` to see titles.
     """
     podcasts = light.podcast.get_podcasts()
     matches = [p for p in podcasts if p.title == title]
@@ -567,6 +597,53 @@ def tools_remove(light: Light, name: str):
     console.print("[green]Removed.[/green]")
 
 
+# -- Device commands ------------------------------------------------------------
+
+
+@devices.command("list")
+@with_light
+def devices_list(light: Light):
+    """List information for all devices registered on this account."""
+    all_devices = light.devices.list_devices()
+
+    table = Table(show_header=True)
+    table.add_column("Device ID")
+    table.add_column("Phone Number")
+    table.add_column("Serial Number")
+    table.add_column("SKU")
+
+    for d in all_devices:
+        table.add_row(d.id, d.phone_number or "[dim]unknown[/dim]", d.serial_number, d.sku)
+
+    console.print(table)
+
+
+# -- Auth -----------------------------------------------------------------------
+
+
+@cli.command()
+@click.pass_context
+def logout(ctx):
+    """Clear the cached session.
+
+    Forces a fresh login and device lookup on the next command. Does not
+    require valid credentials or network access to run.
+    """
+    obj = ctx.obj or {}
+    light = Light(
+        email=obj.get("email"),
+        email_file=obj.get("email_file"),
+        password=obj.get("password"),
+        password_file=obj.get("password_file"),
+        phone=obj.get("phone_number"),
+        phone_file=obj.get("phone_number_file"),
+        device_id=obj.get("device_id"),
+        device_id_file=obj.get("device_id_file"),
+    )
+    light.clear_cache()
+    console.print("[green]Logged out.[/green]")
+
+
 # -- TUI ------------------------------------------------------------------------
 
 
@@ -587,6 +664,8 @@ def tui(ctx):
             password_file=obj.get("password_file"),
             phone=obj.get("phone_number"),
             phone_file=obj.get("phone_number_file"),
+            device_id=obj.get("device_id"),
+            device_id_file=obj.get("device_id_file"),
         )
     )
 

@@ -75,6 +75,8 @@ class LightConfig:
     password_file: str | None = None
     phone: str | None = None
     phone_file: str | None = None
+    device_id: str | None = None
+    device_id_file: str | None = None
 
 
 class LightThread:
@@ -104,6 +106,8 @@ class LightThread:
                 password_file=self._config.password_file,
                 phone=self._config.phone,
                 phone_file=self._config.phone_file,
+                device_id=self._config.device_id,
+                device_id_file=self._config.device_id_file,
             ) as light:
                 self._ready.set()
                 while True:

@@ -6,21 +6,32 @@ import keyring
 import logging
 import os
 
-from typing import TYPE_CHECKING, Any, Callable, final
+from typing import TYPE_CHECKING, Any, Callable, Container, Iterable, Iterator, NewType, final
 
 from open_api_specification_client.api.default import get_api_playlists
 from open_api_specification_client.client import AuthenticatedClient
+from open_api_specification_client.types import Unset
 
 if TYPE_CHECKING:
+    from light_api.devices import LightDevices
     from light_api.music import LightMusic
     from light_api.podcast import LightPodcasts
     from light_api.notes import LightNotes
     from light_api.tools import LightTools
+    from open_api_specification_client.models.get_api_devices_response_200 import (
+        GetApiDevicesResponse200,
+    )
+    from open_api_specification_client.models.get_api_devices_response_200_included_item import (
+        GetApiDevicesResponse200IncludedItem,
+    )
 
 KEYRING_SERVICE = "unofficial-light-api"
 KEYRING_USER = "session"
 API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
+
+DeviceId = NewType("DeviceId", str)
+PhoneNumber = NewType("PhoneNumber", str)
 
 log = logging.getLogger(f"light.{__name__}")
 
@@ -37,6 +48,8 @@ class Light:
         password_file: str | None = None,
         phone: str | None = None,
         phone_file: str | None = None,
+        device_id: str | None = None,
+        device_id_file: str | None = None,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
@@ -45,6 +58,15 @@ class Light:
         self.phone: str | None = phone or self._resolve(
             phone_file, "LIGHT_PHONE_NUMBER"
         )
+        self.device_id: str | None = device_id or self._resolve(
+            device_id_file, "LIGHT_DEVICE_ID"
+        )
+
+        if self.phone and self.device_id:
+            raise RuntimeError(
+                "phone and device id are mutually exclusive - provide only one"
+            )
+
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
@@ -54,6 +76,7 @@ class Light:
         self.podcast: LightPodcasts
         self.notes: LightNotes
         self.tools: LightTools
+        self.devices: LightDevices
 
     def login(self) -> None:
         """Authenticate via the authorizations API and store the bearer token."""
@@ -61,7 +84,7 @@ class Light:
             return
 
         if not self.email or not self.password:
-            raise RuntimeError("No cached session - provide email and password")
+            raise RuntimeError("No cached login found. Provide an email and password.")
 
         resp = httpx.post(
             f"{API_BASE}/api/authorizations",
@@ -101,6 +124,33 @@ class Light:
             resp = func(**kwargs)
         return resp
 
+    @staticmethod
+    def _ensure_ok(
+        resp: Any,
+        action: str,
+        ok_codes: Container[int] = (200,),
+        require_parsed: bool = False,
+        require_data: bool = False,
+    ) -> Any:
+        """Raise RuntimeError(f"{action}: {status}") unless resp is ok, else return resp.parsed.
+
+        Args:
+            resp: The API response to parse
+            action: Description of the API request being validated. Used in error message.
+            ok_codes: Status codes that the caller considers a success
+            require_parsed: True if a non-None `resp.parsed` is required for success
+            require_data: True if a non-empty `resp.parsed.data` is required for success
+                (implies require_parsed)
+
+        Returns:
+            The parsed data
+        """
+        parsed_missing = (require_parsed or require_data) and resp.parsed is None
+        data_missing = require_data and not parsed_missing and not resp.parsed.data
+        if resp.status_code not in ok_codes or parsed_missing or data_missing:
+            raise RuntimeError(f"{action}: {resp.status_code}")
+        return resp.parsed
+
     def __enter__(self) -> Light:
         """Sets up API session."""
         log.info("Authenticating")
@@ -123,6 +173,7 @@ class Light:
             self._fetch_playlist_id()
             self._save_cache()
 
+        from light_api.devices import LightDevices
         from light_api.music import LightMusic
         from light_api.podcast import LightPodcasts
         from light_api.notes import LightNotes
@@ -132,6 +183,7 @@ class Light:
         self.podcast = LightPodcasts(self)
         self.notes = LightNotes(self)
         self.tools = LightTools(self)
+        self.devices = LightDevices(self)
 
         log.info("Authentication complete")
         return self
@@ -181,6 +233,22 @@ class Light:
         except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
             log.warning(f"Keyring error: {e}")
 
+    def clear_cache(self) -> None:
+        """Clear the cached session.
+
+        Forces a fresh login and device lookup on the next `with Light(...)`.
+        """
+        try:
+            keyring.delete_password(KEYRING_SERVICE, KEYRING_USER)
+        except keyring.errors.PasswordDeleteError:
+            log.debug("No cached session to clear")
+        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+            log.warning(f"Keyring error: {e}")
+
+        self._api_token = None
+        self._device_tool_ids = {}
+        self._playlist_id = None
+
     def _validate_cache(self) -> bool:
         """Check if cached auth token is valid."""
         client = AuthenticatedClient(
@@ -202,9 +270,8 @@ class Light:
             client=self._api_client,
             device_tool_id=music_id,
         )
-        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(f"Could not fetch playlists: {resp.status_code}")
-        self._playlist_id = resp.parsed.data[0].id
+        parsed = self._ensure_ok(resp, "Could not fetch playlists", require_data=True)
+        self._playlist_id = parsed.data[0].id
 
     def _fetch_device_tool_ids(self) -> None:
         """Populate _device_tool_ids for all installed tools.
@@ -225,30 +292,21 @@ class Light:
             get_api_devices,
             get_api_tools,
         )
-        from open_api_specification_client.types import Unset
 
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
-        if (
-            devices_resp.status_code != 200
-            or not devices_resp.parsed
-            or not devices_resp.parsed.data
-        ):
-            raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
-        device_id = devices_resp.parsed.data[0].id
+        devices = self._ensure_ok(devices_resp, "Could not fetch devices", require_data=True)
+        device_id = self._select_device_id(devices)
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
         )
-        if tools_resp.status_code != 200 or not tools_resp.parsed:
-            raise RuntimeError(f"Could not fetch tools: {tools_resp.status_code}")
+        tools = self._ensure_ok(tools_resp, "Could not fetch tools", require_parsed=True)
 
         tool_ns: dict[str, str] = {
-            t.id: t.attributes.namespace.lower() for t in tools_resp.parsed.data
+            t.id: t.attributes.namespace.lower() for t in tools.data
         }
 
-        for item in devices_resp.parsed.included:
-            if isinstance(item.relationships, Unset) or isinstance(item.relationships.tool, Unset):
-                continue
+        for item in self._device_tool_items(devices.included, device_id):
             ns = tool_ns.get(item.relationships.tool.data.id, "")
             if "note" in ns:
                 self._device_tool_ids["notes"] = item.id
@@ -256,6 +314,91 @@ class Light:
                 self._device_tool_ids["podcast"] = item.id
             elif "music" in ns or "playlist" in ns:
                 self._device_tool_ids["music"] = item.id
+
+    @staticmethod
+    def _device_tool_items(
+        included: Iterable[GetApiDevicesResponse200IncludedItem], device_id: DeviceId
+    ) -> Iterator[GetApiDevicesResponse200IncludedItem]:
+        """Yield the device_tool items in `included` belonging to `device_id`."""
+        for item in included:
+            if isinstance(item.relationships, Unset) or isinstance(
+                item.relationships.tool, Unset
+            ):
+                continue
+            if item.relationships.device.data.id != device_id:
+                continue
+            yield item
+
+    @staticmethod
+    def _device_phone_numbers(
+        included: Iterable[GetApiDevicesResponse200IncludedItem],
+    ) -> Iterator[tuple[DeviceId, PhoneNumber]]:
+        """Yield (device_id, phone_number) pairs from the sims records in `included`."""
+        for item in included:
+            if item.type_ != "sims" or isinstance(item.attributes.phone_number, Unset):
+                continue
+            yield DeviceId(item.relationships.device.data.id), PhoneNumber(
+                item.attributes.phone_number
+            )
+
+    def _select_device_id(self, devices: GetApiDevicesResponse200) -> DeviceId:
+        """Select the correct device id out of /api/devices data.
+
+        Matches on this criteria, in order:
+        - self.device_id
+        - self.phone
+        - a single device, if only one device is present
+
+        Raises if none of the above resolves to a single device.
+        """
+        data = devices.data
+
+        if self.device_id:
+            for d in data:
+                if d.id == self.device_id:
+                    return DeviceId(d.id)
+
+            available = ", ".join(d.id for d in data)
+            raise RuntimeError(
+                f"No device found with id {self.device_id!r}. "
+                f"Available device ids: {available}"
+            )
+
+        if self.phone:
+            target = self._phone_digits(self.phone)
+            seen: list[str] = []
+
+            for device_id, number in self._device_phone_numbers(devices.included):
+                if self._phone_digits(number) == target:
+                    return device_id
+                seen.append(f"{device_id} ({number})")
+
+            raise RuntimeError(
+                f"No device found matching phone number {self.phone!r}. "
+                f"Available devices: {', '.join(seen)}"
+            )
+
+        if len(data) == 1:
+            return DeviceId(data[0].id)
+
+        raise RuntimeError(
+            "Multiple devices found on this account - specify one via "
+            "--device-id or --phone-number. Available device ids: "
+            + ", ".join(d.id for d in data)
+        )
+
+    @staticmethod
+    def _phone_digits(number: str) -> str:
+        """Normalizes phone numbers to a bare 10-digit string.
+
+        TODO: This is America-centric.
+        """
+        return "".join(c for c in number if c.isdigit())[-10:]
+
+    @staticmethod
+    def _format_phone(number: str) -> str:
+        digits = Light._phone_digits(number)
+        return f"+1 {digits[0:3]} {digits[3:6]} {digits[6:10]}"
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str | None:
@@ -266,8 +409,3 @@ class Light:
             except OSError as e:
                 raise RuntimeError(f"Could not read {filepath}: {e}") from e
         return os.environ.get(env_key)
-
-    @staticmethod
-    def _format_phone(number: str) -> str:
-        digits: str = "".join(c for c in number if c.isdigit())[-10:]
-        return f"+1 {digits[0:3]} {digits[3:6]} {digits[6:10]}"
