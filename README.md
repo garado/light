@@ -218,12 +218,3 @@ python scripts/capture_fixture.py
 # Run tests
 uv run pytest
 ```
-
-### Smoke tests (TODO)
-
-As this is an **unofficial** tool, it could break at any time if Light changes the API format. Smoke tests should be added and run regularly (home server nightly cronjob?) to catch any breaking API changes asap.
-
-# To do
-
-- Fancier `light notes watch`
-- Contacts management
