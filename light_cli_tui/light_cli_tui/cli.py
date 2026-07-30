@@ -126,6 +126,15 @@ def notes():
     pass
 
 
+@cli.group()
+def devices():
+    """Device introspection.
+
+    Shows device id, phone number, SKU, and serial number.
+    """
+    pass
+
+
 # -- Podcast commands ----------------------------------------------------------
 
 
@@ -586,6 +595,27 @@ def tools_remove(light: Light, name: str):
         return
     light.tools.remove_tool(name)
     console.print("[green]Removed.[/green]")
+
+
+# -- Device commands ------------------------------------------------------------
+
+
+@devices.command("list")
+@with_light
+def devices_list(light: Light):
+    """List information for all devices registered on this account."""
+    all_devices = light.devices.list_devices()
+
+    table = Table(show_header=True)
+    table.add_column("Device ID")
+    table.add_column("Phone Number")
+    table.add_column("Serial Number")
+    table.add_column("SKU")
+
+    for d in all_devices:
+        table.add_row(d.id, d.phone_number or "[dim]unknown[/dim]", d.serial_number, d.sku)
+
+    console.print(table)
 
 
 # -- TUI ------------------------------------------------------------------------
