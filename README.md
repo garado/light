@@ -143,13 +143,13 @@ light notes watch <note-id>
 
 ```sh
 # Subscribe to a podcast by RSS feed URL
-light podcast add https://feeds.simplecast.com/FO6kxYGj
+light podcasts add https://feeds.simplecast.com/FO6kxYGj
 
 # List followed podcasts
-light podcast list
+light podcasts list
 
 # Unfollow a podcast by title
-light podcast delete "My Podcast"
+light podcasts delete "My Podcast"
 ```
 
 ### Tools

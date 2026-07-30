@@ -109,7 +109,7 @@ def music():
 
 
 @cli.group()
-def podcast():
+def podcasts():
     """Podcast management.
 
     Add podcasts by RSS feed URL and remove ones you no longer want.
@@ -138,17 +138,17 @@ def devices():
 # -- Podcast commands ----------------------------------------------------------
 
 
-@podcast.command("add")
+@podcasts.command("add")
 @with_light
 @click.argument("rss_feed_url")
-def podcast_add(light: Light, rss_feed_url):
+def podcasts_add(light: Light, rss_feed_url):
     """Subscribe to a podcast by RSS feed URL.
 
     The server resolves the title and publisher automatically from the feed.
 
     **Example:**
 
-    `light podcast add https://feeds.simplecast.com/FO6kxYGj`
+    `light podcasts add https://feeds.simplecast.com/FO6kxYGj`
     """
     p = light.podcast.add_podcast(rss_feed_url)
     console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
@@ -156,9 +156,9 @@ def podcast_add(light: Light, rss_feed_url):
         console.print(f"[dim]Publisher:[/dim] {p.publisher}")
 
 
-@podcast.command("list")
+@podcasts.command("list")
 @with_light
-def podcast_list(light: Light):
+def podcasts_list(light: Light):
     """List all followed podcasts on your device."""
     podcasts = light.podcast.get_podcasts()
 
@@ -177,13 +177,13 @@ def podcast_list(light: Light):
     console.print(table)
 
 
-@podcast.command("delete")
+@podcasts.command("delete")
 @with_light
 @click.argument("title")
-def podcast_delete(light: Light, title):
+def podcasts_delete(light: Light, title):
     """Unfollow a podcast by title.
 
-    Uses exact title matching. Run `light podcast list` to see titles.
+    Uses exact title matching. Run `light podcasts list` to see titles.
     """
     podcasts = light.podcast.get_podcasts()
     matches = [p for p in podcasts if p.title == title]
