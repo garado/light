@@ -60,6 +60,7 @@ class TestEnsureOk:
             Light._ensure_ok(fake_resp(200, parsed), "Do thing", require_data=True)
 
     def test_require_data_raises_on_none_parsed(self):
+        """require_data=True alone (no require_parsed) still catches parsed=None - it's tiered."""
         with pytest.raises(RuntimeError, match="Do thing: 200"):
             Light._ensure_ok(fake_resp(200, None), "Do thing", require_data=True)
 
@@ -67,6 +68,22 @@ class TestEnsureOk:
         parsed = SimpleNamespace(data=["x"])
         result = Light._ensure_ok(fake_resp(200, parsed), "Do thing", require_data=True)
         assert result is parsed
+
+    def test_require_parsed_raises_on_none_parsed(self):
+        with pytest.raises(RuntimeError, match="Do thing: 200"):
+            Light._ensure_ok(fake_resp(200, None), "Do thing", require_parsed=True)
+
+    def test_require_parsed_allows_empty_data(self):
+        """require_parsed=True does NOT imply require_data - empty .data is fine."""
+        parsed = SimpleNamespace(data=[])
+        result = Light._ensure_ok(fake_resp(200, parsed), "Do thing", require_parsed=True)
+        assert result is parsed
+
+    def test_default_allows_none_parsed(self):
+        """Neither flag set - only status is checked, matching endpoints like
+        delete/update that don't touch resp.parsed afterward."""
+        result = Light._ensure_ok(fake_resp(204, None), "Do thing", ok_codes=(200, 204))
+        assert result is None
 
 
 class TestFetchDeviceToolIds:

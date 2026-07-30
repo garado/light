@@ -129,6 +129,7 @@ class Light:
         resp: Any,
         action: str,
         ok_codes: Container[int] = (200,),
+        require_parsed: bool = False,
         require_data: bool = False,
     ) -> Any:
         """Raise RuntimeError(f"{action}: {status}") unless resp is ok, else return resp.parsed.
@@ -137,14 +138,16 @@ class Light:
             resp: The API response to parse
             action: Description of the API request being validated. Used in error message.
             ok_codes: Status codes that the caller considers a success
+            require_parsed: True if a non-None `resp.parsed` is required for success
             require_data: True if a non-empty `resp.parsed.data` is required for success
+                (implies require_parsed)
 
         Returns:
             The parsed data
         """
-        if resp.status_code not in ok_codes or (
-            require_data and not (resp.parsed and resp.parsed.data)
-        ):
+        parsed_missing = (require_parsed or require_data) and resp.parsed is None
+        data_missing = require_data and not parsed_missing and not resp.parsed.data
+        if resp.status_code not in ok_codes or parsed_missing or data_missing:
             raise RuntimeError(f"{action}: {resp.status_code}")
         return resp.parsed
 
@@ -281,7 +284,7 @@ class Light:
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
         )
-        tools = self._ensure_ok(tools_resp, "Could not fetch tools")
+        tools = self._ensure_ok(tools_resp, "Could not fetch tools", require_parsed=True)
 
         tool_ns: dict[str, str] = {
             t.id: t.attributes.namespace.lower() for t in tools.data

@@ -67,7 +67,7 @@ class LightNotes:
             note_id=note.id,
             client=self._l._api_client,
         )
-        self._l._ensure_ok(resp, f"Presigned get URL for {note.id}")
+        self._l._ensure_ok(resp, f"Presigned get URL for {note.id}", require_parsed=True)
 
         content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
         if not content_resp.is_success:
@@ -80,7 +80,7 @@ class LightNotes:
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["notes"],
         )
-        body = self._l._ensure_ok(resp, "List notes")
+        body = self._l._ensure_ok(resp, "List notes", require_parsed=True)
 
         return [_make_light_note(data) for data in body.data]
 
@@ -91,7 +91,7 @@ class LightNotes:
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["notes"],
         )
-        self._l._ensure_ok(resp, f"Fetching note {note_id}")
+        self._l._ensure_ok(resp, f"Fetching note {note_id}", require_parsed=True)
 
         return _make_light_note(resp.parsed.data)
 
@@ -142,7 +142,9 @@ class LightNotes:
                 )
             ),
         )
-        parsed = self._l._ensure_ok(resp, "Creating note", ok_codes=(200, 201))
+        parsed = self._l._ensure_ok(
+            resp, "Creating note", ok_codes=(200, 201), require_parsed=True
+        )
 
         presigned_url = parsed.included[0].attributes.presigned_url
 
@@ -172,7 +174,7 @@ class LightNotes:
             client=self._l._api_client,
             note_id=note.id,
         )
-        self._l._ensure_ok(resp, f"Presigned put URL for {note.id}")
+        self._l._ensure_ok(resp, f"Presigned put URL for {note.id}", require_parsed=True)
         put_resp = httpx.put(resp.parsed.presigned_put_url, content=content, timeout=30)
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
