@@ -14,6 +14,8 @@ def with_light(f):
             password_file=obj.get("password_file"),
             phone=obj.get("phone_number"),
             phone_file=obj.get("phone_number_file"),
+            device_id=obj.get("device_id"),
+            device_id_file=obj.get("device_id_file"),
         ) as light:
             return f(light, *args, **kwargs)
 
