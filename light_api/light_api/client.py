@@ -84,7 +84,7 @@ class Light:
             return
 
         if not self.email or not self.password:
-            raise RuntimeError("No cached session - provide email and password")
+            raise RuntimeError("No cached login found. Provide an email and password.")
 
         resp = httpx.post(
             f"{API_BASE}/api/authorizations",
