@@ -49,17 +49,18 @@ Nix users:
 
 ## Authentication
 
-This needs your Light email, password, and phone number to authenticate into the Light dashboard and operate on the correct device.
+This needs your Light email and password to authenticate into the Light dashboard. If your account has more than one device registered, you'll also need to specify which one to operate on via phone number or device ID (mutually exclusive).
 
 Three options:
 
 ```sh
 # 1. Environment variable
-# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_PHONE_NUMBER are set (see .env.example)
+# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_PHONE_NUMBER (or LIGHT_DEVICE_ID) are set (see .env.example)
 light <command>
 
 # 2. Command line
 light --email=... --password=... --phone-number=... <command>
+light --email=... --password=... --device-id=... <command>
 
 # 3. File
 light --email-file=... --password-file=... --phone-number-file=... <command>
