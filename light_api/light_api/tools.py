@@ -45,7 +45,6 @@ class LightTools:
             get_api_devices,
             get_api_tools,
         )
-        from open_api_specification_client.types import Unset
 
         devices_resp = self._l.call_api(
             get_api_devices.sync_detailed, client=self._l._api_client
@@ -73,13 +72,7 @@ class LightTools:
         }
 
         results = []
-        for item in devices_resp.parsed.included:
-            if isinstance(item.relationships, Unset) or isinstance(
-                item.relationships.tool, Unset
-            ):
-                continue
-            if item.relationships.device.data.id != device_id:
-                continue
+        for item in self._l._device_tool_items(devices_resp.parsed.included, device_id):
             global_tool_id = item.relationships.tool.data.id
             ns, comp, title = tool_info.get(global_tool_id, ("", "", ""))
             results.append(

@@ -6,7 +6,7 @@ import keyring
 import logging
 import os
 
-from typing import TYPE_CHECKING, Any, Callable, NewType, final
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, NewType, final
 
 from open_api_specification_client.api.default import get_api_playlists
 from open_api_specification_client.client import AuthenticatedClient
@@ -20,6 +20,9 @@ if TYPE_CHECKING:
     from light_api.tools import LightTools
     from open_api_specification_client.models.get_api_devices_response_200 import (
         GetApiDevicesResponse200,
+    )
+    from open_api_specification_client.models.get_api_devices_response_200_included_item import (
+        GetApiDevicesResponse200IncludedItem,
     )
 
 KEYRING_SERVICE = "unofficial-light-api"
@@ -267,13 +270,7 @@ class Light:
             t.id: t.attributes.namespace.lower() for t in tools_resp.parsed.data
         }
 
-        for item in devices_resp.parsed.included:
-            if isinstance(item.relationships, Unset) or isinstance(
-                item.relationships.tool, Unset
-            ):
-                continue
-            if item.relationships.device.data.id != device_id:
-                continue
+        for item in self._device_tool_items(devices_resp.parsed.included, device_id):
             ns = tool_ns.get(item.relationships.tool.data.id, "")
             if "note" in ns:
                 self._device_tool_ids["notes"] = item.id
@@ -281,6 +278,32 @@ class Light:
                 self._device_tool_ids["podcast"] = item.id
             elif "music" in ns or "playlist" in ns:
                 self._device_tool_ids["music"] = item.id
+
+    @staticmethod
+    def _device_tool_items(
+        included: Iterable[GetApiDevicesResponse200IncludedItem], device_id: DeviceId
+    ) -> Iterator[GetApiDevicesResponse200IncludedItem]:
+        """Yield the device_tool items in `included` belonging to `device_id`."""
+        for item in included:
+            if isinstance(item.relationships, Unset) or isinstance(
+                item.relationships.tool, Unset
+            ):
+                continue
+            if item.relationships.device.data.id != device_id:
+                continue
+            yield item
+
+    @staticmethod
+    def _device_phone_numbers(
+        included: Iterable[GetApiDevicesResponse200IncludedItem],
+    ) -> Iterator[tuple[DeviceId, PhoneNumber]]:
+        """Yield (device_id, phone_number) pairs from the sims records in `included`."""
+        for item in included:
+            if item.type_ != "sims" or isinstance(item.attributes.phone_number, Unset):
+                continue
+            yield DeviceId(item.relationships.device.data.id), PhoneNumber(
+                item.attributes.phone_number
+            )
 
     def _select_device_id(self, devices: GetApiDevicesResponse200) -> DeviceId:
         """Select the correct device id out of /api/devices data.
@@ -309,17 +332,9 @@ class Light:
             target = self._phone_digits(self.phone)
             seen: list[str] = []
 
-            for item in devices.included:
-                if item.type_ != "sims" or isinstance(
-                    item.attributes.phone_number, Unset
-                ):
-                    continue
-
-                device_id = DeviceId(item.relationships.device.data.id)
-                number = PhoneNumber(item.attributes.phone_number)
+            for device_id, number in self._device_phone_numbers(devices.included):
                 if self._phone_digits(number) == target:
                     return device_id
-
                 seen.append(f"{device_id} ({number})")
 
             raise RuntimeError(
