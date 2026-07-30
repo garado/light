@@ -251,9 +251,8 @@ class Light:
             client=self._api_client,
             device_tool_id=music_id,
         )
-        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(f"Could not fetch playlists: {resp.status_code}")
-        self._playlist_id = resp.parsed.data[0].id
+        parsed = self._ensure_ok(resp, "Could not fetch playlists", require_data=True)
+        self._playlist_id = parsed.data[0].id
 
     def _fetch_device_tool_ids(self) -> None:
         """Populate _device_tool_ids for all installed tools.
@@ -276,25 +275,19 @@ class Light:
         )
 
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
-        if (
-            devices_resp.status_code != 200
-            or not devices_resp.parsed
-            or not devices_resp.parsed.data
-        ):
-            raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
-        device_id = self._select_device_id(devices_resp.parsed)
+        devices = self._ensure_ok(devices_resp, "Could not fetch devices", require_data=True)
+        device_id = self._select_device_id(devices)
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
         )
-        if tools_resp.status_code != 200 or not tools_resp.parsed:
-            raise RuntimeError(f"Could not fetch tools: {tools_resp.status_code}")
+        tools = self._ensure_ok(tools_resp, "Could not fetch tools")
 
         tool_ns: dict[str, str] = {
-            t.id: t.attributes.namespace.lower() for t in tools_resp.parsed.data
+            t.id: t.attributes.namespace.lower() for t in tools.data
         }
 
-        for item in self._device_tool_items(devices_resp.parsed.included, device_id):
+        for item in self._device_tool_items(devices.included, device_id):
             ns = tool_ns.get(item.relationships.tool.data.id, "")
             if "note" in ns:
                 self._device_tool_ids["notes"] = item.id
