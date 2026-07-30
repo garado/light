@@ -37,6 +37,8 @@ class Light:
         password_file: str | None = None,
         phone: str | None = None,
         phone_file: str | None = None,
+        device_id: str | None = None,
+        device_id_file: str | None = None,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
@@ -45,6 +47,15 @@ class Light:
         self.phone: str | None = phone or self._resolve(
             phone_file, "LIGHT_PHONE_NUMBER"
         )
+        self.device_id: str | None = device_id or self._resolve(
+            device_id_file, "LIGHT_DEVICE_ID"
+        )
+
+        if self.phone and self.device_id:
+            raise RuntimeError(
+                "phone and device id are mutually exclusive - provide only one"
+            )
+
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
