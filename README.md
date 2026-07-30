@@ -43,7 +43,7 @@ light --email=... --password=... --device-id=... <command>
 light --email-file=... --password-file=... --phone-number-file=... <command>
 ```
 
-After the first login, your auth token will be cached. Tokens are good for 30 days.
+After the first login, your auth token will be cached. Tokens are good for 30 days. Log out with `light logout`.
 
 ## Getting started: CLI/TUI
 
