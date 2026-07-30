@@ -17,6 +17,11 @@ def f_devices():
 
 
 @pytest.fixture
+def f_devices_multi():
+    return load("devices_multi")
+
+
+@pytest.fixture
 def f_tools():
     return load("tools")
 

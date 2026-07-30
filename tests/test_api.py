@@ -13,14 +13,14 @@ from light_api.music import LightTrack
 API = "https://production.lightphonecloud.com"
 
 
-def make_light() -> Light:
+def make_light(phone: str | None = None, device_id: str | None = None) -> Light:
     """Return a Light instance with auth bypassed."""
     from open_api_specification_client.client import AuthenticatedClient
     from light_api.music import LightMusic
     from light_api.notes import LightNotes
     from light_api.tools import LightTools
     from light_api.podcast import LightPodcasts
-    light = Light(email="test@example.com", password="test")
+    light = Light(email="test@example.com", password="test", phone=phone, device_id=device_id)
     light._api_token = "fake-token"
     light._api_client = AuthenticatedClient(base_url=API, token="fake-token")
     light.music = LightMusic(light)
@@ -57,6 +57,72 @@ class TestFetchDeviceToolIds:
         valid_ids = {item["id"] for item in f_devices["included"]}
         for key, val in light._device_tool_ids.items():
             assert val in valid_ids, f"{key} device_tool_id {val!r} not in fixture included ids"
+
+
+class TestSelectDeviceId:
+    """Unit tests for Light._select_device_id, exercised directly against a
+    parsed /api/devices response (no HTTP mocking needed)."""
+
+    @staticmethod
+    def _parsed(raw: dict):
+        from open_api_specification_client.models.get_api_devices_response_200 import (
+            GetApiDevicesResponse200,
+        )
+
+        return GetApiDevicesResponse200.from_dict(raw)
+
+    def test_single_device_no_selector(self, f_devices):
+        light = make_light()
+        device_id = light._select_device_id(self._parsed(f_devices))
+        assert device_id == f_devices["data"][0]["id"]
+
+    def test_multiple_devices_no_selector_raises(self, f_devices_multi):
+        light = make_light()
+        with pytest.raises(RuntimeError, match="Multiple devices found"):
+            light._select_device_id(self._parsed(f_devices_multi))
+
+    def test_device_id_selects_matching_device(self, f_devices_multi):
+        target = f_devices_multi["data"][1]["id"]
+        light = make_light(device_id=target)
+        assert light._select_device_id(self._parsed(f_devices_multi)) == target
+
+    def test_device_id_no_match_raises(self, f_devices_multi):
+        light = make_light(device_id="does-not-exist")
+        with pytest.raises(RuntimeError, match="No device found with id"):
+            light._select_device_id(self._parsed(f_devices_multi))
+
+    def test_phone_selects_matching_device(self, f_devices_multi):
+        # Stored as "+15125550199" - passed with different formatting/no country code.
+        light = make_light(phone="(512) 555-0199")
+        target = f_devices_multi["data"][1]["id"]
+        assert light._select_device_id(self._parsed(f_devices_multi)) == target
+
+    def test_phone_no_match_raises(self, f_devices_multi):
+        light = make_light(phone="0000000000")
+        with pytest.raises(RuntimeError, match="No device found matching phone number"):
+            light._select_device_id(self._parsed(f_devices_multi))
+
+
+class TestFetchDeviceToolIdsMultiDevice:
+    @respx.mock
+    def test_only_assigns_tool_ids_for_selected_device(self, f_devices_multi, f_tools):
+        target = f_devices_multi["data"][1]["id"]
+        respx.get(f"{API}/api/devices").mock(
+            return_value=httpx.Response(200, json=f_devices_multi)
+        )
+        respx.get(f"{API}/api/tools").mock(return_value=httpx.Response(200, json=f_tools))
+
+        light = make_light(device_id=target)
+        light._fetch_device_tool_ids()
+
+        other_device_tool_ids = {
+            item["id"]
+            for item in f_devices_multi["included"]
+            if item["type"] == "device_tools"
+            and item["relationships"]["device"]["data"]["id"] != target
+        }
+        for val in light._device_tool_ids.values():
+            assert val not in other_device_tool_ids
 
 
 class TestGetNotes:

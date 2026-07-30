@@ -40,6 +40,14 @@ log = logging.getLogger(f"light.{__name__}")
     "--phone-number-file", default=None, help="Path to file containing phone number."
 )
 @click.option(
+    "--device-id",
+    default=None,
+    help="Device UUID to operate on. Mutually exclusive with --phone-number.",
+)
+@click.option(
+    "--device-id-file", default=None, help="Path to file containing device UUID."
+)
+@click.option(
     "--log-level",
     default="WARNING",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
@@ -54,6 +62,8 @@ def cli(
     password_file,
     phone_number,
     phone_number_file,
+    device_id,
+    device_id_file,
     log_level,
 ):
     """**Unofficial CLI for the Light Phone.**
@@ -62,7 +72,15 @@ def cli(
 
     Credentials can be provided via options, files, or environment variables
     (`LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`).
+
+    On accounts with multiple devices, select one via `--phone-number` or
+    `--device-id` (mutually exclusive).
     """
+    if (phone_number or phone_number_file) and (device_id or device_id_file):
+        raise click.UsageError(
+            "--phone-number and --device-id are mutually exclusive."
+        )
+
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
 
@@ -75,6 +93,8 @@ def cli(
             "password_file": password_file,
             "phone_number": phone_number,
             "phone_number_file": phone_number_file,
+            "device_id": device_id,
+            "device_id_file": device_id_file,
         }
     )
 
@@ -588,6 +608,8 @@ def tui(ctx):
             password_file=obj.get("password_file"),
             phone=obj.get("phone_number"),
             phone_file=obj.get("phone_number_file"),
+            device_id=obj.get("device_id"),
+            device_id_file=obj.get("device_id_file"),
         )
     )
 

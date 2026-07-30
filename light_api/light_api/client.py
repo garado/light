@@ -6,21 +6,28 @@ import keyring
 import logging
 import os
 
-from typing import TYPE_CHECKING, Any, Callable, final
+from typing import TYPE_CHECKING, Any, Callable, NewType, final
 
 from open_api_specification_client.api.default import get_api_playlists
 from open_api_specification_client.client import AuthenticatedClient
+from open_api_specification_client.types import Unset
 
 if TYPE_CHECKING:
     from light_api.music import LightMusic
     from light_api.podcast import LightPodcasts
     from light_api.notes import LightNotes
     from light_api.tools import LightTools
+    from open_api_specification_client.models.get_api_devices_response_200 import (
+        GetApiDevicesResponse200,
+    )
 
 KEYRING_SERVICE = "unofficial-light-api"
 KEYRING_USER = "session"
 API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
+
+DeviceId = NewType("DeviceId", str)
+PhoneNumber = NewType("PhoneNumber", str)
 
 log = logging.getLogger(f"light.{__name__}")
 
@@ -37,6 +44,8 @@ class Light:
         password_file: str | None = None,
         phone: str | None = None,
         phone_file: str | None = None,
+        device_id: str | None = None,
+        device_id_file: str | None = None,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
@@ -45,6 +54,15 @@ class Light:
         self.phone: str | None = phone or self._resolve(
             phone_file, "LIGHT_PHONE_NUMBER"
         )
+        self.device_id: str | None = device_id or self._resolve(
+            device_id_file, "LIGHT_DEVICE_ID"
+        )
+
+        if self.phone and self.device_id:
+            raise RuntimeError(
+                "phone and device id are mutually exclusive - provide only one"
+            )
+
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
@@ -225,7 +243,6 @@ class Light:
             get_api_devices,
             get_api_tools,
         )
-        from open_api_specification_client.types import Unset
 
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
         if (
@@ -234,7 +251,7 @@ class Light:
             or not devices_resp.parsed.data
         ):
             raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
-        device_id = devices_resp.parsed.data[0].id
+        device_id = self._select_device_id(devices_resp.parsed)
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
@@ -247,7 +264,11 @@ class Light:
         }
 
         for item in devices_resp.parsed.included:
-            if isinstance(item.relationships, Unset) or isinstance(item.relationships.tool, Unset):
+            if isinstance(item.relationships, Unset) or isinstance(
+                item.relationships.tool, Unset
+            ):
+                continue
+            if item.relationships.device.data.id != device_id:
                 continue
             ns = tool_ns.get(item.relationships.tool.data.id, "")
             if "note" in ns:
@@ -256,6 +277,73 @@ class Light:
                 self._device_tool_ids["podcast"] = item.id
             elif "music" in ns or "playlist" in ns:
                 self._device_tool_ids["music"] = item.id
+
+    def _select_device_id(self, devices: GetApiDevicesResponse200) -> DeviceId:
+        """Select the correct device id out of /api/devices data.
+
+        Matches on this criteria, in order:
+        - self.device_id
+        - self.phone
+        - a single device, if only one device is present
+
+        Raises if none of the above resolves to a single device.
+        """
+        data = devices.data
+
+        if self.device_id:
+            for d in data:
+                if d.id == self.device_id:
+                    return DeviceId(d.id)
+
+            available = ", ".join(d.id for d in data)
+            raise RuntimeError(
+                f"No device found with id {self.device_id!r}. "
+                f"Available device ids: {available}"
+            )
+
+        if self.phone:
+            target = self._phone_digits(self.phone)
+            seen: list[str] = []
+
+            for item in devices.included:
+                if item.type_ != "sims" or isinstance(
+                    item.attributes.phone_number, Unset
+                ):
+                    continue
+
+                device_id = DeviceId(item.relationships.device.data.id)
+                number = PhoneNumber(item.attributes.phone_number)
+                if self._phone_digits(number) == target:
+                    return device_id
+
+                seen.append(f"{device_id} ({number})")
+
+            raise RuntimeError(
+                f"No device found matching phone number {self.phone!r}. "
+                f"Available devices: {', '.join(seen)}"
+            )
+
+        if len(data) == 1:
+            return DeviceId(data[0].id)
+
+        raise RuntimeError(
+            "Multiple devices found on this account - specify one via "
+            "--device-id or --phone-number. Available device ids: "
+            + ", ".join(d.id for d in data)
+        )
+
+    @staticmethod
+    def _phone_digits(number: str) -> str:
+        """Normalizes phone numbers to a bare 10-digit string.
+
+        TODO: This is America-centric.
+        """
+        return "".join(c for c in number if c.isdigit())[-10:]
+
+    @staticmethod
+    def _format_phone(number: str) -> str:
+        digits = Light._phone_digits(number)
+        return f"+1 {digits[0:3]} {digits[3:6]} {digits[6:10]}"
 
     @staticmethod
     def _resolve(filepath: str | None, env_key: str) -> str | None:
@@ -266,8 +354,3 @@ class Light:
             except OSError as e:
                 raise RuntimeError(f"Could not read {filepath}: {e}") from e
         return os.environ.get(env_key)
-
-    @staticmethod
-    def _format_phone(number: str) -> str:
-        digits: str = "".join(c for c in number if c.isdigit())[-10:]
-        return f"+1 {digits[0:3]} {digits[3:6]} {digits[6:10]}"
