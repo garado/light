@@ -67,8 +67,7 @@ class LightNotes:
             note_id=note.id,
             client=self._l._api_client,
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"Presigned get URL for {note.id}: {resp.status_code}")
+        self._l._ensure_ok(resp, f"Presigned get URL for {note.id}", require_parsed=True)
 
         content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
         if not content_resp.is_success:
@@ -81,10 +80,7 @@ class LightNotes:
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["notes"],
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"List notes: {resp.status_code}")
-
-        body = resp.parsed
+        body = self._l._ensure_ok(resp, "List notes", require_parsed=True)
 
         return [_make_light_note(data) for data in body.data]
 
@@ -95,8 +91,7 @@ class LightNotes:
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["notes"],
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"Fetching note {note_id}: {resp.status_code}")
+        self._l._ensure_ok(resp, f"Fetching note {note_id}", require_parsed=True)
 
         return _make_light_note(resp.parsed.data)
 
@@ -147,10 +142,11 @@ class LightNotes:
                 )
             ),
         )
-        if resp.status_code not in (200, 201) or resp.parsed is None:
-            raise RuntimeError(f"Creating note: {resp.status_code}")
+        parsed = self._l._ensure_ok(
+            resp, "Creating note", ok_codes=(200, 201), require_parsed=True
+        )
 
-        presigned_url = resp.parsed.included[0].attributes.presigned_url
+        presigned_url = parsed.included[0].attributes.presigned_url
 
         if content_is_path:
             with open(content) as f:
@@ -163,7 +159,7 @@ class LightNotes:
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
 
-        note = _make_light_note(resp.parsed.data)
+        note = _make_light_note(parsed.data)
         log.info(f"Note {note.id} created")
         return note
 
@@ -178,8 +174,7 @@ class LightNotes:
             client=self._l._api_client,
             note_id=note.id,
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"Presigned put URL for {note.id}: {resp.status_code}")
+        self._l._ensure_ok(resp, f"Presigned put URL for {note.id}", require_parsed=True)
         put_resp = httpx.put(resp.parsed.presigned_put_url, content=content, timeout=30)
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
@@ -211,8 +206,7 @@ class LightNotes:
                 )
             ),
         )
-        if resp.status_code not in (200, 204):
-            raise RuntimeError(f"Update note title: {resp.status_code}")
+        self._l._ensure_ok(resp, "Update note title", ok_codes=(200, 204))
         note.title = title
         log.info(f"Note {note.id} title updated to {title!r}")
 
@@ -223,6 +217,5 @@ class LightNotes:
             client=self._l._api_client,
             note_id=note_id,
         )
-        if resp.status_code not in (200, 204):
-            raise RuntimeError(f"Delete note: {resp.status_code}")
+        self._l._ensure_ok(resp, "Delete note", ok_codes=(200, 204))
         log.info(f"Note {note_id} deleted")

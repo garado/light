@@ -65,10 +65,7 @@ class LightPodcasts:
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["podcast"],
         )
-        if resp.status_code != 200 or resp.parsed is None:
-            raise RuntimeError(f"Get podcasts: {resp.status_code}")
-
-        body = resp.parsed
+        body = self._l._ensure_ok(resp, "Get podcasts", require_parsed=True)
         included_by_id = {
             item.id: item.attributes
             for item in body.included
@@ -109,8 +106,7 @@ class LightPodcasts:
                 followed_podcast_id=p.followed_podcast_id,
                 client=self._l._api_client,
             )
-            if not (200 <= resp.status_code < 300):
-                raise RuntimeError(f"Delete podcast: {resp.status_code}")
+            self._l._ensure_ok(resp, "Delete podcast", ok_codes=range(200, 300))
 
     def add_podcast(self, rss_feed_url: str) -> LightPodcast:
         """Add a podcast to the device by RSS feed URL.
@@ -134,11 +130,12 @@ class LightPodcasts:
                 )
             ),
         )
-        if create_resp.status_code not in (200, 201) or create_resp.parsed is None:
-            raise RuntimeError(f"Create podcast: {create_resp.status_code}")
+        created = self._l._ensure_ok(
+            create_resp, "Create podcast", ok_codes=(200, 201), require_parsed=True
+        )
 
-        podcast_id = create_resp.parsed.data.id
-        attrs = create_resp.parsed.data.attributes
+        podcast_id = created.data.id
+        attrs = created.data.attributes
 
         follow_resp = post_api_followed_podcasts.sync_detailed(
             client=self._l._api_client,
@@ -162,10 +159,11 @@ class LightPodcasts:
                 )
             ),
         )
-        if follow_resp.status_code not in (200, 201) or follow_resp.parsed is None:
-            raise RuntimeError(f"Follow podcast: {follow_resp.status_code}")
+        followed = self._l._ensure_ok(
+            follow_resp, "Follow podcast", ok_codes=(200, 201), require_parsed=True
+        )
 
-        followed_podcast_id = follow_resp.parsed.data.id
+        followed_podcast_id = followed.data.id
 
         return LightPodcast(
             podcast_id=podcast_id,

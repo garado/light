@@ -3,8 +3,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from open_api_specification_client.types import Unset
-
 if TYPE_CHECKING:
     from light_api.client import Light
 
@@ -28,16 +26,9 @@ class LightDevices:
         resp = self._l.call_api(
             get_api_devices.sync_detailed, client=self._l._api_client
         )
-        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(f"Could not fetch devices: {resp.status_code}")
+        devices = self._l._ensure_ok(resp, "Could not fetch devices", require_data=True)
 
-        phone_by_device: dict[str, str] = {}
-        for item in resp.parsed.included:
-            if item.type_ != "sims" or isinstance(item.attributes.phone_number, Unset):
-                continue
-            phone_by_device[item.relationships.device.data.id] = (
-                item.attributes.phone_number
-            )
+        phone_by_device = dict(self._l._device_phone_numbers(devices.included))
 
         return [
             LightDevice(
@@ -46,5 +37,5 @@ class LightDevices:
                 serial_number=d.attributes.serial_number,
                 sku=d.attributes.sku,
             )
-            for d in resp.parsed.data
+            for d in devices.data
         ]

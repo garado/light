@@ -6,7 +6,7 @@ import keyring
 import logging
 import os
 
-from typing import TYPE_CHECKING, Any, Callable, NewType, final
+from typing import TYPE_CHECKING, Any, Callable, Container, Iterable, Iterator, NewType, final
 
 from open_api_specification_client.api.default import get_api_playlists
 from open_api_specification_client.client import AuthenticatedClient
@@ -20,6 +20,9 @@ if TYPE_CHECKING:
     from light_api.tools import LightTools
     from open_api_specification_client.models.get_api_devices_response_200 import (
         GetApiDevicesResponse200,
+    )
+    from open_api_specification_client.models.get_api_devices_response_200_included_item import (
+        GetApiDevicesResponse200IncludedItem,
     )
 
 KEYRING_SERVICE = "unofficial-light-api"
@@ -120,6 +123,33 @@ class Light:
             self.reauth()
             resp = func(**kwargs)
         return resp
+
+    @staticmethod
+    def _ensure_ok(
+        resp: Any,
+        action: str,
+        ok_codes: Container[int] = (200,),
+        require_parsed: bool = False,
+        require_data: bool = False,
+    ) -> Any:
+        """Raise RuntimeError(f"{action}: {status}") unless resp is ok, else return resp.parsed.
+
+        Args:
+            resp: The API response to parse
+            action: Description of the API request being validated. Used in error message.
+            ok_codes: Status codes that the caller considers a success
+            require_parsed: True if a non-None `resp.parsed` is required for success
+            require_data: True if a non-empty `resp.parsed.data` is required for success
+                (implies require_parsed)
+
+        Returns:
+            The parsed data
+        """
+        parsed_missing = (require_parsed or require_data) and resp.parsed is None
+        data_missing = require_data and not parsed_missing and not resp.parsed.data
+        if resp.status_code not in ok_codes or parsed_missing or data_missing:
+            raise RuntimeError(f"{action}: {resp.status_code}")
+        return resp.parsed
 
     def __enter__(self) -> Light:
         """Sets up API session."""
@@ -224,9 +254,8 @@ class Light:
             client=self._api_client,
             device_tool_id=music_id,
         )
-        if resp.status_code != 200 or not resp.parsed or not resp.parsed.data:
-            raise RuntimeError(f"Could not fetch playlists: {resp.status_code}")
-        self._playlist_id = resp.parsed.data[0].id
+        parsed = self._ensure_ok(resp, "Could not fetch playlists", require_data=True)
+        self._playlist_id = parsed.data[0].id
 
     def _fetch_device_tool_ids(self) -> None:
         """Populate _device_tool_ids for all installed tools.
@@ -249,31 +278,19 @@ class Light:
         )
 
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
-        if (
-            devices_resp.status_code != 200
-            or not devices_resp.parsed
-            or not devices_resp.parsed.data
-        ):
-            raise RuntimeError(f"Could not fetch devices: {devices_resp.status_code}")
-        device_id = self._select_device_id(devices_resp.parsed)
+        devices = self._ensure_ok(devices_resp, "Could not fetch devices", require_data=True)
+        device_id = self._select_device_id(devices)
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
         )
-        if tools_resp.status_code != 200 or not tools_resp.parsed:
-            raise RuntimeError(f"Could not fetch tools: {tools_resp.status_code}")
+        tools = self._ensure_ok(tools_resp, "Could not fetch tools", require_parsed=True)
 
         tool_ns: dict[str, str] = {
-            t.id: t.attributes.namespace.lower() for t in tools_resp.parsed.data
+            t.id: t.attributes.namespace.lower() for t in tools.data
         }
 
-        for item in devices_resp.parsed.included:
-            if isinstance(item.relationships, Unset) or isinstance(
-                item.relationships.tool, Unset
-            ):
-                continue
-            if item.relationships.device.data.id != device_id:
-                continue
+        for item in self._device_tool_items(devices.included, device_id):
             ns = tool_ns.get(item.relationships.tool.data.id, "")
             if "note" in ns:
                 self._device_tool_ids["notes"] = item.id
@@ -281,6 +298,32 @@ class Light:
                 self._device_tool_ids["podcast"] = item.id
             elif "music" in ns or "playlist" in ns:
                 self._device_tool_ids["music"] = item.id
+
+    @staticmethod
+    def _device_tool_items(
+        included: Iterable[GetApiDevicesResponse200IncludedItem], device_id: DeviceId
+    ) -> Iterator[GetApiDevicesResponse200IncludedItem]:
+        """Yield the device_tool items in `included` belonging to `device_id`."""
+        for item in included:
+            if isinstance(item.relationships, Unset) or isinstance(
+                item.relationships.tool, Unset
+            ):
+                continue
+            if item.relationships.device.data.id != device_id:
+                continue
+            yield item
+
+    @staticmethod
+    def _device_phone_numbers(
+        included: Iterable[GetApiDevicesResponse200IncludedItem],
+    ) -> Iterator[tuple[DeviceId, PhoneNumber]]:
+        """Yield (device_id, phone_number) pairs from the sims records in `included`."""
+        for item in included:
+            if item.type_ != "sims" or isinstance(item.attributes.phone_number, Unset):
+                continue
+            yield DeviceId(item.relationships.device.data.id), PhoneNumber(
+                item.attributes.phone_number
+            )
 
     def _select_device_id(self, devices: GetApiDevicesResponse200) -> DeviceId:
         """Select the correct device id out of /api/devices data.
@@ -309,17 +352,9 @@ class Light:
             target = self._phone_digits(self.phone)
             seen: list[str] = []
 
-            for item in devices.included:
-                if item.type_ != "sims" or isinstance(
-                    item.attributes.phone_number, Unset
-                ):
-                    continue
-
-                device_id = DeviceId(item.relationships.device.data.id)
-                number = PhoneNumber(item.attributes.phone_number)
+            for device_id, number in self._device_phone_numbers(devices.included):
                 if self._phone_digits(number) == target:
                     return device_id
-
                 seen.append(f"{device_id} ({number})")
 
             raise RuntimeError(

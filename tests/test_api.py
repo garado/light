@@ -4,6 +4,7 @@ import json
 import pytest
 import respx
 import httpx
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from light_api.client import Light
@@ -28,6 +29,61 @@ def make_light(phone: str | None = None, device_id: str | None = None) -> Light:
     light.tools = LightTools(light)
     light.podcast = LightPodcasts(light)
     return light
+
+
+def fake_resp(status_code: int, parsed=None):
+    return SimpleNamespace(status_code=status_code, parsed=parsed)
+
+
+class TestEnsureOk:
+    def test_returns_parsed_on_success(self):
+        parsed = SimpleNamespace(data=["x"])
+        result = Light._ensure_ok(fake_resp(200, parsed), "Do thing")
+        assert result is parsed
+
+    def test_raises_on_unexpected_status(self):
+        with pytest.raises(RuntimeError, match="Do thing: 404"):
+            Light._ensure_ok(fake_resp(404), "Do thing")
+
+    def test_accepts_alternate_ok_codes(self):
+        parsed = SimpleNamespace(data=["x"])
+        result = Light._ensure_ok(fake_resp(201, parsed), "Create thing", ok_codes=(200, 201))
+        assert result is parsed
+
+    def test_accepts_status_only_range(self):
+        result = Light._ensure_ok(fake_resp(204, None), "Delete thing", ok_codes=range(200, 300))
+        assert result is None
+
+    def test_require_data_raises_on_empty_data(self):
+        parsed = SimpleNamespace(data=[])
+        with pytest.raises(RuntimeError, match="Do thing: 200"):
+            Light._ensure_ok(fake_resp(200, parsed), "Do thing", require_data=True)
+
+    def test_require_data_raises_on_none_parsed(self):
+        """require_data=True alone (no require_parsed) still catches parsed=None - it's tiered."""
+        with pytest.raises(RuntimeError, match="Do thing: 200"):
+            Light._ensure_ok(fake_resp(200, None), "Do thing", require_data=True)
+
+    def test_require_data_succeeds_with_data(self):
+        parsed = SimpleNamespace(data=["x"])
+        result = Light._ensure_ok(fake_resp(200, parsed), "Do thing", require_data=True)
+        assert result is parsed
+
+    def test_require_parsed_raises_on_none_parsed(self):
+        with pytest.raises(RuntimeError, match="Do thing: 200"):
+            Light._ensure_ok(fake_resp(200, None), "Do thing", require_parsed=True)
+
+    def test_require_parsed_allows_empty_data(self):
+        """require_parsed=True does NOT imply require_data - empty .data is fine."""
+        parsed = SimpleNamespace(data=[])
+        result = Light._ensure_ok(fake_resp(200, parsed), "Do thing", require_parsed=True)
+        assert result is parsed
+
+    def test_default_allows_none_parsed(self):
+        """Neither flag set - only status is checked, matching endpoints like
+        delete/update that don't touch resp.parsed afterward."""
+        result = Light._ensure_ok(fake_resp(204, None), "Do thing", ok_codes=(200, 204))
+        assert result is None
 
 
 class TestFetchDeviceToolIds:
