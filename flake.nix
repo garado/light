@@ -10,7 +10,7 @@
 
     light-phone-api = python.pkgs.buildPythonPackage {
       pname = "light-phone-api";
-      version = "0.1.1";
+      version = "0.2.0";
       pyproject = true;
       src = ./light_api;
       build-system = [ python.pkgs.hatchling ];
@@ -25,7 +25,7 @@
 
     light-phone-cli-tui = python.pkgs.buildPythonPackage {
       pname = "light-phone-cli-tui";
-      version = "0.1.1";
+      version = "0.2.0";
       pyproject = true;
       src = ./light_cli_tui;
       build-system = [ python.pkgs.hatchling ];
