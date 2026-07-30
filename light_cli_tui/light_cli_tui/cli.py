@@ -30,6 +30,7 @@ log = logging.getLogger(f"light.{__name__}")
 
 
 @click.group()
+@click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password", default=None, help="Light account password.")
