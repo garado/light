@@ -269,7 +269,10 @@ def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_fl
             "--overwrite and --allow-duplicates are mutually exclusive."
         )
 
-    files = list(songs)
+    files, invalid_files = light.music.filter_valid_tracks(list(songs))
+    for file_path in invalid_files:
+        console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+
     matches = light.music.find_upload_matches(files)
 
     skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0

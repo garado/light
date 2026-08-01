@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 from light_api.client import Light
 from light_api.notes import LightNote
-from light_api.music import LightTrack
+from light_api.music import LightMusic, LightTrack
 
 API = "https://production.lightphonecloud.com"
 
@@ -521,6 +521,19 @@ class TestUploadTracksExcludesMissingFiles:
 
         mock_file.assert_not_called()
         light.music.delete_tracks_predicate.assert_not_called()
+
+
+class TestFilterValidTracks:
+    def test_splits_existing_and_missing_paths(self, tmp_path):
+        real_file = tmp_path / "song.mp3"
+        real_file.write_bytes(b"")
+
+        valid, invalid = LightMusic.filter_valid_tracks(
+            [str(real_file), "/nonexistent/missing.mp3"]
+        )
+
+        assert valid == [str(real_file)]
+        assert invalid == ["/nonexistent/missing.mp3"]
 
 
 def make_note(overrides: dict | None = None) -> LightNote:
