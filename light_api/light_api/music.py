@@ -339,6 +339,15 @@ class LightMusic:
 
         return (to_upload, to_delete)
 
+    @staticmethod
+    def filter_valid_tracks(files: list[str]) -> tuple[list[str], list[str]]:
+        """Verify validity of audio files, returning (valid, invalid)."""
+        valid = []
+        invalid = []
+        for file_path in files:
+            (valid if os.path.exists(file_path) else invalid).append(file_path)
+        return valid, invalid
+
     def upload_tracks(
         self,
         files: list[str],
@@ -362,15 +371,12 @@ class LightMusic:
 
         manual_update_cmds = []
 
-        existing_files: list[str] = []
-        for file_path in files:
-            if os.path.exists(file_path):
-                existing_files.append(file_path)
-            else:
-                log.warning(f"File not found, skipping: {file_path}")
+        valid_files, invalid_files = self.filter_valid_tracks(files)
+        for file_path in invalid_files:
+            log.warning(f"File not found, skipping: {file_path}")
 
         to_upload, to_delete = self._resolve_upload_plan(
-            existing_files, allow_duplicates, overwrite
+            valid_files, allow_duplicates, overwrite
         )
 
         if to_delete:
