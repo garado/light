@@ -235,15 +235,24 @@ def podcasts_delete(light: Light, title):
 @click.option(
     "--allow-duplicates",
     is_flag=True,
-    help="Skip duplicate checking and always upload.",
+    help="Skip duplicate checking entirely and always upload.",
 )
 @click.option(
-    "--match-title-by",
+    "--replace",
+    is_flag=True,
+    help="Delete a file's matching existing track before uploading it, instead of "
+    "skipping the file (the default).",
+)
+@click.option(
+    "--match-by",
     "-m",
     type=click.Choice(["filename", "metadata"]),
     default="metadata",
     show_default=True,
-    help="How to match existing tracks when checking for duplicates.",
+    help="How to identify a file for duplicate matching. 'metadata' matches on "
+    "title+artist from tags; 'filename' matches on filename-as-title only, for tracks "
+    "that were themselves uploaded with no metadata (LightOS shows those with "
+    "title=filename, artist=Unknown).",
 )
 @click.option(
     "--no-convert-flac",
@@ -251,41 +260,31 @@ def podcasts_delete(light: Light, title):
     default=False,
     help="Skip FLAC to MP3 conversion (conversion is on by default to preserve metadata).",
 )
-def music_upload(light: Light, songs, allow_duplicates, match_title_by, no_convert_flac):
+def music_upload(light: Light, songs, allow_duplicates, replace, match_by, no_convert_flac):
     """Upload one or more audio files to your device.
 
-    Duplicate detection is on by default - existing tracks with a matching
-    title will be replaced. Use `--allow-duplicates` to skip this.
+    Duplicate detection is on by default: files matching an existing track
+    (by title+artist) are skipped, leaving the existing track untouched. Use
+    `--replace` to delete-and-replace matches instead, or `--allow-duplicates`
+    to skip the check entirely.
 
     **Example:**
 
     `light music upload track1.mp3 track2.mp3`
     """
+    if replace and allow_duplicates:
+        raise click.UsageError("--replace and --allow-duplicates are mutually exclusive.")
+
     files = list(songs)
 
     if not allow_duplicates:
-        from mutagen._file import File as MutagenFile
-        import os as _os
+        matches = light.music.find_upload_matches(files, match_by, replace)
 
-        if match_title_by == "metadata":
-            titles = []
-            for s in files:
-                f = MutagenFile(s, easy=True)
-                titles.append(
-                    f.get("title", [_os.path.splitext(_os.path.basename(s))[0]])[0]
-                    if f
-                    else _os.path.splitext(_os.path.basename(s))[0]
-                )
-        else:
-            titles = [_os.path.splitext(_os.path.basename(s))[0] for s in files]
-
-        existing = light.music.get_tracks()
-        to_overwrite = [t for t in existing if t.title in set(titles)]
-
-        if to_overwrite:
-            console.print(f"Tracks to overwrite ({len(to_overwrite)}):")
-            for t in to_overwrite:
-                console.print(f"  {t.artist} — {t.title}")
+        if matches:
+            verb = "overwrite" if replace else "skip"
+            console.print(f"Tracks to {verb} ({len(matches)}):")
+            for file_path, t in matches.items():
+                console.print(f"  {file_path} -> {t.artist} — {t.title}")
             if not click.confirm("Proceed?"):
                 return
 
@@ -310,7 +309,8 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by, no_conve
         light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
-            match_title_by=match_title_by,
+            replace=replace,
+            match_by=match_by,
             convert_flac=not no_convert_flac,
             on_progress=on_progress,
         )
