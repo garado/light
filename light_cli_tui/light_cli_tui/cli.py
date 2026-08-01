@@ -242,7 +242,7 @@ _VERBOSE_LIST_THRESHOLD = 20
 @click.option(
     "--overwrite",
     is_flag=True,
-    help="Overwrite duplicate tracks.",
+    help="Overwrite existing matching tracks.",
 )
 @click.option(
     "--no-convert-flac",
