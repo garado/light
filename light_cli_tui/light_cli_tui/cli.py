@@ -262,20 +262,21 @@ def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_fl
 
     files = list(songs)
     matches = light.music.find_upload_matches(files)
-    new_count = len(files) - len(matches)
 
-    console.print(f"{new_count} new track{'s' if new_count != 1 else ''} will be added")
+    skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0
+    upload_count = len(files) - skip_count
+
+    console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
     if matches:
-        if allow_duplicates:
-            verb = "duplicated"
-        elif overwrite:
-            verb = "overwritten"
+        if skip_count:
+            console.print(
+                f"{skip_count} existing track{'s' if skip_count != 1 else ''} will be skipped:"
+            )
         else:
-            verb = "skipped"
-        console.print(
-            f"{len(matches)} existing track{'s' if len(matches) != 1 else ''} "
-            f"will be {verb}:"
-        )
+            verb = "duplicated" if allow_duplicates else "overwritten"
+            console.print(
+                f"{len(matches)} of these already exist and will be {verb}:"
+            )
         for file_path, t in matches.items():
             console.print(f"  {file_path} -> {t.artist} — {t.title}")
 

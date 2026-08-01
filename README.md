@@ -63,7 +63,7 @@ light music upload song1 song2 song3
 light music upload song1 song2 song3 --overwrite
 
 # Upload tracks
-# Skip duplicate checking entirely, always upload
+# Allow uploading duplicate tracks
 light music upload --allow-duplicates song1 song2 song3
 ```
 
