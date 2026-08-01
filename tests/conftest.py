@@ -22,6 +22,11 @@ def f_devices_multi():
 
 
 @pytest.fixture
+def f_devices_no_sim():
+    return load("devices_no_sim")
+
+
+@pytest.fixture
 def f_tools():
     return load("tools")
 
