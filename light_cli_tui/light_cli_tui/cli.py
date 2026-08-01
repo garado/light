@@ -5,6 +5,7 @@
 Command line tools for Light devices.
 """
 
+import json
 import logging
 import time
 import rich_click as click
@@ -643,6 +644,17 @@ def devices_list(light: Light):
         console.print(table)
 
     render(all_devices, render_human_readable)
+
+
+# -- Schema ---------------------------------------------------------------------
+
+
+@cli.command()
+def schema():
+    """Generate JSON Schema for every `--json`-enabled command's output."""
+    from light_cli_tui.schema import generate_schema
+
+    console.print_json(json.dumps(generate_schema()))
 
 
 # -- Auth -----------------------------------------------------------------------
