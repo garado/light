@@ -23,6 +23,11 @@ def render(data: Any, human: Callable[[], None]) -> None:
         human()
 
 
+def render_error(message: str) -> None:
+    """Render an error in `--json` mode."""
+    click.echo(json.dumps({"data": None, "error": message}, indent=2))
+
+
 def is_json_mode() -> bool:
     ctx = click.get_current_context()
     obj = ctx.find_root().obj or {}
@@ -32,9 +37,9 @@ def is_json_mode() -> bool:
 def _render_json(data: Any) -> None:
     """Output JSON data to stdout.
 
-    `data` renders as `{"data": ...}`.
+    `data` renders as `{"data": ..., "error": null}`.
     """
-    click.echo(json.dumps({"data": _to_jsonable(data)}, indent=2))
+    click.echo(json.dumps({"data": _to_jsonable(data), "error": None}, indent=2))
 
 
 def _to_jsonable(value: Any) -> Any:
