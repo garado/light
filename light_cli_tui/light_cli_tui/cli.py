@@ -43,7 +43,9 @@ class JsonAwareGroup(click.RichGroup):
             raise
 
 
-@click.group(cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(
+    cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]}
+)
 @click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
@@ -99,9 +101,7 @@ def cli(
     `--device-id` (mutually exclusive).
     """
     if (phone_number or phone_number_file) and (device_id or device_id_file):
-        raise click.UsageError(
-            "--phone-number and --device-id are mutually exclusive."
-        )
+        raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
 
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
@@ -228,6 +228,8 @@ def podcasts_delete(light: Light, title):
 
 # -- Music commands -------------------------------------------------------------
 
+_VERBOSE_LIST_THRESHOLD = 20
+
 
 @music.command("upload")
 @with_light
@@ -235,59 +237,67 @@ def podcasts_delete(light: Light, title):
 @click.option(
     "--allow-duplicates",
     is_flag=True,
-    help="Skip duplicate checking and always upload.",
+    help="Allow uploading duplicate tracks.",
 )
 @click.option(
-    "--match-title-by",
-    "-m",
-    type=click.Choice(["filename", "metadata"]),
-    default="metadata",
-    show_default=True,
-    help="How to match existing tracks when checking for duplicates.",
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing matching tracks.",
 )
 @click.option(
     "--no-convert-flac",
     is_flag=True,
     default=False,
-    help="Skip FLAC to MP3 conversion (conversion is on by default to preserve metadata).",
+    help="Skip FLAC to MP3 conversion. Conversion is on by default to preserve metadata.",
 )
-def music_upload(light: Light, songs, allow_duplicates, match_title_by, no_convert_flac):
-    """Upload one or more audio files to your device.
-
-    Duplicate detection is on by default - existing tracks with a matching
-    title will be replaced. Use `--allow-duplicates` to skip this.
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Show the full list of affected tracks, even for large batches.",
+)
+def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_flac, verbose):
+    """Upload audio files to your device.
 
     **Example:**
 
     `light music upload track1.mp3 track2.mp3`
     """
-    files = list(songs)
+    if overwrite and allow_duplicates:
+        raise click.UsageError(
+            "--overwrite and --allow-duplicates are mutually exclusive."
+        )
 
-    if not allow_duplicates:
-        from mutagen._file import File as MutagenFile
-        import os as _os
+    files, invalid_files = light.music.filter_valid_tracks(list(songs))
+    for file_path in invalid_files:
+        console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
 
-        if match_title_by == "metadata":
-            titles = []
-            for s in files:
-                f = MutagenFile(s, easy=True)
-                titles.append(
-                    f.get("title", [_os.path.splitext(_os.path.basename(s))[0]])[0]
-                    if f
-                    else _os.path.splitext(_os.path.basename(s))[0]
-                )
+    matches = light.music.find_upload_matches(files)
+
+    skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0
+    upload_count = len(files) - skip_count
+
+    console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
+    if matches:
+        if skip_count:
+            console.print(
+                f"{skip_count} existing track{'s' if skip_count != 1 else ''} will be skipped:"
+            )
         else:
-            titles = [_os.path.splitext(_os.path.basename(s))[0] for s in files]
+            verb = "duplicated" if allow_duplicates else "overwritten"
+            console.print(
+                f"{len(matches)} of these already exist and will be {verb}:"
+            )
 
-        existing = light.music.get_tracks()
-        to_overwrite = [t for t in existing if t.title in set(titles)]
+        if not verbose and len(matches) > _VERBOSE_LIST_THRESHOLD:
+            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+        else:
+            for file_path, t in matches.items():
+                console.print(f"  {file_path} -> {t.artist} — {t.title}")
 
-        if to_overwrite:
-            console.print(f"Tracks to overwrite ({len(to_overwrite)}):")
-            for t in to_overwrite:
-                console.print(f"  {t.artist} — {t.title}")
-            if not click.confirm("Proceed?"):
-                return
+    if not click.confirm("Proceed?"):
+        return
 
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -310,7 +320,7 @@ def music_upload(light: Light, songs, allow_duplicates, match_title_by, no_conve
         light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
-            match_title_by=match_title_by,
+            overwrite=overwrite,
             convert_flac=not no_convert_flac,
             on_progress=on_progress,
         )
@@ -480,7 +490,9 @@ def notes_list(light: Light, show_id=False, content_preview=False):
 
     def render_human_readable():
         if content_preview:
-            console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
+            console.print(
+                f"[dim]Content preview enabled. This might take a while.[/dim]"
+            )
 
         table = Table(show_header=True)
         table.add_column("#", style="dim", width=4)

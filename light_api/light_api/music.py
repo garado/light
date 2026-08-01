@@ -7,7 +7,7 @@ import os
 import re
 import tempfile
 from enum import StrEnum
-from typing import Callable, Literal
+from typing import Callable
 
 from dataclasses import dataclass
 from mutagen._file import File
@@ -266,11 +266,93 @@ class LightMusic:
         """
         self.delete_tracks_predicate(lambda t: bool(re.match(pattern, t.artist)))
 
+    def _track_identity(self, file_path: str) -> tuple[str, str]:
+        """Return (title, artist) for an audio file at file_path.
+
+        If the track has metadata for a field: use that metadata.
+        If no metadata for a field: titles will fall back to just 'filename', and 
+        artists will fall back to "Unknown", matching the dashboard's implementation.
+
+        Args:
+            file_path: File path of audio file to process.
+
+        Returns:
+            (title, artist) tuple representing that file's content.
+        """
+        tags = File(file_path, easy=True)
+        title = (tags.get("title", [None])[0] if tags else None) or os.path.splitext(
+            os.path.basename(file_path)
+        )[0]
+        artist = (tags.get("artist", [None])[0] if tags else None) or "Unknown"
+        return title, artist
+
+    def _find_matching_track(self, title: str, artist: str) -> LightTrack | None:
+        """Find an existing track with an exact (title, artist) match."""
+        for t in self._tracks:
+            if t.title == title and t.artist == artist:
+                return t
+        return None
+
+    def find_upload_matches(self, files: list[str]) -> dict[str, LightTrack]:
+        """Given a list of local audio files, find those that already exist on the device and
+        return the matching existing LightTrack instances.
+
+        Args:
+            files: A list of paths to audio files.
+
+        Returns:
+            A {file_path: LightTrack} dict.
+        """
+        self._init_tracks()
+        matches: dict[str, LightTrack] = {}
+        for file_path in files:
+            title, artist = self._track_identity(file_path)
+            match = self._find_matching_track(title, artist)
+            if match is not None:
+                matches[file_path] = match
+        return matches
+
+    def _resolve_upload_plan(
+        self, files: list[str], allow_duplicates: bool, overwrite: bool
+        ) -> tuple[list[str], list[LightTrack]]:
+        """Return the subset of files to upload and the subset of tracks to overwrite after
+        applying allow_duplicates/overwrite behavior flags.
+
+        Returns:
+            Tuple of lists. First item is list[str] of files to upload. Second item is list[LightTrack]
+            of files to be overwritten.
+        """
+        if allow_duplicates:
+            return (files, [])
+
+        matches = self.find_upload_matches(files)
+        to_delete = list({t.audio_id: t for t in matches.values()}.values()) if overwrite else []
+
+        to_upload = []
+        for file_path in files:
+            match = matches.get(file_path)
+
+            if match is None or overwrite:
+                to_upload.append(file_path)
+            else:
+                log.info(f"Skipping {file_path!r}: matches existing ({match.title!r}, {match.artist!r})")
+
+        return (to_upload, to_delete)
+
+    @staticmethod
+    def filter_valid_tracks(files: list[str]) -> tuple[list[str], list[str]]:
+        """Verify validity of audio files, returning (valid, invalid)."""
+        valid = []
+        invalid = []
+        for file_path in files:
+            (valid if os.path.exists(file_path) else invalid).append(file_path)
+        return valid, invalid
+
     def upload_tracks(
         self,
         files: list[str],
         allow_duplicates: bool = False,
-        match_title_by: Literal["metadata", "filename"] = "metadata",
+        overwrite: bool = False,
         convert_flac: bool = True,
         on_progress: "Callable[[str, int, int], None] | None" = None,
     ) -> None:
@@ -278,35 +360,29 @@ class LightMusic:
 
         Args:
             files: List of paths to audio files to upload.
-            allow_duplicates: If False (default), existing tracks with matching titles are
-                              deleted before uploading. If True, duplicates are kept.
-            match_title_by: How to determine a track's title for duplicate detection.
-                            "metadata" (default) reads the title from the file's ID3/audio tags.
-                            "filename" uses the filename (without extension) as the title.
+            allow_duplicates: If True, skip duplicate checking entirely and always upload,
+                               potentially creating multiple tracks with the same title/artist.
+            overwrite: If True, delete a file's matching existing track (if any) before
+                       uploading it. If False (default), files matching an existing track
+                       are skipped instead, leaving the existing track untouched.
         """
-        manual_update_cmds = []
+        if overwrite and allow_duplicates:
+            raise ValueError("overwrite and allow_duplicates are mutually exclusive")
 
-        if not allow_duplicates:
-            titles: list[str]
+        valid_files, invalid_files = self.filter_valid_tracks(files)
+        for file_path in invalid_files:
+            log.warning(f"File not found, skipping: {file_path}")
 
-            if match_title_by == "metadata":
-                titles = []
-                for s in files:
-                    f = File(s, easy=True)
-                    if f is None:
-                        raise ValueError(f"Could not read metadata from {s}")
-                    titles.append(f.get("title", ["Unknown Title"])[0])
-            else:
-                titles = [os.path.splitext(os.path.basename(s))[0] for s in files]
+        to_upload, to_delete = self._resolve_upload_plan(
+            valid_files, allow_duplicates, overwrite
+        )
 
-            self.delete_tracks_by_title(titles)
+        if to_delete:
+            audio_ids = {t.audio_id for t in to_delete}
+            self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
-        for file_path in files:
+        for file_path in to_upload:
             log.info(f"Uploading {file_path}")
-
-            if not os.path.exists(file_path):
-                log.warning(f"File not found, skipping: {file_path}")
-                continue
 
             tmp_path = None
             try:
@@ -367,29 +443,11 @@ class LightMusic:
                     raise RuntimeError(
                         f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
                     )
-
-                # The Light API has an issue where it won't set title/artist metadata properly
-                # when uploading non-mp3 files. Give user list of commands to patch manually after
-                # upload since files are still processing and a patch immediately after will fail.
-                if content_type != "audio/mpeg":
-                    path = os.path.basename(upload_path)
-                    tags = File(upload_path, easy=True)
-                    title = tags.get("title", ["Unknown"])[0] if tags else "Unknown"
-                    artist = tags.get("artist", ["Unknown"])[0] if tags else "Unknown"
-                    album = tags.get("album", [""])[0] if tags else ""
-                    cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}" --new-album "{album}"'
-                    manual_update_cmds.append(cmd)
             finally:
                 if tmp_path:
                     os.unlink(tmp_path)
 
         log.info("All uploads complete")
-
-        if len(manual_update_cmds) > 0:
-            log.warning(
-                "Manual metadata fixes needed:\n"
-                + "\n".join(f"  {cmd} ;" for cmd in manual_update_cmds)
-            )
 
     def update_track_metadata(
         self,

@@ -5,11 +5,11 @@ import pytest
 import respx
 import httpx
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from light_api.client import Light
 from light_api.notes import LightNote
-from light_api.music import LightTrack
+from light_api.music import LightMusic, LightTrack
 
 API = "https://production.lightphonecloud.com"
 
@@ -361,6 +361,179 @@ class TestGetTracks:
         light._playlist_id = "fake-playlist-id"
         with pytest.raises(RuntimeError, match="500"):
             light.music.get_tracks()
+
+
+class TestFindMatchingTrack:
+    def test_ignores_cross_artist_title_collision(self):
+        """Regression test for #18: "Playing God" by Polyphia must not match an
+        existing "Playing God" by Paramore just because titles collide."""
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Playing God", artist="Paramore", album="",
+            ),
+        ]
+
+        assert light.music._find_matching_track("Playing God", "Paramore") is not None
+        assert light.music._find_matching_track("Playing God", "Polyphia") is None
+
+    def test_matches_untagged_tracks_by_exact_unknown_artist(self):
+        """A file with no tags resolves to artist="Unknown" and should exact-match
+        an existing track that was itself uploaded with no metadata."""
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="2", audio_id="a2",
+                title="Some Old Rip", artist="Unknown", album="",
+            ),
+        ]
+
+        match = light.music._find_matching_track("Some Old Rip", "Unknown")
+        assert match is not None and match.audio_id == "a2"
+
+
+class TestTrackIdentity:
+    def test_reads_title_and_artist_from_tags(self):
+        light = make_light()
+        with patch("light_api.music.File", return_value={"title": ["Song"], "artist": ["Artist"]}):
+            assert light.music._track_identity("song.mp3") == ("Song", "Artist")
+
+    def test_falls_back_to_filename_and_unknown_when_tags_missing(self):
+        light = make_light()
+        with patch("light_api.music.File", return_value=None):
+            title, artist = light.music._track_identity("/path/Some Song.mp3")
+        assert title == "Some Song"
+        assert artist == "Unknown"
+
+    def test_falls_back_per_field_when_only_one_tag_is_missing(self):
+        light = make_light()
+        with patch("light_api.music.File", return_value={"title": ["Real Title"]}):
+            title, artist = light.music._track_identity("/path/Filename.mp3")
+        assert title == "Real Title"
+        assert artist == "Unknown"
+
+
+class TestFindUploadMatches:
+    def test_ignores_cross_artist_title_collision(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Playing God", artist="Paramore", album="",
+            ),
+            LightTrack(
+                playlist_item_id="2", audio_id="a2",
+                title="New Song", artist="New Artist", album="",
+            ),
+        ]
+
+        tags_by_path = {
+            "playing_god_polyphia.mp3": {"title": ["Playing God"], "artist": ["Polyphia"]},
+            "new_song.mp3": {"title": ["New Song"], "artist": ["New Artist"]},
+        }
+
+        with patch("light_api.music.File", side_effect=lambda p, easy=True: tags_by_path[p]):
+            matches = light.music.find_upload_matches(
+                ["playing_god_polyphia.mp3", "new_song.mp3"]
+            )
+
+        assert "playing_god_polyphia.mp3" not in matches
+        assert matches["new_song.mp3"].audio_id == "a2"
+
+
+class TestResolveUploadPlan:
+    """Unit tests for LightMusic._resolve_upload_plan's skip/overwrite/allow_duplicates
+    filtering. Pure computation - no mocking of delete_tracks_predicate needed."""
+
+    def _light_with_track(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Song", artist="Artist", album="",
+            ),
+        ]
+        return light
+
+    def test_allow_duplicates_returns_files_unchanged_and_nothing_to_delete(self):
+        light = self._light_with_track()
+
+        to_upload, to_delete = light.music._resolve_upload_plan(
+            ["match.mp3", "new.mp3"], allow_duplicates=True, overwrite=False
+        )
+
+        assert to_upload == ["match.mp3", "new.mp3"]
+        assert to_delete == []
+
+    def test_default_skips_matching_files_without_deleting(self):
+        light = self._light_with_track()
+
+        tags_by_path = {
+            "match.mp3": {"title": ["Song"], "artist": ["Artist"]},
+            "new.mp3": {"title": ["New Song"], "artist": ["New Artist"]},
+        }
+        with patch("light_api.music.File", side_effect=lambda p, easy=True: tags_by_path[p]):
+            to_upload, to_delete = light.music._resolve_upload_plan(
+                ["match.mp3", "new.mp3"], allow_duplicates=False, overwrite=False
+            )
+
+        assert to_upload == ["new.mp3"]
+        assert to_delete == []
+
+    def test_overwrite_returns_matches_to_delete_and_still_uploads_them(self):
+        light = self._light_with_track()
+
+        tags_by_path = {
+            "match.mp3": {"title": ["Song"], "artist": ["Artist"]},
+            "new.mp3": {"title": ["New Song"], "artist": ["New Artist"]},
+        }
+        with patch("light_api.music.File", side_effect=lambda p, easy=True: tags_by_path[p]):
+            to_upload, to_delete = light.music._resolve_upload_plan(
+                ["match.mp3", "new.mp3"], allow_duplicates=False, overwrite=True
+            )
+
+        assert to_upload == ["match.mp3", "new.mp3"]
+        assert to_delete == [light.music._tracks[0]]
+
+
+class TestUploadTracksExcludesMissingFiles:
+    """overwrite=True must never delete a track whose replacement file doesn't exist on disk."""
+
+    def test_missing_file_never_reaches_matching_or_deletion(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Song", artist="Artist", album="",
+            ),
+        ]
+        light.music.delete_tracks_predicate = MagicMock()
+
+        # Tags are mocked to guarantee a match *would* occur if File() were ever
+        # called on this path - but the path doesn't exist, so matching/deletion
+        # must never even be attempted for it.
+        with patch(
+            "light_api.music.File",
+            return_value={"title": ["Song"], "artist": ["Artist"]},
+        ) as mock_file:
+            light.music.upload_tracks(["/nonexistent/match.mp3"], overwrite=True)
+
+        mock_file.assert_not_called()
+        light.music.delete_tracks_predicate.assert_not_called()
+
+
+class TestFilterValidTracks:
+    def test_splits_existing_and_missing_paths(self, tmp_path):
+        real_file = tmp_path / "song.mp3"
+        real_file.write_bytes(b"")
+
+        valid, invalid = LightMusic.filter_valid_tracks(
+            [str(real_file), "/nonexistent/missing.mp3"]
+        )
+
+        assert valid == [str(real_file)]
+        assert invalid == ["/nonexistent/missing.mp3"]
 
 
 def make_note(overrides: dict | None = None) -> LightNote:
