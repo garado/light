@@ -453,17 +453,18 @@ def notes_list(light: Light, show_id=False, content_preview=False):
         console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
 
     for i, note in enumerate(all_notes, 1):
-        if content_preview:
-            content = light.notes.get_note_content(note)
-        else:
-            content = ""
-
         if note.note_type == "audio":
             preview = f"[dim](audio)[/dim] {note.title}"
-        elif content and content.strip():
-            preview = f"[dim]({note.title})[/dim] {content.splitlines()[0]}"
         else:
-            preview = "[dim](empty)[/dim]"
+            title = note.title or "[dim](untitled)[/dim]"
+            if not content_preview:
+                preview = title
+            else:
+                content = light.notes.get_note_content(note)
+                if content and content.strip():
+                    preview = f"[dim]({title})[/dim] {content.splitlines()[0]}"
+                else:
+                    preview = f"[dim]({title})[/dim] [dim](empty)[/dim]"
 
         id_prefix = f"{note.id} " if show_id else ""
         console.print(f"[dim]{i}.[/dim] {id_prefix}{preview}")
