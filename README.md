@@ -86,10 +86,6 @@ light music upload song1 song2 song3
 light music upload song1 song2 song3 --replace
 
 # Upload tracks
-# Match by filename instead of metadata tags (for files with missing/broken tags)
-light music upload song1 song2 song3 --match-by filename
-
-# Upload tracks
 # Skip duplicate checking entirely, always upload
 light music upload --allow-duplicates song1 song2 song3
 ```
