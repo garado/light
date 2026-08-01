@@ -43,7 +43,9 @@ class JsonAwareGroup(click.RichGroup):
             raise
 
 
-@click.group(cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(
+    cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]}
+)
 @click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
@@ -99,9 +101,7 @@ def cli(
     `--device-id` (mutually exclusive).
     """
     if (phone_number or phone_number_file) and (device_id or device_id_file):
-        raise click.UsageError(
-            "--phone-number and --device-id are mutually exclusive."
-        )
+        raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
 
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
@@ -238,7 +238,7 @@ def podcasts_delete(light: Light, title):
     help="Skip duplicate checking entirely and always upload.",
 )
 @click.option(
-    "--replace",
+    "--overwrite",
     is_flag=True,
     help="Delete a file's matching existing track before uploading it, instead of "
     "skipping the file (the default).",
@@ -249,20 +249,22 @@ def podcasts_delete(light: Light, title):
     default=False,
     help="Skip FLAC to MP3 conversion (conversion is on by default to preserve metadata).",
 )
-def music_upload(light: Light, songs, allow_duplicates, replace, no_convert_flac):
+def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_flac):
     """Upload one or more audio files to your device.
 
     Duplicate detection is on by default: files matching an existing track
-    (by title+artist, read from tags) are skipped, leaving the existing track
-    untouched. Use `--replace` to delete-and-replace matches instead, or
+    (by title+artist, read from metadata) are skipped, leaving the existing track
+    untouched. Use `--overwrite` to delete-and-replace matches instead, or
     `--allow-duplicates` to skip the check entirely.
 
     **Example:**
 
     `light music upload track1.mp3 track2.mp3`
     """
-    if replace and allow_duplicates:
-        raise click.UsageError("--replace and --allow-duplicates are mutually exclusive.")
+    if overwrite and allow_duplicates:
+        raise click.UsageError(
+            "--overwrite and --allow-duplicates are mutually exclusive."
+        )
 
     files = list(songs)
 
@@ -270,13 +272,13 @@ def music_upload(light: Light, songs, allow_duplicates, replace, no_convert_flac
         matches = light.music.find_upload_matches(files)
 
         if matches:
-            verb = "overwrite" if replace else "skip"
+            verb = "overwrite" if overwrite else "skip"
             console.print(f"Tracks to {verb} ({len(matches)}):")
             for file_path, t in matches.items():
                 console.print(f"  {file_path} -> {t.artist} — {t.title}")
             if not click.confirm("Proceed?"):
                 return
-        elif replace:
+        elif overwrite:
             console.print("[dim]No matching tracks found; uploading all as new.[/dim]")
             if not click.confirm("Proceed?"):
                 return
@@ -302,7 +304,7 @@ def music_upload(light: Light, songs, allow_duplicates, replace, no_convert_flac
         light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
-            replace=replace,
+            overwrite=overwrite,
             convert_flac=not no_convert_flac,
             on_progress=on_progress,
         )
@@ -472,7 +474,9 @@ def notes_list(light: Light, show_id=False, content_preview=False):
 
     def render_human_readable():
         if content_preview:
-            console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
+            console.print(
+                f"[dim]Content preview enabled. This might take a while.[/dim]"
+            )
 
         for i, note in enumerate(all_notes, 1):
             if note.note_type == "audio":

@@ -270,7 +270,7 @@ class LightMusic:
         """Return (title, artist) for an audio file at file_path.
 
         If the track has metadata for a field: use that metadata.
-        If no metadata for a field:titles will fall back to just 'filename', and 
+        If no metadata for a field: titles will fall back to just 'filename', and 
         artists will fall back to "Unknown", matching the dashboard's implementation.
 
         Args:
@@ -316,7 +316,7 @@ class LightMusic:
         self,
         files: list[str],
         allow_duplicates: bool = False,
-        replace: bool = False,
+        overwrite: bool = False,
         convert_flac: bool = True,
         on_progress: "Callable[[str, int, int], None] | None" = None,
     ) -> None:
@@ -326,12 +326,12 @@ class LightMusic:
             files: List of paths to audio files to upload.
             allow_duplicates: If True, skip duplicate checking entirely and always upload,
                                potentially creating multiple tracks with the same title/artist.
-            replace: If True, delete a file's matching existing track (if any) before
-                     uploading it. If False (default), files matching an existing track
-                     are skipped instead, leaving the existing track untouched.
+            overwrite: If True, delete a file's matching existing track (if any) before
+                       uploading it. If False (default), files matching an existing track
+                       are skipped instead, leaving the existing track untouched.
         """
-        if replace and allow_duplicates:
-            raise ValueError("replace and allow_duplicates are mutually exclusive")
+        if overwrite and allow_duplicates:
+            raise ValueError("overwrite and allow_duplicates are mutually exclusive")
 
         manual_update_cmds = []
         to_upload = files
@@ -339,7 +339,7 @@ class LightMusic:
         if not allow_duplicates:
             matches = self.find_upload_matches(files)
 
-            if replace and matches:
+            if overwrite and matches:
                 audio_ids = {t.audio_id for t in matches.values()}
                 self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
@@ -347,7 +347,7 @@ class LightMusic:
             for file_path in files:
                 match = matches.get(file_path)
 
-                if match is None or replace:
+                if match is None or overwrite:
                     to_upload.append(file_path)
                 else:
                     log.info(f"Skipping {file_path!r}: matches existing track {match.title!r}")
