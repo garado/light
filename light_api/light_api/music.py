@@ -312,6 +312,33 @@ class LightMusic:
                 matches[file_path] = match
         return matches
 
+    def _resolve_upload_plan(
+        self, files: list[str], allow_duplicates: bool, overwrite: bool
+        ) -> tuple[list[str], list[LightTrack]]:
+        """Return the subset of files to upload and the subset of files to overwrite after
+        applying allow_duplicates/overwrite behavior flags.
+
+        Returns:
+            Tuple of lists. First item is list[str] of files to upload. Second item is list[LightTrack]
+            of files to be overwritten.
+        """
+        if allow_duplicates:
+            return (files, [])
+
+        matches = self.find_upload_matches(files)
+        to_delete = list({t.audio_id: t for t in matches.values()}.values()) if overwrite else []
+
+        to_upload = []
+        for file_path in files:
+            match = matches.get(file_path)
+
+            if match is None or overwrite:
+                to_upload.append(file_path)
+            else:
+                log.info(f"Skipping {file_path!r}: matches existing ({match.title!r}, {match.artist!r})")
+
+        return (to_upload, to_delete)
+
     def upload_tracks(
         self,
         files: list[str],
@@ -334,27 +361,13 @@ class LightMusic:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
 
         manual_update_cmds = []
-        to_upload = files
+        to_upload, to_delete = self._resolve_upload_plan(files, allow_duplicates, overwrite)
 
-        if not allow_duplicates:
-            matches = self.find_upload_matches(files)
+        if to_delete:
+            audio_ids = {t.audio_id for t in to_delete}
+            self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
-            if overwrite and matches:
-                audio_ids = {t.audio_id for t in matches.values()}
-                self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
-
-            to_upload = []
-            for file_path in files:
-                match = matches.get(file_path)
-
-                if match is None or overwrite:
-                    to_upload.append(file_path)
-                else:
-                    log.info(f"Skipping {file_path!r}: matches existing ({match.title!r}, {match.artist!r})")
-
-        files = to_upload
-
-        for file_path in files:
+        for file_path in to_upload:
             log.info(f"Uploading {file_path}")
 
             if not os.path.exists(file_path):
@@ -421,6 +434,7 @@ class LightMusic:
                         f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
                     )
 
+                # (TODO Is this even necessary anymore now that we have FLAC autoconversion)
                 # The Light API has an issue where it won't set title/artist metadata properly
                 # when uploading non-mp3 files. Give user list of commands to patch manually after
                 # upload since files are still processing and a patch immediately after will fail.

@@ -442,6 +442,61 @@ class TestFindUploadMatches:
         assert matches["new_song.mp3"].audio_id == "a2"
 
 
+class TestResolveUploadPlan:
+    """Unit tests for LightMusic._resolve_upload_plan's skip/overwrite/allow_duplicates
+    filtering. Pure computation - no mocking of delete_tracks_predicate needed."""
+
+    def _light_with_track(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Song", artist="Artist", album="",
+            ),
+        ]
+        return light
+
+    def test_allow_duplicates_returns_files_unchanged_and_nothing_to_delete(self):
+        light = self._light_with_track()
+
+        to_upload, to_delete = light.music._resolve_upload_plan(
+            ["match.mp3", "new.mp3"], allow_duplicates=True, overwrite=False
+        )
+
+        assert to_upload == ["match.mp3", "new.mp3"]
+        assert to_delete == []
+
+    def test_default_skips_matching_files_without_deleting(self):
+        light = self._light_with_track()
+
+        tags_by_path = {
+            "match.mp3": {"title": ["Song"], "artist": ["Artist"]},
+            "new.mp3": {"title": ["New Song"], "artist": ["New Artist"]},
+        }
+        with patch("light_api.music.File", side_effect=lambda p, easy=True: tags_by_path[p]):
+            to_upload, to_delete = light.music._resolve_upload_plan(
+                ["match.mp3", "new.mp3"], allow_duplicates=False, overwrite=False
+            )
+
+        assert to_upload == ["new.mp3"]
+        assert to_delete == []
+
+    def test_overwrite_returns_matches_to_delete_and_still_uploads_them(self):
+        light = self._light_with_track()
+
+        tags_by_path = {
+            "match.mp3": {"title": ["Song"], "artist": ["Artist"]},
+            "new.mp3": {"title": ["New Song"], "artist": ["New Artist"]},
+        }
+        with patch("light_api.music.File", side_effect=lambda p, easy=True: tags_by_path[p]):
+            to_upload, to_delete = light.music._resolve_upload_plan(
+                ["match.mp3", "new.mp3"], allow_duplicates=False, overwrite=True
+            )
+
+        assert to_upload == ["match.mp3", "new.mp3"]
+        assert to_delete == [light.music._tracks[0]]
+
+
 def make_note(overrides: dict | None = None) -> LightNote:
     data = dict(id="note-1", file_id="file-1", note_type="text", title="old title", updated_at="2026-01-01T00:00:00")
     if overrides:
