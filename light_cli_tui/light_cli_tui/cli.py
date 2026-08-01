@@ -235,27 +235,21 @@ def podcasts_delete(light: Light, title):
 @click.option(
     "--allow-duplicates",
     is_flag=True,
-    help="Skip duplicate checking entirely and always upload.",
+    help="Allow uploading duplicate tracks.",
 )
 @click.option(
     "--overwrite",
     is_flag=True,
-    help="Delete a file's matching existing track before uploading it, instead of "
-    "skipping the file (the default).",
+    help="Overwrite duplicate tracks.",
 )
 @click.option(
     "--no-convert-flac",
     is_flag=True,
     default=False,
-    help="Skip FLAC to MP3 conversion (conversion is on by default to preserve metadata).",
+    help="Skip FLAC to MP3 conversion. Conversion is on by default to preserve metadata.",
 )
 def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_flac):
-    """Upload one or more audio files to your device.
-
-    Duplicate detection is on by default: files matching an existing track
-    (by title+artist, read from metadata) are skipped, leaving the existing track
-    untouched. Use `--overwrite` to delete-and-replace matches instead, or
-    `--allow-duplicates` to skip the check entirely.
+    """Upload audio files to your device.
 
     **Example:**
 
@@ -267,21 +261,26 @@ def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_fl
         )
 
     files = list(songs)
+    matches = light.music.find_upload_matches(files)
+    new_count = len(files) - len(matches)
 
-    if not allow_duplicates:
-        matches = light.music.find_upload_matches(files)
-
-        if matches:
-            verb = "overwrite" if overwrite else "skip"
-            console.print(f"Tracks to {verb} ({len(matches)}):")
-            for file_path, t in matches.items():
-                console.print(f"  {file_path} -> {t.artist} — {t.title}")
-            if not click.confirm("Proceed?"):
-                return
+    console.print(f"{new_count} new track{'s' if new_count != 1 else ''} will be added")
+    if matches:
+        if allow_duplicates:
+            verb = "duplicated"
         elif overwrite:
-            console.print("[dim]No matching tracks found; uploading all as new.[/dim]")
-            if not click.confirm("Proceed?"):
-                return
+            verb = "overwritten"
+        else:
+            verb = "skipped"
+        console.print(
+            f"{len(matches)} existing track{'s' if len(matches) != 1 else ''} "
+            f"will be {verb}:"
+        )
+        for file_path, t in matches.items():
+            console.print(f"  {file_path} -> {t.artist} — {t.title}")
+
+    if not click.confirm("Proceed?"):
+        return
 
     with Progress(
         TextColumn("[progress.description]{task.description}"),
