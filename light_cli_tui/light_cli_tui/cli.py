@@ -53,6 +53,13 @@ log = logging.getLogger(f"light.{__name__}")
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
     help="Log level.",
 )
+@click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    default=False,
+    help="Output machine-readable JSON instead of human-readable text.",
+)
 @click.pass_context
 def cli(
     ctx,
@@ -65,6 +72,7 @@ def cli(
     device_id,
     device_id_file,
     log_level,
+    json_output,
 ):
     """**Unofficial CLI for the Light Phone.**
 
@@ -95,6 +103,7 @@ def cli(
             "phone_number_file": phone_number_file,
             "device_id": device_id,
             "device_id_file": device_id_file,
+            "json": json_output,
         }
     )
 
