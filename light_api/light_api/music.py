@@ -7,7 +7,7 @@ import os
 import re
 import tempfile
 from enum import StrEnum
-from typing import Callable, Literal
+from typing import Callable
 
 from dataclasses import dataclass
 from mutagen._file import File
@@ -266,68 +266,34 @@ class LightMusic:
         """
         self.delete_tracks_predicate(lambda t: bool(re.match(pattern, t.artist)))
 
-    def _track_identity(
-        self,
-        file_path: str,
-        match_by: Literal["metadata", "filename"],
-        replace: bool = False,
-    ) -> tuple[str, str | None]:
-        """Return (title, artist) used to match `file_path` against existing tracks.
+    def _track_identity(self, file_path: str) -> tuple[str, str]:
+        """Return (title, artist) for file_path, read from its tags where available.
 
-        'filename' mode applies for tracks that were uploaded with no metadata; LightOS
-        displays those with title=filename, artist='Unknown'.
-
-        If match_by='metadata' but `file_path` has no readable title/artist tags, this
-        auto-falls back to filename matching for that file - unless replace=True, since
-        a false-positive filename-only match would delete the wrong track under
-        --replace. In that case, a missing tag raises instead, requiring the caller to
-        explicitly pass match_by='filename' to acknowledge the weaker match.
+        Falls back to (filename, "Unknown") for whatever's missing - matching how
+        LightOS represents a track that was itself uploaded with no metadata.
         """
-        if match_by == "metadata":
-            tags = File(file_path, easy=True)
-            title = tags.get("title", [None])[0] if tags else None
-            artist = tags.get("artist", [None])[0] if tags else None
-            if title and artist:
-                return title, artist
+        tags = File(file_path, easy=True)
+        title = (tags.get("title", [None])[0] if tags else None) or os.path.splitext(
+            os.path.basename(file_path)
+        )[0]
+        artist = (tags.get("artist", [None])[0] if tags else None) or "Unknown"
+        return title, artist
 
-            if replace:
-                raise ValueError(
-                    f"Could not read title/artist metadata from {file_path!r}, and "
-                    "--replace is destructive - pass match_by='filename' "
-                    "(CLI: --match-by filename) to explicitly acknowledge the weaker "
-                    "match instead of silently falling back."
-                )
-
-        return os.path.splitext(os.path.basename(file_path))[0], None
-
-    _UNKNOWN_ARTIST_VALUES = {"", "Unknown"}
-
-    def _find_matching_track(self, title: str, artist: str | None) -> LightTrack | None:
-        """Find an existing track matching (title, artist).
-
-        artist=None matches only untagged tracks (artist is blank or "Unknown").
-        """
+    def _find_matching_track(self, title: str, artist: str) -> LightTrack | None:
+        """Find an existing track with an exact (title, artist) match."""
         for t in self._tracks:
-            if t.title != title:
-                continue
-            if artist is None:
-                if t.artist in self._UNKNOWN_ARTIST_VALUES:
-                    return t
-            elif t.artist == artist:
+            if t.title == title and t.artist == artist:
                 return t
         return None
 
-    def find_upload_matches(
-        self,
-        files: list[str],
-        match_by: Literal["metadata", "filename"] = "metadata",
-        replace: bool = False,
-    ) -> dict[str, LightTrack]:
-        """Return {file_path: existing LightTrack} for files that match a track already on the device."""
+    def find_upload_matches(self, files: list[str]) -> dict[str, LightTrack]:
+        """Return {file_path: existing LightTrack} for files that match a track already
+        on the device. Shared by upload_tracks and CLI confirmation prompts, so there's
+        exactly one definition of "what counts as a duplicate"."""
         self._init_tracks()
         matches: dict[str, LightTrack] = {}
         for file_path in files:
-            title, artist = self._track_identity(file_path, match_by, replace)
+            title, artist = self._track_identity(file_path)
             match = self._find_matching_track(title, artist)
             if match is not None:
                 matches[file_path] = match
@@ -338,7 +304,6 @@ class LightMusic:
         files: list[str],
         allow_duplicates: bool = False,
         replace: bool = False,
-        match_by: Literal["metadata", "filename"] = "metadata",
         convert_flac: bool = True,
         on_progress: "Callable[[str, int, int], None] | None" = None,
     ) -> None:
@@ -351,14 +316,6 @@ class LightMusic:
             replace: If True, delete a file's matching existing track (if any) before
                      uploading it. If False (default), files matching an existing track
                      are skipped instead, leaving the existing track untouched.
-            match_by: How to identify a file for duplicate matching.
-                      "metadata" (default) reads title+artist from the file's ID3/audio tags.
-                      Per file, if tags are missing this auto-falls back to filename-only
-                      matching - unless replace=True, in which case it raises instead
-                      (a false-positive filename-only match would delete the wrong track).
-                      "filename" matches on filename-as-title only for every file, for
-                      tracks that were themselves uploaded with no metadata - LightOS
-                      displays those with title=filename and artist="Unknown".
         """
         if replace and allow_duplicates:
             raise ValueError("replace and allow_duplicates are mutually exclusive")
@@ -367,7 +324,7 @@ class LightMusic:
         to_upload = files
 
         if not allow_duplicates:
-            matches = self.find_upload_matches(files, match_by, replace)
+            matches = self.find_upload_matches(files)
 
             if replace and matches:
                 audio_ids = {t.audio_id for t in matches.values()}

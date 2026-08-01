@@ -244,29 +244,18 @@ def podcasts_delete(light: Light, title):
     "skipping the file (the default).",
 )
 @click.option(
-    "--match-by",
-    "-m",
-    type=click.Choice(["filename", "metadata"]),
-    default="metadata",
-    show_default=True,
-    help="How to identify a file for duplicate matching. 'metadata' matches on "
-    "title+artist from tags; 'filename' matches on filename-as-title only, for tracks "
-    "that were themselves uploaded with no metadata (LightOS shows those with "
-    "title=filename, artist=Unknown).",
-)
-@click.option(
     "--no-convert-flac",
     is_flag=True,
     default=False,
     help="Skip FLAC to MP3 conversion (conversion is on by default to preserve metadata).",
 )
-def music_upload(light: Light, songs, allow_duplicates, replace, match_by, no_convert_flac):
+def music_upload(light: Light, songs, allow_duplicates, replace, no_convert_flac):
     """Upload one or more audio files to your device.
 
     Duplicate detection is on by default: files matching an existing track
-    (by title+artist) are skipped, leaving the existing track untouched. Use
-    `--replace` to delete-and-replace matches instead, or `--allow-duplicates`
-    to skip the check entirely.
+    (by title+artist, read from tags) are skipped, leaving the existing track
+    untouched. Use `--replace` to delete-and-replace matches instead, or
+    `--allow-duplicates` to skip the check entirely.
 
     **Example:**
 
@@ -278,7 +267,7 @@ def music_upload(light: Light, songs, allow_duplicates, replace, match_by, no_co
     files = list(songs)
 
     if not allow_duplicates:
-        matches = light.music.find_upload_matches(files, match_by, replace)
+        matches = light.music.find_upload_matches(files)
 
         if matches:
             verb = "overwrite" if replace else "skip"
@@ -314,7 +303,6 @@ def music_upload(light: Light, songs, allow_duplicates, replace, match_by, no_co
             files,
             allow_duplicates=allow_duplicates,
             replace=replace,
-            match_by=match_by,
             convert_flac=not no_convert_flac,
             on_progress=on_progress,
         )
