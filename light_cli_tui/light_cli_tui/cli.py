@@ -228,6 +228,8 @@ def podcasts_delete(light: Light, title):
 
 # -- Music commands -------------------------------------------------------------
 
+_VERBOSE_LIST_THRESHOLD = 20
+
 
 @music.command("upload")
 @with_light
@@ -248,7 +250,14 @@ def podcasts_delete(light: Light, title):
     default=False,
     help="Skip FLAC to MP3 conversion. Conversion is on by default to preserve metadata.",
 )
-def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_flac):
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Show the full list of affected tracks, even for large batches.",
+)
+def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_flac, verbose):
     """Upload audio files to your device.
 
     **Example:**
@@ -277,8 +286,12 @@ def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_fl
             console.print(
                 f"{len(matches)} of these already exist and will be {verb}:"
             )
-        for file_path, t in matches.items():
-            console.print(f"  {file_path} -> {t.artist} — {t.title}")
+
+        if not verbose and len(matches) > _VERBOSE_LIST_THRESHOLD:
+            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+        else:
+            for file_path, t in matches.items():
+                console.print(f"  {file_path} -> {t.artist} — {t.title}")
 
     if not click.confirm("Proceed?"):
         return
