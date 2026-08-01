@@ -299,10 +299,20 @@ class LightMusic:
 
         return os.path.splitext(os.path.basename(file_path))[0], None
 
+    _UNKNOWN_ARTIST_VALUES = {"", "Unknown"}
+
     def _find_matching_track(self, title: str, artist: str | None) -> LightTrack | None:
-        """Find an existing track matching (title, artist). artist=None matches title only."""
+        """Find an existing track matching (title, artist).
+
+        artist=None matches only untagged tracks (artist is blank or "Unknown").
+        """
         for t in self._tracks:
-            if t.title == title and (artist is None or t.artist == artist):
+            if t.title != title:
+                continue
+            if artist is None:
+                if t.artist in self._UNKNOWN_ARTIST_VALUES:
+                    return t
+            elif t.artist == artist:
                 return t
         return None
 
@@ -312,9 +322,7 @@ class LightMusic:
         match_by: Literal["metadata", "filename"] = "metadata",
         replace: bool = False,
     ) -> dict[str, LightTrack]:
-        """Return {file_path: existing LightTrack} for files that match a track already
-        on the device. Shared by upload_tracks and CLI confirmation prompts, so there's
-        exactly one definition of "what counts as a duplicate"."""
+        """Return {file_path: existing LightTrack} for files that match a track already on the device."""
         self._init_tracks()
         matches: dict[str, LightTrack] = {}
         for file_path in files:
