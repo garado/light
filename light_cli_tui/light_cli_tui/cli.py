@@ -7,7 +7,6 @@ Command line tools for Light devices.
 
 import json
 import logging
-import time
 import rich_click as click
 from rich.console import Console
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
@@ -145,7 +144,7 @@ def podcasts():
 def notes():
     """Notes management.
 
-    List, add, download, and watch for changes to text and audio notes.
+    List, add, and download text and audio notes.
     """
     pass
 
@@ -552,34 +551,6 @@ def notes_add(light: Light, title: str, content: str | None, content_file: str |
         light.notes.create_text_note(title, content_file, content_is_path=True)
     else:
         light.notes.create_text_note(title, content)
-
-
-@notes.command("watch")
-@with_light
-@click.argument("note_id")
-def notes_watch(light: Light, note_id: str):
-    """Poll a note for changes and print its content when updated.
-
-    Checks every 5 seconds and prints content when `updated_at` changes.
-    Useful for watching a note you're actively editing on your phone.
-
-    Run `light notes list --id` to find the note ID.
-
-    **Example:**
-
-    `light notes watch 4f1d3063-085b-4738-8ba1-582c5d1cd9ac`
-    """
-    note = light.notes.get_note_metadata(note_id)
-    last_updated_at = note.updated_at
-
-    while True:
-        time.sleep(5)
-        note = light.notes.get_note_metadata(note_id)
-        if note.updated_at != last_updated_at:
-            content = light.notes.get_note_content(note)
-            console.print(f"[green]Updated at {note.updated_at}:[/green]")
-            console.print(content.decode())
-            last_updated_at = note.updated_at
 
 
 # -- Tools commands ------------------------------------------------------------
