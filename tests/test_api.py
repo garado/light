@@ -5,7 +5,7 @@ import pytest
 import respx
 import httpx
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from light_api.client import Light
 from light_api.notes import LightNote
@@ -495,6 +495,32 @@ class TestResolveUploadPlan:
 
         assert to_upload == ["match.mp3", "new.mp3"]
         assert to_delete == [light.music._tracks[0]]
+
+
+class TestUploadTracksExcludesMissingFiles:
+    """overwrite=True must never delete a track whose replacement file doesn't exist on disk."""
+
+    def test_missing_file_never_reaches_matching_or_deletion(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Song", artist="Artist", album="",
+            ),
+        ]
+        light.music.delete_tracks_predicate = MagicMock()
+
+        # Tags are mocked to guarantee a match *would* occur if File() were ever
+        # called on this path - but the path doesn't exist, so matching/deletion
+        # must never even be attempted for it.
+        with patch(
+            "light_api.music.File",
+            return_value={"title": ["Song"], "artist": ["Artist"]},
+        ) as mock_file:
+            light.music.upload_tracks(["/nonexistent/match.mp3"], overwrite=True)
+
+        mock_file.assert_not_called()
+        light.music.delete_tracks_predicate.assert_not_called()
 
 
 def make_note(overrides: dict | None = None) -> LightNote:

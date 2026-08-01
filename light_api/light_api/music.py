@@ -361,7 +361,17 @@ class LightMusic:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
 
         manual_update_cmds = []
-        to_upload, to_delete = self._resolve_upload_plan(files, allow_duplicates, overwrite)
+
+        existing_files: list[str] = []
+        for file_path in files:
+            if os.path.exists(file_path):
+                existing_files.append(file_path)
+            else:
+                log.warning(f"File not found, skipping: {file_path}")
+
+        to_upload, to_delete = self._resolve_upload_plan(
+            existing_files, allow_duplicates, overwrite
+        )
 
         if to_delete:
             audio_ids = {t.audio_id for t in to_delete}
@@ -369,10 +379,6 @@ class LightMusic:
 
         for file_path in to_upload:
             log.info(f"Uploading {file_path}")
-
-            if not os.path.exists(file_path):
-                log.warning(f"File not found, skipping: {file_path}")
-                continue
 
             tmp_path = None
             try:
