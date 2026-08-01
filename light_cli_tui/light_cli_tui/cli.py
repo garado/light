@@ -663,11 +663,23 @@ def devices_list(light: Light):
 
 
 @cli.command()
-def schema():
+@click.option(
+    "--hash",
+    "hash_only",
+    is_flag=True,
+    help="Show only the schema's SHA-256 hash.",
+)
+def schema(hash_only):
     """Generate JSON Schema for every `--json`-enabled command's output."""
-    from light_cli_tui.schema import generate_schema
+    from light_cli_tui.schema import generate_schema, schema_hash
 
-    console.print_json(json.dumps(generate_schema()))
+    if hash_only:
+        h = schema_hash()
+        render({"hash": h}, lambda: click.echo(h))
+        return
+
+    doc = generate_schema()
+    render(doc, lambda: console.print_json(json.dumps(doc)))
 
 
 # -- Auth -----------------------------------------------------------------------
