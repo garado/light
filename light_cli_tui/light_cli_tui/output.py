@@ -1,6 +1,6 @@
 """JSON output helpers for --json mode.
 
-Every command's JSON output is wrapped as `{"data": <value>}`.
+Every command's JSON output is wrapped as `{"data": <value>, "error": <string or null>}`.
 """
 
 import click
