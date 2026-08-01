@@ -17,7 +17,7 @@ from light_api.client import Light
 from light_api.music import SortMode
 from light_api.tools import ToolName
 from light_api import with_light
-from light_cli_tui.output import render
+from light_cli_tui.output import render, render_error
 from light_cli_tui.tui import LightConfig, run_tui
 
 
@@ -31,7 +31,20 @@ console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+class JsonAwareGroup(click.RichGroup):
+    """Wrapper for command execution adding JSON output support for failures."""
+
+    def invoke(self, ctx: click.Context):
+        try:
+            return super().invoke(ctx)
+        except click.ClickException as e:
+            if (ctx.obj or {}).get("json"):
+                render_error(e.format_message())
+                ctx.exit(e.exit_code)
+            raise
+
+
+@click.group(cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
