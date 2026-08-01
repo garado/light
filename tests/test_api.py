@@ -156,6 +156,17 @@ class TestFetchDeviceToolIds:
         for key, val in light._device_tool_ids.items():
             assert val in valid_ids, f"{key} device_tool_id {val!r} not in fixture included ids"
 
+    @respx.mock
+    def test_handles_null_sim_data(self, f_devices_no_sim, f_tools):
+        """A device with no SIM/eSIM assigned returns relationships.sim.data: null."""
+        respx.get(f"{API}/api/devices").mock(return_value=httpx.Response(200, json=f_devices_no_sim))
+        respx.get(f"{API}/api/tools").mock(return_value=httpx.Response(200, json=f_tools))
+
+        light = make_light()
+        light._fetch_device_tool_ids()  # should not raise
+
+        assert "notes" in light._device_tool_ids
+
 
 class TestSelectDeviceId:
     """Unit tests for Light._select_device_id, exercised directly against a
