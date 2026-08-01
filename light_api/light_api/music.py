@@ -293,8 +293,9 @@ class LightMusic:
             if replace:
                 raise ValueError(
                     f"Could not read title/artist metadata from {file_path!r}, and "
-                    "--replace is destructive - pass match_by='filename' to explicitly "
-                    "acknowledge the weaker match instead of silently falling back."
+                    "--replace is destructive - pass match_by='filename' "
+                    "(CLI: --match-by filename) to explicitly acknowledge the weaker "
+                    "match instead of silently falling back."
                 )
 
         return os.path.splitext(os.path.basename(file_path))[0], None
@@ -367,14 +368,16 @@ class LightMusic:
 
         if not allow_duplicates:
             matches = self.find_upload_matches(files, match_by, replace)
+
+            if replace and matches:
+                audio_ids = {t.audio_id for t in matches.values()}
+                self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
+
             to_upload = []
             for file_path in files:
                 match = matches.get(file_path)
 
-                if match is None:
-                    to_upload.append(file_path)
-                elif replace:
-                    self.delete_tracks_predicate(lambda t: t is match)
+                if match is None or replace:
                     to_upload.append(file_path)
                 else:
                     log.info(f"Skipping {file_path!r}: matches existing track {match.title!r}")
