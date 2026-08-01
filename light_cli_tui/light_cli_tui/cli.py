@@ -287,6 +287,10 @@ def music_upload(light: Light, songs, allow_duplicates, replace, match_by, no_co
                 console.print(f"  {file_path} -> {t.artist} — {t.title}")
             if not click.confirm("Proceed?"):
                 return
+        elif replace:
+            console.print("[dim]No matching tracks found; uploading all as new.[/dim]")
+            if not click.confirm("Proceed?"):
+                return
 
     with Progress(
         TextColumn("[progress.description]{task.description}"),
