@@ -60,7 +60,7 @@ light music upload song1 song2 song3
 
 # Upload tracks
 # Delete-and-replace matching existing tracks instead of skipping them
-light music upload song1 song2 song3 --replace
+light music upload song1 song2 song3 --overwrite
 
 # Upload tracks
 # Skip duplicate checking entirely, always upload
