@@ -34,8 +34,11 @@ def generate_schema() -> dict[str, Any]:
     return {
         command: {
             "type": "object",
-            "properties": {"data": _type_to_schema(shape)},
-            "required": ["data"],
+            "properties": {
+                "data": _type_to_schema(shape),
+                "error": {"type": "string", "nullable": True},
+            },
+            "required": ["data", "error"],
         }
         for command, shape in COMMAND_OUTPUT_SHAPES.items()
     }
