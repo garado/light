@@ -1,0 +1,218 @@
+{
+  "$hash": "f47d76baac5944f6bbbe1b717fdcd3b5f902db87d5a7bae6bc4afc1010f839d5",
+  "podcasts list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "podcast_id": {
+              "type": "string"
+            },
+            "followed_podcast_id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "rss_feed_url": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "required": [
+            "podcast_id",
+            "followed_podcast_id",
+            "title",
+            "publisher",
+            "rss_feed_url"
+          ]
+        }
+      },
+      "error": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "music list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "playlist_item_id": {
+              "type": "string"
+            },
+            "audio_id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "artist": {
+              "type": "string"
+            },
+            "album": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "playlist_item_id",
+            "audio_id",
+            "title",
+            "artist",
+            "album"
+          ]
+        }
+      },
+      "error": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "notes list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "file_id": {
+              "type": "string"
+            },
+            "note_type": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "file_id",
+            "note_type",
+            "title",
+            "updated_at"
+          ]
+        }
+      },
+      "error": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "tools list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "device_tool_id": {
+              "type": "string"
+            },
+            "global_tool_id": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "component": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "device_tool_id",
+            "global_tool_id",
+            "namespace",
+            "component",
+            "title"
+          ]
+        }
+      },
+      "error": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "devices list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "phone_number": {
+              "type": "string",
+              "nullable": true
+            },
+            "serial_number": {
+              "type": "string"
+            },
+            "sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "serial_number",
+            "sku"
+          ]
+        }
+      },
+      "error": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  }
+}
