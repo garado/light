@@ -90,17 +90,10 @@ def _type_to_schema(tp: object) -> dict[str, Any]:
 def _dataclass_json_schema(cls: type) -> dict[str, Any]:
     """Build a JSON Schema object for a dataclass's fields."""
     hints = typing.get_type_hints(cls)
-    properties: dict[str, Any] = {}
-    required: list[str] = []
-
-    for f in dataclasses.fields(cls):
-        schema = _type_to_schema(hints[f.name])
-        properties[f.name] = schema
-        if not schema.get("nullable"):
-            required.append(f.name)
+    fields = dataclasses.fields(cls)
 
     return {
         "type": "object",
-        "properties": properties,
-        "required": required,
+        "properties": {f.name: _type_to_schema(hints[f.name]) for f in fields},
+        "required": [f.name for f in fields],
     }

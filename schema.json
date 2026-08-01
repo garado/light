@@ -1,5 +1,5 @@
 {
-  "$hash": "f47d76baac5944f6bbbe1b717fdcd3b5f902db87d5a7bae6bc4afc1010f839d5",
+  "$hash": "bf787dc5ab837dea497a912b0f25816c32b23dbccf15997f3df922150ccedbc5",
   "podcasts list": {
     "type": "object",
     "properties": {
@@ -33,7 +33,8 @@
             "followed_podcast_id",
             "title",
             "publisher",
-            "rss_feed_url"
+            "rss_feed_url",
+            "description"
           ]
         }
       },
@@ -200,6 +201,7 @@
           },
           "required": [
             "id",
+            "phone_number",
             "serial_number",
             "sku"
           ]
