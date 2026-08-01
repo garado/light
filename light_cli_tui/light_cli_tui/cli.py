@@ -482,22 +482,38 @@ def notes_list(light: Light, show_id=False, content_preview=False):
         if content_preview:
             console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
 
+        table = Table(show_header=True)
+        table.add_column("#", style="dim", width=4)
+        if show_id:
+            table.add_column("ID")
+        table.add_column("Title")
+        table.add_column("Type")
+        table.add_column("Updated At")
+        if content_preview:
+            table.add_column("Preview")
+
         for i, note in enumerate(all_notes, 1):
-            if note.note_type == "audio":
-                preview = f"[dim](audio)[/dim] {note.title}"
-            else:
-                title = note.title or "[dim](untitled)[/dim]"
-                if not content_preview:
-                    preview = title
+            row = [str(i)]
+            if show_id:
+                row.append(note.id)
+            row.append(note.title or "[dim](untitled)[/dim]")
+            row.append(note.note_type)
+            row.append(note.updated_at)
+
+            if content_preview:
+                if note.note_type == "audio":
+                    preview = "[dim](audio)[/dim]"
                 else:
                     content = light.notes.get_note_content(note)
                     if content and content.strip():
-                        preview = f"[dim]({title})[/dim] {content.splitlines()[0]}"
+                        preview = content.splitlines()[0]
                     else:
-                        preview = f"[dim]({title})[/dim] [dim](empty)[/dim]"
+                        preview = "[dim](empty)[/dim]"
+                row.append(preview)
 
-            id_prefix = f"{note.id} " if show_id else ""
-            console.print(f"[dim]{i}.[/dim] {id_prefix}{preview}")
+            table.add_row(*row)
+
+        console.print(table)
 
     render(all_notes, render_human_readable)
 
