@@ -1,6 +1,8 @@
 """Derive JSON Schema from the dataclasses used with --json."""
 
 import dataclasses
+import hashlib
+import json
 import types
 import typing
 from typing import Any
@@ -31,6 +33,16 @@ _PRIMITIVE_SCHEMAS: dict[type, dict[str, Any]] = {
 
 def generate_schema() -> dict[str, Any]:
     """Build full JSON Schema document."""
+    return {"$hash": schema_hash(), **_command_schemas()}
+
+
+def schema_hash() -> str:
+    """Get SHA-256 of the canonicalized schema."""
+    canonical = json.dumps(_command_schemas(), sort_keys=True)
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _command_schemas() -> dict[str, Any]:
     return {
         command: {
             "type": "object",
