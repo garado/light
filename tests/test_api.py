@@ -363,6 +363,101 @@ class TestGetTracks:
             light.music.get_tracks()
 
 
+class TestFindMatchingTrack:
+    def test_ignores_cross_artist_title_collision(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Playing God", artist="Paramore", album="",
+            ),
+        ]
+
+        # artist=None (filename-mode / metadata-fallback identity) must not
+        # wildcard-match a track that has a real, different artist.
+        assert light.music._find_matching_track("Playing God", None) is None
+
+        # Precise (title, artist) matching still works correctly.
+        assert light.music._find_matching_track("Playing God", "Paramore") is not None
+        assert light.music._find_matching_track("Playing God", "Polyphia") is None
+
+    def test_matches_untagged_tracks_by_title_only(self):
+        """artist=None should still match existing tracks that are themselves
+        untagged (artist blank or 'Unknown') - what filename-mode targets."""
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="2", audio_id="a2",
+                title="Some Old Rip", artist="Unknown", album="",
+            ),
+        ]
+
+        match = light.music._find_matching_track("Some Old Rip", None)
+        assert match is not None and match.audio_id == "a2"
+
+
+class TestTrackIdentity:
+    def test_metadata_mode_reads_title_and_artist(self):
+        light = make_light()
+        with patch("light_api.music.File", return_value={"title": ["Song"], "artist": ["Artist"]}):
+            assert light.music._track_identity("song.mp3", "metadata") == ("Song", "Artist")
+
+    def test_metadata_mode_falls_back_to_filename_when_tags_missing(self):
+        """Default (replace=False): missing tags silently fall back to filename matching."""
+        light = make_light()
+        with patch("light_api.music.File", return_value=None):
+            title, artist = light.music._track_identity(
+                "/path/Some Song.mp3", "metadata", replace=False
+            )
+        assert title == "Some Song"
+        assert artist is None
+
+    def test_metadata_mode_raises_under_replace_when_tags_missing(self):
+        """--replace is destructive, so a missing-tags fallback must be explicit, not silent."""
+        light = make_light()
+        with patch("light_api.music.File", return_value=None):
+            with pytest.raises(ValueError, match="match_by='filename'"):
+                light.music._track_identity("/path/Some Song.mp3", "metadata", replace=True)
+
+    def test_filename_mode_ignores_tags_entirely(self):
+        light = make_light()
+        with patch(
+            "light_api.music.File",
+            return_value={"title": ["Real Title"], "artist": ["Real Artist"]},
+        ):
+            title, artist = light.music._track_identity("/path/Filename Title.mp3", "filename")
+        assert title == "Filename Title"
+        assert artist is None
+
+
+class TestFindUploadMatches:
+    def test_ignores_cross_artist_title_collision(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Playing God", artist="Paramore", album="",
+            ),
+            LightTrack(
+                playlist_item_id="2", audio_id="a2",
+                title="New Song", artist="New Artist", album="",
+            ),
+        ]
+
+        tags_by_path = {
+            "playing_god_polyphia.mp3": {"title": ["Playing God"], "artist": ["Polyphia"]},
+            "new_song.mp3": {"title": ["New Song"], "artist": ["New Artist"]},
+        }
+
+        with patch("light_api.music.File", side_effect=lambda p, easy=True: tags_by_path[p]):
+            matches = light.music.find_upload_matches(
+                ["playing_god_polyphia.mp3", "new_song.mp3"], match_by="metadata"
+            )
+
+        assert "playing_god_polyphia.mp3" not in matches
+        assert matches["new_song.mp3"].audio_id == "a2"
+
+
 def make_note(overrides: dict | None = None) -> LightNote:
     data = dict(id="note-1", file_id="file-1", note_type="text", title="old title", updated_at="2026-01-01T00:00:00")
     if overrides:
