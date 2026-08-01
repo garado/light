@@ -315,7 +315,7 @@ class LightMusic:
     def _resolve_upload_plan(
         self, files: list[str], allow_duplicates: bool, overwrite: bool
         ) -> tuple[list[str], list[LightTrack]]:
-        """Return the subset of files to upload and the subset of files to overwrite after
+        """Return the subset of files to upload and the subset of tracks to overwrite after
         applying allow_duplicates/overwrite behavior flags.
 
         Returns:
