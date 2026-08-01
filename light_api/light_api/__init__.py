@@ -20,7 +20,7 @@ def with_light(f):
             )
             light.__enter__()
             return f(light, *args, **kwargs)
-        except (RuntimeError, ValueError) as e:
+        except RuntimeError as e:
             raise click.ClickException(str(e))
 
     return wrapper
