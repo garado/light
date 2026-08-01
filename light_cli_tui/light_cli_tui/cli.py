@@ -5,6 +5,7 @@
 Command line tools for Light devices.
 """
 
+import json
 import logging
 import time
 import rich_click as click
@@ -16,6 +17,7 @@ from light_api.client import Light
 from light_api.music import SortMode
 from light_api.tools import ToolName
 from light_api import with_light
+from light_cli_tui.output import render, render_error
 from light_cli_tui.tui import LightConfig, run_tui
 
 
@@ -29,7 +31,20 @@ console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+class JsonAwareGroup(click.RichGroup):
+    """Wrapper for command execution adding JSON output support for failures."""
+
+    def invoke(self, ctx: click.Context):
+        try:
+            return super().invoke(ctx)
+        except click.ClickException as e:
+            if (ctx.obj or {}).get("json"):
+                render_error(e.format_message())
+                ctx.exit(e.exit_code)
+            raise
+
+
+@click.group(cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
@@ -53,6 +68,13 @@ log = logging.getLogger(f"light.{__name__}")
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
     help="Log level.",
 )
+@click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    default=False,
+    help="Output machine-readable JSON instead of human-readable text.",
+)
 @click.pass_context
 def cli(
     ctx,
@@ -65,10 +87,11 @@ def cli(
     device_id,
     device_id_file,
     log_level,
+    json_output,
 ):
     """**Unofficial CLI for the Light Phone.**
 
-    Manages music, podcasts, and notes on your Light device from the terminal.
+    Manages music, podcasts, notes, and more on your Light device from the terminal.
 
     Credentials can be provided via options, files, or environment variables
     (`LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`, `LIGHT_DEVICE_ID`).
@@ -95,6 +118,7 @@ def cli(
             "phone_number_file": phone_number_file,
             "device_id": device_id,
             "device_id_file": device_id_file,
+            "json": json_output,
         }
     )
 
@@ -162,19 +186,22 @@ def podcasts_list(light: Light):
     """List all followed podcasts on your device."""
     podcasts = light.podcast.get_podcasts()
 
-    if not podcasts:
-        console.print("[dim]No podcasts followed.[/dim]")
-        return
+    def render_human_readable():
+        if not podcasts:
+            console.print("[dim]No podcasts followed.[/dim]")
+            return
 
-    table = Table(show_header=True)
-    table.add_column("#", style="dim", width=4)
-    table.add_column("Title")
-    table.add_column("Publisher")
+        table = Table(show_header=True)
+        table.add_column("#", style="dim", width=4)
+        table.add_column("Title")
+        table.add_column("Publisher")
 
-    for i, p in enumerate(podcasts, 1):
-        table.add_row(str(i), p.title, p.publisher)
+        for i, p in enumerate(podcasts, 1):
+            table.add_row(str(i), p.title, p.publisher)
 
-    console.print(table)
+        console.print(table)
+
+    render(podcasts, render_human_readable)
 
 
 @podcasts.command("delete")
@@ -408,16 +435,19 @@ def music_list(light: Light):
     """List all tracks on your device."""
     tracks = light.music.get_tracks()
 
-    table = Table(show_header=True)
-    table.add_column("#", style="dim", width=4)
-    table.add_column("Title")
-    table.add_column("Artist")
-    table.add_column("Album")
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("#", style="dim", width=4)
+        table.add_column("Title")
+        table.add_column("Artist")
+        table.add_column("Album")
 
-    for i, track in enumerate(tracks, 1):
-        table.add_row(str(i), track.title, track.artist, track.album)
+        for i, track in enumerate(tracks, 1):
+            table.add_row(str(i), track.title, track.artist, track.album)
 
-    console.print(table)
+        console.print(table)
+
+    render(tracks, render_human_readable)
 
 
 # -- Notes commands -------------------------------------------------------------
@@ -449,25 +479,28 @@ def notes_list(light: Light, show_id=False, content_preview=False):
     """
     all_notes = light.notes.get_notes()
 
-    if content_preview:
-        console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
+    def render_human_readable():
+        if content_preview:
+            console.print(f"[dim]Content preview enabled. This might take a while.[/dim]")
 
-    for i, note in enumerate(all_notes, 1):
-        if note.note_type == "audio":
-            preview = f"[dim](audio)[/dim] {note.title}"
-        else:
-            title = note.title or "[dim](untitled)[/dim]"
-            if not content_preview:
-                preview = title
+        for i, note in enumerate(all_notes, 1):
+            if note.note_type == "audio":
+                preview = f"[dim](audio)[/dim] {note.title}"
             else:
-                content = light.notes.get_note_content(note)
-                if content and content.strip():
-                    preview = f"[dim]({title})[/dim] {content.splitlines()[0]}"
+                title = note.title or "[dim](untitled)[/dim]"
+                if not content_preview:
+                    preview = title
                 else:
-                    preview = f"[dim]({title})[/dim] [dim](empty)[/dim]"
+                    content = light.notes.get_note_content(note)
+                    if content and content.strip():
+                        preview = f"[dim]({title})[/dim] {content.splitlines()[0]}"
+                    else:
+                        preview = f"[dim]({title})[/dim] [dim](empty)[/dim]"
 
-        id_prefix = f"{note.id} " if show_id else ""
-        console.print(f"[dim]{i}.[/dim] {id_prefix}{preview}")
+            id_prefix = f"{note.id} " if show_id else ""
+            console.print(f"[dim]{i}.[/dim] {id_prefix}{preview}")
+
+    render(all_notes, render_human_readable)
 
 
 @notes.command("download")
@@ -564,14 +597,16 @@ def tools_list(light: Light):
     """List all tools installed on your device."""
     all_tools = light.tools.get_tools()
 
-    table = Table(show_header=True)
-    table.add_column("Title")
-    table.add_column("Namespace")
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("Title")
 
-    for t in all_tools:
-        table.add_row(t.title, t.namespace)
+        for t in all_tools:
+            table.add_row(t.title)
 
-    console.print(table)
+        console.print(table)
+
+    render(all_tools, render_human_readable)
 
 
 @tools.command("add")
@@ -607,16 +642,44 @@ def devices_list(light: Light):
     """List information for all devices registered on this account."""
     all_devices = light.devices.list_devices()
 
-    table = Table(show_header=True)
-    table.add_column("Device ID")
-    table.add_column("Phone Number")
-    table.add_column("Serial Number")
-    table.add_column("SKU")
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("Device ID")
+        table.add_column("Phone Number")
+        table.add_column("Serial Number")
+        table.add_column("SKU")
 
-    for d in all_devices:
-        table.add_row(d.id, d.phone_number or "[dim]unknown[/dim]", d.serial_number, d.sku)
+        for d in all_devices:
+            table.add_row(
+                d.id, d.phone_number or "[dim]unknown[/dim]", d.serial_number, d.sku
+            )
 
-    console.print(table)
+        console.print(table)
+
+    render(all_devices, render_human_readable)
+
+
+# -- Schema ---------------------------------------------------------------------
+
+
+@cli.command()
+@click.option(
+    "--hash",
+    "hash_only",
+    is_flag=True,
+    help="Show only the schema's SHA-256 hash.",
+)
+def schema(hash_only):
+    """Generate JSON Schema for every `--json`-enabled command's output."""
+    from light_cli_tui.schema import generate_schema, schema_hash
+
+    if hash_only:
+        h = schema_hash()
+        render({"hash": h}, lambda: click.echo(h))
+        return
+
+    doc = generate_schema()
+    render(doc, lambda: console.print_json(json.dumps(doc)))
 
 
 # -- Auth -----------------------------------------------------------------------

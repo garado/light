@@ -1,0 +1,262 @@
+{
+  "$hash": "c8de7147c845595d91fbdcd575faad6c2202cff41b21b5c245c2d333dad48a93",
+  "podcasts list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "podcast_id": {
+              "type": "string"
+            },
+            "followed_podcast_id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "rss_feed_url": {
+              "type": "string"
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "podcast_id",
+            "followed_podcast_id",
+            "title",
+            "publisher",
+            "rss_feed_url",
+            "description"
+          ]
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "music list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "playlist_item_id": {
+              "type": "string"
+            },
+            "audio_id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "artist": {
+              "type": "string"
+            },
+            "album": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "playlist_item_id",
+            "audio_id",
+            "title",
+            "artist",
+            "album"
+          ]
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "notes list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "file_id": {
+              "type": "string"
+            },
+            "note_type": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "file_id",
+            "note_type",
+            "title",
+            "updated_at"
+          ]
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "tools list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "device_tool_id": {
+              "type": "string"
+            },
+            "global_tool_id": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "component": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "device_tool_id",
+            "global_tool_id",
+            "namespace",
+            "component",
+            "title"
+          ]
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  },
+  "devices list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "phone_number": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "serial_number": {
+              "type": "string"
+            },
+            "sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "phone_number",
+            "serial_number",
+            "sku"
+          ]
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ]
+  }
+}
