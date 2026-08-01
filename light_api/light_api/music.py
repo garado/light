@@ -369,8 +369,6 @@ class LightMusic:
         if overwrite and allow_duplicates:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
 
-        manual_update_cmds = []
-
         valid_files, invalid_files = self.filter_valid_tracks(files)
         for file_path in invalid_files:
             log.warning(f"File not found, skipping: {file_path}")
@@ -445,30 +443,11 @@ class LightMusic:
                     raise RuntimeError(
                         f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
                     )
-
-                # (TODO Is this even necessary anymore now that we have FLAC autoconversion)
-                # The Light API has an issue where it won't set title/artist metadata properly
-                # when uploading non-mp3 files. Give user list of commands to patch manually after
-                # upload since files are still processing and a patch immediately after will fail.
-                if content_type != "audio/mpeg":
-                    path = os.path.basename(upload_path)
-                    tags = File(upload_path, easy=True)
-                    title = tags.get("title", ["Unknown"])[0] if tags else "Unknown"
-                    artist = tags.get("artist", ["Unknown"])[0] if tags else "Unknown"
-                    album = tags.get("album", [""])[0] if tags else ""
-                    cmd = f'light music update "{path}" --new-title "{title}" --new-artist "{artist}" --new-album "{album}"'
-                    manual_update_cmds.append(cmd)
             finally:
                 if tmp_path:
                     os.unlink(tmp_path)
 
         log.info("All uploads complete")
-
-        if len(manual_update_cmds) > 0:
-            log.warning(
-                "Manual metadata fixes needed:\n"
-                + "\n".join(f"  {cmd} ;" for cmd in manual_update_cmds)
-            )
 
     def update_track_metadata(
         self,
