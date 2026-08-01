@@ -266,11 +266,70 @@ class LightMusic:
         """
         self.delete_tracks_predicate(lambda t: bool(re.match(pattern, t.artist)))
 
+    def _track_identity(
+        self,
+        file_path: str,
+        match_by: Literal["metadata", "filename"],
+        replace: bool = False,
+    ) -> tuple[str, str | None]:
+        """Return (title, artist) used to match `file_path` against existing tracks.
+
+        'filename' mode applies for tracks that were uploaded with no metadata; LightOS
+        displays those with title=filename, artist='Unknown'.
+
+        If match_by='metadata' but `file_path` has no readable title/artist tags, this
+        auto-falls back to filename matching for that file - unless replace=True, since
+        a false-positive filename-only match would delete the wrong track under
+        --replace. In that case, a missing tag raises instead, requiring the caller to
+        explicitly pass match_by='filename' to acknowledge the weaker match.
+        """
+        if match_by == "metadata":
+            tags = File(file_path, easy=True)
+            title = tags.get("title", [None])[0] if tags else None
+            artist = tags.get("artist", [None])[0] if tags else None
+            if title and artist:
+                return title, artist
+
+            if replace:
+                raise ValueError(
+                    f"Could not read title/artist metadata from {file_path!r}, and "
+                    "--replace is destructive - pass match_by='filename' to explicitly "
+                    "acknowledge the weaker match instead of silently falling back."
+                )
+
+        return os.path.splitext(os.path.basename(file_path))[0], None
+
+    def _find_matching_track(self, title: str, artist: str | None) -> "LightTrack | None":
+        """Find an existing track matching (title, artist). artist=None matches title only."""
+        for t in self._tracks:
+            if t.title == title and (artist is None or t.artist == artist):
+                return t
+        return None
+
+    def find_upload_matches(
+        self,
+        files: list[str],
+        match_by: Literal["metadata", "filename"] = "metadata",
+        replace: bool = False,
+    ) -> dict[str, "LightTrack"]:
+        """Return {file_path: existing LightTrack} for files that match a track already
+        on the device. Shared by upload_tracks and CLI confirmation prompts, so there's
+        exactly one definition of "what counts as a duplicate"."""
+        self._init_tracks()
+        matches: dict[str, "LightTrack"] = {}
+        for file_path in files:
+            title, artist = self._track_identity(file_path, match_by, replace)
+            match = self._find_matching_track(title, artist)
+            if match is not None:
+                matches[file_path] = match
+        return matches
+
     def upload_tracks(
         self,
         files: list[str],
         allow_duplicates: bool = False,
-        match_title_by: Literal["metadata", "filename"] = "metadata",
+        replace: bool = False,
+        match_by: Literal["metadata", "filename"] = "metadata",
         convert_flac: bool = True,
         on_progress: "Callable[[str, int, int], None] | None" = None,
     ) -> None:
@@ -278,28 +337,41 @@ class LightMusic:
 
         Args:
             files: List of paths to audio files to upload.
-            allow_duplicates: If False (default), existing tracks with matching titles are
-                              deleted before uploading. If True, duplicates are kept.
-            match_title_by: How to determine a track's title for duplicate detection.
-                            "metadata" (default) reads the title from the file's ID3/audio tags.
-                            "filename" uses the filename (without extension) as the title.
+            allow_duplicates: If True, skip duplicate checking entirely and always upload,
+                               potentially creating multiple tracks with the same title/artist.
+            replace: If True, delete a file's matching existing track (if any) before
+                     uploading it. If False (default), files matching an existing track
+                     are skipped instead, leaving the existing track untouched.
+            match_by: How to identify a file for duplicate matching.
+                      "metadata" (default) reads title+artist from the file's ID3/audio tags.
+                      Per file, if tags are missing this auto-falls back to filename-only
+                      matching - unless replace=True, in which case it raises instead
+                      (a false-positive filename-only match would delete the wrong track).
+                      "filename" matches on filename-as-title only for every file, for
+                      tracks that were themselves uploaded with no metadata - LightOS
+                      displays those with title=filename and artist="Unknown".
         """
+        if replace and allow_duplicates:
+            raise ValueError("replace and allow_duplicates are mutually exclusive")
+
         manual_update_cmds = []
+        to_upload = files
 
         if not allow_duplicates:
-            titles: list[str]
+            matches = self.find_upload_matches(files, match_by, replace)
+            to_upload = []
+            for file_path in files:
+                match = matches.get(file_path)
 
-            if match_title_by == "metadata":
-                titles = []
-                for s in files:
-                    f = File(s, easy=True)
-                    if f is None:
-                        raise ValueError(f"Could not read metadata from {s}")
-                    titles.append(f.get("title", ["Unknown Title"])[0])
-            else:
-                titles = [os.path.splitext(os.path.basename(s))[0] for s in files]
+                if match is None:
+                    to_upload.append(file_path)
+                elif replace:
+                    self.delete_tracks_predicate(lambda t: t is match)
+                    to_upload.append(file_path)
+                else:
+                    log.info(f"Skipping {file_path!r}: matches existing track {match.title!r}")
 
-            self.delete_tracks_by_title(titles)
+        files = to_upload
 
         for file_path in files:
             log.info(f"Uploading {file_path}")

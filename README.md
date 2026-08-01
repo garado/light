@@ -55,15 +55,19 @@ After the first login, your auth token will be cached. Tokens are good for 30 da
 
 ```sh
 # Upload tracks
-# Overwrite existing matching tracks (match on file title metadata)
-light music upload song1 song2 song3 --match-title-by metadata
+# Files matching an existing track (by title+artist) are skipped by default
+light music upload song1 song2 song3
 
 # Upload tracks
-# Overwrite existing matching tracks (match on filename)
-light music upload song1 song2 song3 --match-title-by filename
+# Delete-and-replace matching existing tracks instead of skipping them
+light music upload song1 song2 song3 --replace
 
 # Upload tracks
-# Don't overwrite existing tracks
+# Match by filename instead of metadata tags (for files with missing/broken tags)
+light music upload song1 song2 song3 --match-by filename
+
+# Upload tracks
+# Skip duplicate checking entirely, always upload
 light music upload --allow-duplicates song1 song2 song3
 ```
 
