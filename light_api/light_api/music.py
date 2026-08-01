@@ -267,10 +267,17 @@ class LightMusic:
         self.delete_tracks_predicate(lambda t: bool(re.match(pattern, t.artist)))
 
     def _track_identity(self, file_path: str) -> tuple[str, str]:
-        """Return (title, artist) for file_path, read from its tags where available.
+        """Return (title, artist) for an audio file at file_path.
 
-        Falls back to (filename, "Unknown") for whatever's missing - matching how
-        LightOS represents a track that was itself uploaded with no metadata.
+        If the track has metadata for a field: use that metadata.
+        If no metadata for a field:titles will fall back to just 'filename', and 
+        artists will fall back to "Unknown", matching the dashboard's implementation.
+
+        Args:
+            file_path: File path of audio file to process.
+
+        Returns:
+            (title, artist) tuple representing that file's content.
         """
         tags = File(file_path, easy=True)
         title = (tags.get("title", [None])[0] if tags else None) or os.path.splitext(
@@ -287,9 +294,15 @@ class LightMusic:
         return None
 
     def find_upload_matches(self, files: list[str]) -> dict[str, LightTrack]:
-        """Return {file_path: existing LightTrack} for files that match a track already
-        on the device. Shared by upload_tracks and CLI confirmation prompts, so there's
-        exactly one definition of "what counts as a duplicate"."""
+        """Given a list of local audio files, find those that already exist on the device and
+        return the matching existing LightTrack instances.
+
+        Args:
+            files: A list of paths to audio files.
+
+        Returns:
+            A {file_path: LightTrack} dict.
+        """
         self._init_tracks()
         matches: dict[str, LightTrack] = {}
         for file_path in files:
