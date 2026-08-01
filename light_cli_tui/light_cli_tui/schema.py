@@ -5,6 +5,22 @@ import types
 import typing
 from typing import Any
 
+from light_api.devices import LightDevice
+from light_api.music import LightTrack
+from light_api.notes import LightNote
+from light_api.podcast import LightPodcast
+from light_api.tools import LightTool
+
+# Map each `--json`-enabled command to its output dataclass.
+# NOTE: No way to autoderive this. Must be kept in sync w/ any added `render(...)` commands in cli.py.
+COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
+    "podcasts list": list[LightPodcast],
+    "music list": list[LightTrack],
+    "notes list": list[LightNote],
+    "tools list": list[LightTool],
+    "devices list": list[LightDevice],
+}
+
 _PRIMITIVE_SCHEMAS: dict[type, dict[str, Any]] = {
     str: {"type": "string"},
     int: {"type": "integer"},
@@ -13,7 +29,50 @@ _PRIMITIVE_SCHEMAS: dict[type, dict[str, Any]] = {
 }
 
 
-def dataclass_json_schema(cls: type) -> dict[str, Any]:
+def generate_schema() -> dict[str, Any]:
+    """Build full JSON Schema document."""
+    return {
+        command: {
+            "type": "object",
+            "properties": {"data": _type_to_schema(shape)},
+            "required": ["data"],
+        }
+        for command, shape in COMMAND_OUTPUT_SHAPES.items()
+    }
+
+
+def _type_to_schema(tp: object) -> dict[str, Any]:
+    """Recursively converts a single Type annotation into its JSON Schema fragment."""
+
+    if tp in _PRIMITIVE_SCHEMAS:
+        return dict(_PRIMITIVE_SCHEMAS[tp])
+
+    if isinstance(tp, type) and dataclasses.is_dataclass(tp):
+        return _dataclass_json_schema(tp)
+
+    origin = typing.get_origin(tp)
+
+    if origin is list:
+        (item_type,) = typing.get_args(tp)
+        return {"type": "array", "items": _type_to_schema(item_type)}
+
+    if origin is types.UnionType or origin is typing.Union:
+        args = typing.get_args(tp)
+        nullable = type(None) in args
+        non_none = [a for a in args if a is not type(None)]
+        if len(non_none) != 1:
+            raise NotImplementedError(
+                f"Unsupported union for schema generation: {tp!r}"
+            )
+        schema = _type_to_schema(non_none[0])
+        if nullable:
+            schema["nullable"] = True
+        return schema
+
+    raise NotImplementedError(f"Unsupported type for schema generation: {tp!r}")
+
+
+def _dataclass_json_schema(cls: type) -> dict[str, Any]:
     """Build a JSON Schema object for a dataclass's fields."""
     hints = typing.get_type_hints(cls)
     properties: dict[str, Any] = {}
@@ -30,26 +89,3 @@ def dataclass_json_schema(cls: type) -> dict[str, Any]:
         "properties": properties,
         "required": required,
     }
-
-
-def _type_to_schema(tp: Any) -> dict[str, Any]:
-    """Recursively converts a single Type annotation into its JSON Schema fragment."""
-
-    if tp in _PRIMITIVE_SCHEMAS:
-        return dict(_PRIMITIVE_SCHEMAS[tp])
-
-    origin = typing.get_origin(tp)
-    if origin is types.UnionType or origin is typing.Union:
-        args = typing.get_args(tp)
-        nullable = type(None) in args
-        non_none = [a for a in args if a is not type(None)]
-        if len(non_none) != 1:
-            raise NotImplementedError(
-                f"Unsupported union for schema generation: {tp!r}"
-            )
-        schema = _type_to_schema(non_none[0])
-        if nullable:
-            schema["nullable"] = True
-        return schema
-
-    raise NotImplementedError(f"Unsupported type for schema generation: {tp!r}")
