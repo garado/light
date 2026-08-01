@@ -48,7 +48,7 @@ def _command_schemas() -> dict[str, Any]:
             "type": "object",
             "properties": {
                 "data": _type_to_schema(shape),
-                "error": {"type": "string", "nullable": True},
+                "error": {"anyOf": [{"type": "string"}, {"type": "null"}]},
             },
             "required": ["data", "error"],
         }
@@ -81,7 +81,7 @@ def _type_to_schema(tp: object) -> dict[str, Any]:
             )
         schema = _type_to_schema(non_none[0])
         if nullable:
-            schema["nullable"] = True
+            return {"anyOf": [schema, {"type": "null"}]}
         return schema
 
     raise NotImplementedError(f"Unsupported type for schema generation: {tp!r}")

@@ -1,5 +1,5 @@
 {
-  "$hash": "bf787dc5ab837dea497a912b0f25816c32b23dbccf15997f3df922150ccedbc5",
+  "$hash": "c8de7147c845595d91fbdcd575faad6c2202cff41b21b5c245c2d333dad48a93",
   "podcasts list": {
     "type": "object",
     "properties": {
@@ -24,8 +24,14 @@
               "type": "string"
             },
             "description": {
-              "type": "string",
-              "nullable": true
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -39,8 +45,14 @@
         }
       },
       "error": {
-        "type": "string",
-        "nullable": true
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
       }
     },
     "required": [
@@ -82,8 +94,14 @@
         }
       },
       "error": {
-        "type": "string",
-        "nullable": true
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
       }
     },
     "required": [
@@ -125,8 +143,14 @@
         }
       },
       "error": {
-        "type": "string",
-        "nullable": true
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
       }
     },
     "required": [
@@ -168,8 +192,14 @@
         }
       },
       "error": {
-        "type": "string",
-        "nullable": true
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
       }
     },
     "required": [
@@ -189,8 +219,14 @@
               "type": "string"
             },
             "phone_number": {
-              "type": "string",
-              "nullable": true
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "serial_number": {
               "type": "string"
@@ -208,8 +244,14 @@
         }
       },
       "error": {
-        "type": "string",
-        "nullable": true
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
       }
     },
     "required": [
