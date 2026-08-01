@@ -586,10 +586,9 @@ def tools_list(light: Light):
     def render_human_readable():
         table = Table(show_header=True)
         table.add_column("Title")
-        table.add_column("Namespace")
 
         for t in all_tools:
-            table.add_row(t.title, t.namespace)
+            table.add_row(t.title)
 
         console.print(table)
 
