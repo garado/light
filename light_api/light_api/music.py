@@ -350,7 +350,7 @@ class LightMusic:
                 if match is None or overwrite:
                     to_upload.append(file_path)
                 else:
-                    log.info(f"Skipping {file_path!r}: matches existing track {match.title!r}")
+                    log.info(f"Skipping {file_path!r}: matches existing ({match.title!r}, {match.artist!r})")
 
         files = to_upload
 
