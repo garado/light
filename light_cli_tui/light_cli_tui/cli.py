@@ -257,21 +257,37 @@ _VERBOSE_LIST_THRESHOLD = 20
     default=False,
     help="Show the full list of affected tracks, even for large batches.",
 )
-def music_upload(light: Light, songs, allow_duplicates, overwrite, no_convert_flac, verbose):
-    """Upload audio files to your device.
+@click.option(
+    "--recursive",
+    "-r",
+    is_flag=True,
+    default=False,
+    help="When SONGS includes a directory, also walk its subdirectories for audio files.",
+)
+def music_upload(
+    light: Light, songs, allow_duplicates, overwrite, no_convert_flac, verbose, recursive
+):
+    """Upload audio files (or directories of them) to your device.
 
-    **Example:**
+    **Examples:**
 
     `light music upload track1.mp3 track2.mp3`
+
+    `light music upload ~/Music --recursive`
     """
     if overwrite and allow_duplicates:
         raise click.UsageError(
             "--overwrite and --allow-duplicates are mutually exclusive."
         )
 
-    files, invalid_files = light.music.filter_valid_tracks(list(songs))
+    expanded = light.music.expand_music_paths(list(songs), recursive)
+    files, invalid_files = light.music.filter_valid_tracks(expanded)
     for file_path in invalid_files:
         console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+
+    if not files:
+        console.print("[yellow]No audio files found.[/yellow]")
+        return
 
     matches = light.music.find_upload_matches(files)
 

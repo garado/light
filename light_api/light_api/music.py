@@ -348,6 +348,34 @@ class LightMusic:
             (valid if os.path.exists(file_path) else invalid).append(file_path)
         return valid, invalid
 
+    _MUSIC_EXTENSIONS = {".mp3", ".flac", ".m4a", ".wav"}
+
+    @classmethod
+    def expand_music_paths(cls, paths: list[str], recursive: bool = False) -> list[str]:
+        """Expand any directories in `paths` into the audio files they contain.
+
+        Non-directory entries (individual file paths) pass through unchanged.
+        Directories are expanded top-level only unless recursive=True.
+        """
+        files = []
+        for path in paths:
+            if not os.path.isdir(path):
+                files.append(path)
+                continue
+
+            if recursive:
+                for root, _dirs, filenames in os.walk(path):
+                    for filename in sorted(filenames):
+                        if os.path.splitext(filename)[1].lower() in cls._MUSIC_EXTENSIONS:
+                            files.append(os.path.join(root, filename))
+            else:
+                for filename in sorted(os.listdir(path)):
+                    full = os.path.join(path, filename)
+                    if os.path.isfile(full) and os.path.splitext(filename)[1].lower() in cls._MUSIC_EXTENSIONS:
+                        files.append(full)
+
+        return files
+
     def upload_tracks(
         self,
         files: list[str],
