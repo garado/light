@@ -36,7 +36,7 @@
         textual
         pyperclip
         light-phone-api
-        questionary
+        inquirerpy
         rapidfuzz
       ];
     };
