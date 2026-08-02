@@ -8,6 +8,7 @@ Command line tools for Light devices.
 import json
 import logging
 import os
+import re
 import rich_click as click
 from rich.console import Console
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
@@ -390,19 +391,61 @@ def music_delete_all(light: Light):
 
 @music.command("delete")
 @with_light
-@click.argument("songs", nargs=-1, required=True)
-def music_delete(light: Light, songs):
-    """Delete tracks by title.
+@click.argument("songs", nargs=-1)
+@click.option(
+    "--title", "-t", "title_regex", help="Delete tracks whose title matches this regex pattern."
+)
+@click.option(
+    "--artist", "-a", "artist_regex", help="Delete tracks whose artist matches this regex pattern."
+)
+@click.option(
+    "--album", "-b", "album_regex", help="Delete tracks whose album matches this regex pattern."
+)
+def music_delete(light: Light, songs, title_regex, artist_regex, album_regex):
+    """Delete tracks by title, or by regex pattern.
 
     Uses exact title matching. Run `light music list` to see track titles.
 
-    **Example:**
+    If more than one of --title, --artist, --album regex patterns are given, tracks must match all of them.
+
+    **Examples:**
 
     `light music delete "Song Title" "Another Song"`
+
+    `light music delete --title '^Live '`
+
+    `light music delete --artist '^The '`
+
+    `light music delete --album '(Deluxe|Remastered)'`
     """
-    titles = list(songs)
+    regex_given = title_regex or artist_regex or album_regex
+    if songs and regex_given:
+        raise click.UsageError(
+            "Provide either song titles or --title/--artist/--album, not both."
+        )
+    if not songs and not regex_given:
+        raise click.UsageError("Provide song titles, or one of --title/--artist/--album.")
+
     tracks = light.music.get_tracks()
-    to_delete = [t for t in tracks if t.title in set(titles)]
+
+    if regex_given:
+        try:
+            title_pattern = re.compile(title_regex) if title_regex else None
+            artist_pattern = re.compile(artist_regex) if artist_regex else None
+            album_pattern = re.compile(album_regex) if album_regex else None
+        except re.error as e:
+            raise click.UsageError(f"Invalid regex: {e}")
+
+        to_delete = [
+            t
+            for t in tracks
+            if (title_pattern is None or title_pattern.match(t.title))
+            and (artist_pattern is None or artist_pattern.match(t.artist))
+            and (album_pattern is None or album_pattern.match(t.album))
+        ]
+    else:
+        titles = list(songs)
+        to_delete = [t for t in tracks if t.title in set(titles)]
 
     if not to_delete:
         console.print("[yellow]No matching tracks.[/yellow]")
@@ -414,7 +457,8 @@ def music_delete(light: Light, songs):
     if not click.confirm("Proceed?"):
         return
 
-    light.music.delete_tracks_by_title(titles)
+    audio_ids = {t.audio_id for t in to_delete}
+    light.music.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
 
 @music.command("sort")
