@@ -411,8 +411,7 @@ def music_delete_all(light: Light):
     "-i",
     is_flag=True,
     default=False,
-    help="Pick which fuzzy matches to delete interactively, instead of auto-selecting "
-    "the best match for each query.",
+    help="Immediately open interactive deletion menu."
 )
 def music_delete(light: Light, songs, title_regex, artist_regex, album_regex, interactive):
     """Delete tracks by fuzzy search, or by regex pattern.
@@ -450,7 +449,7 @@ def music_delete(light: Light, songs, title_regex, artist_regex, album_regex, in
             songs,
             tracks,
             fields=lambda t: (t.title, t.artist, t.album),
-            label=lambda t: f"{t.artist} — {t.title} — {t.album}",
+            label=lambda t: f"{t.artist} — {t.album} — {t.title}",
             id_key=lambda t: t.audio_id,
             console=console,
         )
