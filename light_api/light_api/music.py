@@ -390,6 +390,7 @@ class LightMusic:
         convert_flac: bool = True,
         on_progress: "Callable[[str, int, int], None] | None" = None,
         on_convert: "Callable[[str], None] | None" = None,
+        on_file_start: "Callable[[int, int, str], None] | None" = None,
     ) -> None:
         """Upload tracks to device.
 
@@ -401,6 +402,9 @@ class LightMusic:
                        uploading it. If False (default), files matching an existing track
                        are skipped instead, leaving the existing track untouched.
             on_convert: Called with a file's path right before it is converted to MP3.
+            on_file_start: Called with (index, total, file_path) - 1-based index into
+                            the files actually being uploaded - right before each file
+                            starts processing (before conversion, if any).
         """
         if overwrite and allow_duplicates:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
@@ -417,8 +421,11 @@ class LightMusic:
             audio_ids = {t.audio_id for t in to_delete}
             self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
-        for file_path in to_upload:
+        total_files = len(to_upload)
+        for index, file_path in enumerate(to_upload, 1):
             log.info(f"Uploading {file_path}")
+            if on_file_start:
+                on_file_start(index, total_files, file_path)
 
             tmp_path = None
             try:

@@ -344,6 +344,11 @@ def music_upload(
     ) as progress:
         task_id: TaskID | None = None
         current_file: str | None = None
+        batch_position = ""
+
+        def on_file_start(index: int, total: int, file_path: str) -> None:
+            nonlocal batch_position
+            batch_position = f"[{index}/{total}] "
 
         def on_progress(filename: str, sent: int, total: int) -> None:
             nonlocal task_id, current_file
@@ -351,13 +356,13 @@ def music_upload(
                 if task_id is not None:
                     progress.remove_task(task_id)
                 current_file = filename
-                task_id = progress.add_task(f"uploading {filename}", total=100)
+                task_id = progress.add_task(f"{batch_position}uploading {filename}", total=100)
             progress.update(task_id, completed=int(sent / total * 100))
 
         def on_convert(file_path: str) -> None:
             filename = os.path.basename(file_path)
             mp3_name = os.path.splitext(filename)[0] + ".mp3"
-            console.print(f"[dim]Converting {filename} -> {mp3_name}[/dim]")
+            console.print(f"[dim]{batch_position}Converting {filename} -> {mp3_name}[/dim]")
 
         light.music.upload_tracks(
             files,
@@ -366,6 +371,7 @@ def music_upload(
             convert_flac=not no_convert,
             on_progress=on_progress,
             on_convert=on_convert,
+            on_file_start=on_file_start,
         )
 
 
