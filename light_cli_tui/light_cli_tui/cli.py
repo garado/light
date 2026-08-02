@@ -7,6 +7,7 @@ Command line tools for Light devices.
 
 import json
 import logging
+import os
 import rich_click as click
 from rich.console import Console
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
@@ -245,17 +246,19 @@ _VERBOSE_LIST_THRESHOLD = 20
     help="Overwrite existing matching tracks.",
 )
 @click.option(
-    "--no-convert-flac",
+    "--no-convert",
     is_flag=True,
     default=False,
-    help="Skip FLAC to MP3 conversion. Conversion is on by default to preserve metadata.",
-)
+    help="Skip pre-converting non-MP3 files. Light's servers do not correctly set "
+    "metadata on non-MP3 files when uploading; pre-converting to MP3 prevents "
+    "that from happening.",
+    )
 @click.option(
     "--verbose",
     "-v",
     is_flag=True,
     default=False,
-    help="Show the full list of affected tracks, even for large batches.",
+    help="Show the full list of affected tracks.",
 )
 @click.option(
     "--recursive",
@@ -265,7 +268,7 @@ _VERBOSE_LIST_THRESHOLD = 20
     help="When SONGS includes a directory, also walk its subdirectories for audio files.",
 )
 def music_upload(
-    light: Light, songs, allow_duplicates, overwrite, no_convert_flac, verbose, recursive
+    light: Light, songs, allow_duplicates, overwrite, no_convert, verbose, recursive
 ):
     """Upload audio files (or directories of them) to your device.
 
@@ -312,8 +315,26 @@ def music_upload(
             for file_path, t in matches.items():
                 console.print(f"  {file_path} -> {t.artist} — {t.title}")
 
+    to_upload_files = [f for f in files if f not in matches] if skip_count else files
+    convert_files = [
+        f for f in to_upload_files if not no_convert and light.music.is_convertible(f)
+    ]
+    if convert_files:
+        console.print(
+            f"{len(convert_files)} FLAC file{'s' if len(convert_files) != 1 else ''} "
+            "will be pre-converted to MP3:"
+        )
+        if not verbose and len(convert_files) > _VERBOSE_LIST_THRESHOLD:
+            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+        else:
+            for file_path in convert_files:
+                base = os.path.splitext(os.path.basename(file_path))[0]
+                console.print(f"  {os.path.basename(file_path)} -> {base}.mp3")
+
     if not click.confirm("Proceed?"):
         return
+
+    console.print()
 
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -328,17 +349,23 @@ def music_upload(
             nonlocal task_id, current_file
             if filename != current_file:
                 if task_id is not None:
-                    progress.update(task_id, completed=100)
+                    progress.remove_task(task_id)
                 current_file = filename
                 task_id = progress.add_task(f"uploading {filename}", total=100)
             progress.update(task_id, completed=int(sent / total * 100))
+
+        def on_convert(file_path: str) -> None:
+            filename = os.path.basename(file_path)
+            mp3_name = os.path.splitext(filename)[0] + ".mp3"
+            console.print(f"[dim]Converting {filename} -> {mp3_name}[/dim]")
 
         light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
             overwrite=overwrite,
-            convert_flac=not no_convert_flac,
+            convert_flac=not no_convert,
             on_progress=on_progress,
+            on_convert=on_convert,
         )
 
 

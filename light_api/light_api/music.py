@@ -349,6 +349,12 @@ class LightMusic:
         return valid, invalid
 
     _MUSIC_EXTENSIONS = {".mp3", ".flac", ".m4a", ".wav"}
+    CONVERTIBLE_EXTENSIONS = {".flac"}
+
+    @classmethod
+    def is_convertible(cls, file_path: str) -> bool:
+        """True if file_path is in a format that gets converted to MP3 before upload."""
+        return os.path.splitext(file_path)[1].lower() in cls.CONVERTIBLE_EXTENSIONS
 
     @classmethod
     def expand_music_paths(cls, paths: list[str], recursive: bool = False) -> list[str]:
@@ -383,6 +389,7 @@ class LightMusic:
         overwrite: bool = False,
         convert_flac: bool = True,
         on_progress: "Callable[[str, int, int], None] | None" = None,
+        on_convert: "Callable[[str], None] | None" = None,
     ) -> None:
         """Upload tracks to device.
 
@@ -393,6 +400,7 @@ class LightMusic:
             overwrite: If True, delete a file's matching existing track (if any) before
                        uploading it. If False (default), files matching an existing track
                        are skipped instead, leaving the existing track untouched.
+            on_convert: Called with a file's path right before it is converted to MP3.
         """
         if overwrite and allow_duplicates:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
@@ -414,12 +422,18 @@ class LightMusic:
 
             tmp_path = None
             try:
-                if convert_flac and file_path.lower().endswith(".flac"):
+                if convert_flac and self.is_convertible(file_path):
                     log.info(f"Converting {file_path} to MP3")
+                    if on_convert:
+                        on_convert(file_path)
                     tmp_path = _flac_to_mp3(file_path)
                     upload_path = tmp_path
+                    server_filename = os.path.splitext(os.path.basename(file_path))[0] + ".mp3"
+                    display_name = f"{server_filename} (converted)"
                 else:
                     upload_path = file_path
+                    server_filename = os.path.basename(file_path)
+                    display_name = server_filename
 
                 create_resp = self._l.call_api(
                     post_api_audios.sync_detailed,
@@ -428,7 +442,7 @@ class LightMusic:
                         data=PostApiAudiosBodyData(
                             type_=PostApiAudiosBodyDataType.AUDIOS,
                             attributes=PostApiAudiosBodyDataAttributes(
-                                filename=os.path.basename(upload_path),
+                                filename=server_filename,
                                 device_tool_id=self._l._device_tool_ids["music"],
                             ),
                         )
@@ -436,7 +450,7 @@ class LightMusic:
                 )
                 created = self._l._ensure_ok(
                     create_resp,
-                    f"Create audio record for {os.path.basename(upload_path)}",
+                    f"Create audio record for {server_filename}",
                     ok_codes=(200, 201),
                     require_parsed=True,
                 )
@@ -449,7 +463,6 @@ class LightMusic:
 
                 content_type = mimetypes.guess_type(upload_path)[0] or "audio/mpeg"
                 total = os.path.getsize(upload_path)
-                filename = os.path.basename(upload_path)
 
                 def _chunks(path: str, total: int, filename: str):
                     sent = 0
@@ -462,7 +475,7 @@ class LightMusic:
 
                 put_resp = httpx.put(
                     presigned_url,
-                    content=_chunks(upload_path, total, filename),
+                    content=_chunks(upload_path, total, display_name),
                     headers={"Content-Type": content_type, "Content-Length": str(total)},
                     timeout=300,
                 )

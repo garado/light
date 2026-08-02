@@ -536,6 +536,66 @@ class TestFilterValidTracks:
         assert invalid == ["/nonexistent/missing.mp3"]
 
 
+class TestIsConvertible:
+    def test_flac_is_convertible_case_insensitive(self):
+        assert LightMusic.is_convertible("song.flac") is True
+        assert LightMusic.is_convertible("song.FLAC") is True
+
+    def test_other_formats_are_not_convertible(self):
+        assert LightMusic.is_convertible("song.mp3") is False
+        assert LightMusic.is_convertible("song.wav") is False
+        assert LightMusic.is_convertible("song.m4a") is False
+
+
+class TestUploadTracksOnConvert:
+    def test_on_convert_called_with_path_before_conversion(self, tmp_path):
+        light = make_light()
+        light.music._tracks = []
+        light._device_tool_ids = {"music": "fake-device-tool-id"}
+
+        flac_file = tmp_path / "song.flac"
+        flac_file.write_bytes(b"")
+
+        def fake_convert(path):
+            out = str(tmp_path / "converted.mp3")
+            open(out, "wb").close()
+            return out
+
+        calls = []
+
+        with patch("light_api.music._flac_to_mp3", side_effect=fake_convert) as mock_convert, \
+             patch.object(light, "call_api", side_effect=RuntimeError("stop after convert")):
+            with pytest.raises(RuntimeError, match="stop after convert"):
+                light.music.upload_tracks(
+                    [str(flac_file)],
+                    allow_duplicates=True,
+                    on_convert=calls.append,
+                )
+
+        assert calls == [str(flac_file)]
+        mock_convert.assert_called_once_with(str(flac_file))
+
+    def test_on_convert_not_called_for_mp3(self, tmp_path):
+        light = make_light()
+        light.music._tracks = []
+        light._device_tool_ids = {"music": "fake-device-tool-id"}
+
+        mp3_file = tmp_path / "song.mp3"
+        mp3_file.write_bytes(b"")
+
+        calls = []
+
+        with patch.object(light, "call_api", side_effect=RuntimeError("stop after convert check")):
+            with pytest.raises(RuntimeError):
+                light.music.upload_tracks(
+                    [str(mp3_file)],
+                    allow_duplicates=True,
+                    on_convert=calls.append,
+                )
+
+        assert calls == []
+
+
 def make_note(overrides: dict | None = None) -> LightNote:
     data = dict(id="note-1", file_id="file-1", note_type="text", title="old title", updated_at="2026-01-01T00:00:00")
     if overrides:
