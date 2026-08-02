@@ -363,6 +363,81 @@ class TestGetTracks:
             light.music.get_tracks()
 
 
+class TestDeleteTracksPredicateAndRegex:
+    def _light_with_tracks(self):
+        light = make_light()
+        light.music._tracks = [
+            LightTrack(
+                playlist_item_id="1", audio_id="a1",
+                title="Playing God", artist="Paramore", album="Riot!",
+            ),
+            LightTrack(
+                playlist_item_id="2", audio_id="a2",
+                title="Playing God", artist="Polyphia", album="New Levels New Devils",
+            ),
+            LightTrack(
+                playlist_item_id="3", audio_id="a3",
+                title="Live at Wembley", artist="Queen", album="Live Magic",
+            ),
+        ]
+        return light
+
+    def _mock_delete(self):
+        return patch(
+            "light_api.music.delete_api_audios_audio_id.sync_detailed",
+            return_value=SimpleNamespace(status_code=204),
+        )
+
+    def test_predicate_only_deletes_matching_tracks(self):
+        light = self._light_with_tracks()
+        with self._mock_delete() as mock_delete:
+            light.music.delete_tracks_predicate(lambda t: t.audio_id == "a1")
+
+        deleted_ids = {call.kwargs["audio_id"] for call in mock_delete.call_args_list}
+        assert deleted_ids == {"a1"}
+
+    def test_predicate_calls_nothing_when_no_matches(self):
+        light = self._light_with_tracks()
+        with self._mock_delete() as mock_delete:
+            light.music.delete_tracks_predicate(lambda t: False)
+
+        mock_delete.assert_not_called()
+
+    def test_title_regex_deletes_all_cross_artist_matches(self):
+        """Regex matching is title-only by design; unlike exact-match deletion,
+        it can span multiple artists and that's the caller's responsibility."""
+        light = self._light_with_tracks()
+        with self._mock_delete() as mock_delete:
+            light.music.delete_tracks_by_title_regex("^Playing God$")
+
+        deleted_ids = {call.kwargs["audio_id"] for call in mock_delete.call_args_list}
+        assert deleted_ids == {"a1", "a2"}
+
+    def test_title_regex_uses_match_not_search(self):
+        """re.match anchors at the start of the string, so a pattern that would
+        only match mid-string must not delete anything."""
+        light = self._light_with_tracks()
+        with self._mock_delete() as mock_delete:
+            light.music.delete_tracks_by_title_regex("God$")
+
+        mock_delete.assert_not_called()
+
+    def test_artist_regex_deletes_matching_artist_only(self):
+        light = self._light_with_tracks()
+        with self._mock_delete() as mock_delete:
+            light.music.delete_tracks_by_artist_regex("^Queen$")
+
+        deleted_ids = {call.kwargs["audio_id"] for call in mock_delete.call_args_list}
+        assert deleted_ids == {"a3"}
+
+    def test_artist_regex_no_match_deletes_nothing(self):
+        light = self._light_with_tracks()
+        with self._mock_delete() as mock_delete:
+            light.music.delete_tracks_by_artist_regex("^Nonexistent$")
+
+        mock_delete.assert_not_called()
+
+
 class TestFindMatchingTrack:
     def test_ignores_cross_artist_title_collision(self):
         """Regression test for #18: "Playing God" by Polyphia must not match an
