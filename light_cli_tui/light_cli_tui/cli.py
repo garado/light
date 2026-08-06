@@ -180,9 +180,13 @@ def podcasts_add(light: Light, rss_feed_url):
     `light podcasts add https://feeds.simplecast.com/FO6kxYGj`
     """
     p = light.podcast.add_podcast(rss_feed_url)
-    console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
-    if p.publisher:
-        console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+
+    def render_human_readable():
+        console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
+        if p.publisher:
+            console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+
+    render(p, render_human_readable)
 
 
 @podcasts.command("list")
