@@ -24,7 +24,6 @@ from light_cli_tui.interactive import (
     fuzzy_pick_interactive,
 )
 from light_cli_tui.output import render, render_error
-from light_cli_tui.tui import LightConfig, run_tui
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -871,6 +870,14 @@ def tui(ctx):
     A full-screen interface for browsing and managing your music library
     with vim-style keybindings.
     """
+    try:
+        from light_cli_tui.tui import LightConfig, run_tui
+    except ImportError:
+        raise click.UsageError(
+            "The TUI requires extra dependencies. Install with: "
+            "pip install 'light-phone-cli-tui[tui]'"
+        )
+
     obj = ctx.obj or {}
     run_tui(
         LightConfig(

@@ -445,10 +445,14 @@ dependencies = [
     { name = "click" },
     { name = "inquirerpy" },
     { name = "light-phone-api" },
-    { name = "pyperclip" },
     { name = "rapidfuzz" },
     { name = "rich" },
     { name = "rich-click" },
+]
+
+[package.optional-dependencies]
+tui = [
+    { name = "pyperclip" },
     { name = "textual" },
 ]
 
@@ -457,12 +461,13 @@ requires-dist = [
     { name = "click" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
     { name = "light-phone-api", editable = "light_api" },
-    { name = "pyperclip" },
+    { name = "pyperclip", marker = "extra == 'tui'" },
     { name = "rapidfuzz", specifier = ">=3.14.5" },
     { name = "rich" },
     { name = "rich-click" },
-    { name = "textual" },
+    { name = "textual", marker = "extra == 'tui'" },
 ]
+provides-extras = ["tui"]
 
 [[package]]
 name = "linkify-it-py"

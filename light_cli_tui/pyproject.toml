@@ -9,12 +9,13 @@ dependencies = [
     "click",
     "rich_click",
     "rich",
-    "textual",
-    "pyperclip",
     "light-phone-api",
     "rapidfuzz>=3.14.5",
     "inquirerpy>=0.3.4",
 ]
+
+[project.optional-dependencies]
+tui = ["textual", "pyperclip"]
 
 [project.scripts]
 light = "light_cli_tui.cli:cli"
