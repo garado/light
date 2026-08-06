@@ -64,7 +64,6 @@
           textual
           httpx
           attrs
-          questionary
           rapidfuzz
         ]))
         uv
