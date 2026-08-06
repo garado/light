@@ -424,8 +424,8 @@ def music_delete(
     """Delete tracks by fuzzy search, or by regex pattern.
 
     Each SONGS argument is fuzzy-matched against every track's title, artist,
-    and album. By default, the single best match per query is auto-selected;
-    pass --interactive to pick matches by hand instead.
+    and album. By default, the top-scoring match(es) per query are auto-selected
+    (ties may select multiple); pass --interactive to pick matches by hand instead.
 
     If more than one of --title, --artist, --album regex patterns are given, tracks must match all of them.
 
