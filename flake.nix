@@ -36,6 +36,8 @@
         textual
         pyperclip
         light-phone-api
+        inquirerpy
+        rapidfuzz
       ];
     };
 
@@ -62,6 +64,8 @@
           textual
           httpx
           attrs
+          inquirerpy
+          rapidfuzz
         ]))
         uv
         pyright

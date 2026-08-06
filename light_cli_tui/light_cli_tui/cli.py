@@ -18,6 +18,11 @@ from light_api.client import Light
 from light_api.music import SortMode
 from light_api.tools import ToolName
 from light_api import with_light
+from light_cli_tui.interactive import (
+    confirm_selection_with_repick,
+    fuzzy_pick_best,
+    fuzzy_pick_interactive,
+)
 from light_cli_tui.output import render, render_error
 from light_cli_tui.tui import LightConfig, run_tui
 
@@ -401,16 +406,34 @@ def music_delete_all(light: Light):
 @click.option(
     "--album", "-b", "album_regex", help="Delete tracks whose album matches this regex pattern."
 )
-def music_delete(light: Light, songs, title_regex, artist_regex, album_regex):
-    """Delete tracks by title, or by regex pattern.
+@click.option(
+    "--interactive",
+    "-i",
+    is_flag=True,
+    default=False,
+    help="Immediately open interactive deletion menu."
+)
+def music_delete(
+    light: Light,
+    songs: tuple[str, ...],
+    title_regex: str | None,
+    artist_regex: str | None,
+    album_regex: str | None,
+    interactive: bool,
+):
+    """Delete tracks by fuzzy search, or by regex pattern.
 
-    Uses exact title matching. Run `light music list` to see track titles.
+    Each SONGS argument is fuzzy-matched against every track's title, artist,
+    and album. By default, the top-scoring match(es) per query are auto-selected
+    (ties may select multiple); pass --interactive to pick matches by hand instead.
 
     If more than one of --title, --artist, --album regex patterns are given, tracks must match all of them.
 
     **Examples:**
 
-    `light music delete "Song Title" "Another Song"`
+    `light music delete "Playing God"`
+
+    `light music delete -i "Playing God"`
 
     `light music delete --title '^Live '`
 
@@ -418,15 +441,28 @@ def music_delete(light: Light, songs, title_regex, artist_regex, album_regex):
 
     `light music delete --album '(Deluxe|Remastered)'`
     """
+    songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
+
     if songs and regex_given:
         raise click.UsageError(
             "Provide either song titles or --title/--artist/--album, not both."
         )
+
     if not songs and not regex_given:
         raise click.UsageError("Provide song titles, or one of --title/--artist/--album.")
 
     tracks = light.music.get_tracks()
+
+    def repick():
+        return fuzzy_pick_interactive(
+            songs,
+            tracks,
+            fields=lambda t: (t.title, t.artist, t.album),
+            label=lambda t: f"{t.artist} — {t.album} — {t.title}",
+            id_key=lambda t: t.audio_id,
+            console=console,
+        )
 
     if regex_given:
         try:
@@ -444,18 +480,42 @@ def music_delete(light: Light, songs, title_regex, artist_regex, album_regex):
             and (album_pattern is None or album_pattern.match(t.album))
         ]
     else:
-        titles = list(songs)
-        to_delete = [t for t in tracks if t.title in set(titles)]
+        if interactive:
+            selected = repick()
+        else:
+            selected = fuzzy_pick_best(
+                songs,
+                tracks,
+                fields=lambda t: (t.title, t.artist, t.album),
+                id_key=lambda t: t.audio_id,
+                console=console,
+            )
+        if selected is None:
+            console.print("[yellow]Aborted.[/yellow]")
+            return
+        to_delete = list(selected.values())
 
     if not to_delete:
         console.print("[yellow]No matching tracks.[/yellow]")
         return
 
-    console.print(f"Tracks to delete ({len(to_delete)}):")
-    for t in to_delete:
-        console.print(f"  {t.artist} — {t.title}")
-    if not click.confirm("Proceed?"):
-        return
+    if regex_given:
+        console.print(f"Tracks to delete ({len(to_delete)}):")
+        for t in to_delete:
+            console.print(f"  {t.artist} — {t.title}")
+        if not click.confirm("Proceed?"):
+            return
+    else:
+        result = confirm_selection_with_repick(
+            {t.audio_id: t for t in to_delete},
+            label=lambda t: f"{t.artist} — {t.album} - {t.title}",
+            header="Tracks to delete",
+            repick=repick,
+            console=console,
+        )
+        if result is None:
+            return
+        to_delete = result
 
     audio_ids = {t.audio_id for t in to_delete}
     light.music.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)

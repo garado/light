@@ -12,6 +12,8 @@ dependencies = [
     "textual",
     "pyperclip",
     "light-phone-api",
+    "rapidfuzz>=3.14.5",
+    "inquirerpy>=0.3.4",
 ]
 
 [project.scripts]
