@@ -64,6 +64,7 @@
           textual
           httpx
           attrs
+          inquirerpy
           rapidfuzz
         ]))
         uv
