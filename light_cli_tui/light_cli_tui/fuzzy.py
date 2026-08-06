@@ -21,6 +21,9 @@ def fuzzy_score(
         The match score, or None if nothing cleared the bar.
     """
     query_lower = query.lower()
+    if not query_lower.strip():
+        return None
+
     if any(query_lower in field.lower() for field in fields):
         return 100.0
 

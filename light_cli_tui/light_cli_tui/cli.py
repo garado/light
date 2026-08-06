@@ -413,7 +413,14 @@ def music_delete_all(light: Light):
     default=False,
     help="Immediately open interactive deletion menu."
 )
-def music_delete(light: Light, songs, title_regex, artist_regex, album_regex, interactive):
+def music_delete(
+    light: Light,
+    songs: tuple[str, ...],
+    title_regex: str | None,
+    artist_regex: str | None,
+    album_regex: str | None,
+    interactive: bool,
+):
     """Delete tracks by fuzzy search, or by regex pattern.
 
     Each SONGS argument is fuzzy-matched against every track's title, artist,
@@ -434,11 +441,14 @@ def music_delete(light: Light, songs, title_regex, artist_regex, album_regex, in
 
     `light music delete --album '(Deluxe|Remastered)'`
     """
+    songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
+
     if songs and regex_given:
         raise click.UsageError(
             "Provide either song titles or --title/--artist/--album, not both."
         )
+
     if not songs and not regex_given:
         raise click.UsageError("Provide song titles, or one of --title/--artist/--album.")
 
