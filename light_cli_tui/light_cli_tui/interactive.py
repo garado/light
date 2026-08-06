@@ -123,7 +123,7 @@ def confirm_selection_with_repick(
             return items
 
         repicked = repick()
-        if not repicked:
+        if repicked is None:
             console.print("[yellow]Aborted.[/yellow]")
             return None
         selected = repicked
