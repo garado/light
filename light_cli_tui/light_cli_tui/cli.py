@@ -23,7 +23,7 @@ from light_cli_tui.interactive import (
     fuzzy_pick_best,
     fuzzy_pick_interactive,
 )
-from light_cli_tui.output import render, render_error
+from light_cli_tui.output import render, render_error, resolve_destructive_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -34,6 +34,19 @@ click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
+
+
+def destructive_options(dry_run_help: str):
+    """Bundle the shared --yes/--dry-run options for a destructive command."""
+
+    def decorator(f):
+        f = click.option("--dry-run", is_flag=True, default=False, help=dry_run_help)(f)
+        f = click.option(
+            "--yes", "-y", is_flag=True, default=False, help="Skip confirmation prompt."
+        )(f)
+        return f
+
+    return decorator
 
 
 class JsonAwareGroup(click.RichGroup):
@@ -216,7 +229,8 @@ def podcasts_list(light: Light):
 @podcasts.command("delete")
 @with_light
 @click.argument("title")
-def podcasts_delete(light: Light, title):
+@destructive_options("Show which podcasts would be unfollowed, without unfollowing them.")
+def podcasts_delete(light: Light, title, yes, dry_run):
     """Unfollow a podcast by title.
 
     Uses exact title matching. Run `light podcasts list` to see titles.
@@ -224,16 +238,29 @@ def podcasts_delete(light: Light, title):
     podcasts = light.podcast.get_podcasts()
     matches = [p for p in podcasts if p.title == title]
 
+    def render_human_readable():
+        if not matches:
+            console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
+            return
+        for p in matches:
+            console.print(f"  {p.title}")
+
     if not matches:
-        console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
+        render(matches, render_human_readable)
         return
 
-    for p in matches:
-        console.print(f"  {p.title}")
-    if not click.confirm("Unfollow?"):
+    proceed = resolve_destructive_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        confirm_message="Unfollow?",
+    )
+    if not proceed:
         return
 
     light.podcast.delete_podcast_by_title(title)
+    render(matches, render_human_readable)
 
 
 # -- Music commands -------------------------------------------------------------
