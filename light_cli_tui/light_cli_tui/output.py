@@ -33,7 +33,7 @@ def resolve_destructive_action(
         raise click.UsageError("--yes and --dry-run are mutually exclusive.")
 
     if dry_run:
-        if not is_json_mode():
+        if not is_json_mode() and preview_header:
             click.secho(preview_header, bold=True)
         render(data, render_human_readable)
         return False
