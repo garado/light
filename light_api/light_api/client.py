@@ -197,7 +197,11 @@ class Light:
 
         try:
             raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
-        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+        except (
+            keyring.errors.NoKeyringError,
+            keyring.errors.KeyringLocked,
+            keyring.errors.InitError,
+        ) as e:
             log.debug(f"Keyring error: {e}")
             return False
 
@@ -230,7 +234,11 @@ class Light:
                     }
                 ),
             )
-        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+        except (
+            keyring.errors.NoKeyringError,
+            keyring.errors.KeyringLocked,
+            keyring.errors.InitError,
+        ) as e:
             log.warning(f"Keyring error: {e}")
 
     def clear_cache(self) -> None:
@@ -242,7 +250,11 @@ class Light:
             keyring.delete_password(KEYRING_SERVICE, KEYRING_USER)
         except keyring.errors.PasswordDeleteError:
             log.debug("No cached session to clear")
-        except (keyring.errors.NoKeyringError, keyring.errors.KeyringLocked) as e:
+        except (
+            keyring.errors.NoKeyringError,
+            keyring.errors.KeyringLocked,
+            keyring.errors.InitError,
+        ) as e:
             log.warning(f"Keyring error: {e}")
 
         self._api_token = None
