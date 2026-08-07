@@ -270,6 +270,7 @@ def podcasts_delete(light: Light, title, ids, yes, dry_run):
         render_human_readable,
         yes=yes,
         dry_run=dry_run,
+        preview_header="This will unfollow the following podcast(s):",
         confirm_message="Unfollow?",
     )
     if not proceed:

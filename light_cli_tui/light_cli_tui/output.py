@@ -16,14 +16,15 @@ def resolve_destructive_action(
     *,
     yes: bool,
     dry_run: bool,
+    preview_header: str,
     confirm_message: str,
 ) -> bool:
     """Handle the shared --json/--yes/--dry-run/confirm flow for destructive commands.
 
     On `--dry-run`, renders `data` as the preview and tells the caller not to proceed.
     Otherwise, resolves confirmation (skipped via `--yes`, or via an interactive prompt)
-    and tells the caller whether to proceed with the action. `--json` requires `--yes`
-    or `--dry-run` since an interactive prompt can't be answered by a JSON consumer.
+    and tells the caller whether to proceed with the action. `--json` requires either
+    `--yes` or `--dry-run`.
 
     Returns:
         True if the caller should proceed with the action, False otherwise.
@@ -32,6 +33,8 @@ def resolve_destructive_action(
         raise click.UsageError("--yes and --dry-run are mutually exclusive.")
 
     if dry_run:
+        if not is_json_mode():
+            click.secho(preview_header, bold=True)
         render(data, render_human_readable)
         return False
 
@@ -40,6 +43,7 @@ def resolve_destructive_action(
             raise click.UsageError(
                 "--json requires --yes or --dry-run for destructive commands."
             )
+        click.secho(preview_header, bold=True)
         render_human_readable()
         if not click.confirm(confirm_message):
             return False
