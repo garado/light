@@ -237,6 +237,24 @@ def podcasts_delete(light: Light, title):
 _VERBOSE_LIST_THRESHOLD = 20
 
 
+def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
+    """Keep tracks whose title/artist/album all match their given regex pattern."""
+    try:
+        title_pattern = re.compile(title_regex) if title_regex else None
+        artist_pattern = re.compile(artist_regex) if artist_regex else None
+        album_pattern = re.compile(album_regex) if album_regex else None
+    except re.error as e:
+        raise click.UsageError(f"Invalid regex: {e}")
+
+    return [
+        t
+        for t in tracks
+        if (title_pattern is None or title_pattern.match(t.title))
+        and (artist_pattern is None or artist_pattern.match(t.artist))
+        and (album_pattern is None or album_pattern.match(t.album))
+    ]
+
+
 @music.command("upload")
 @with_light
 @click.argument("songs", nargs=-1, required=True)
@@ -464,20 +482,7 @@ def music_delete(
         )
 
     if regex_given:
-        try:
-            title_pattern = re.compile(title_regex) if title_regex else None
-            artist_pattern = re.compile(artist_regex) if artist_regex else None
-            album_pattern = re.compile(album_regex) if album_regex else None
-        except re.error as e:
-            raise click.UsageError(f"Invalid regex: {e}")
-
-        to_delete = [
-            t
-            for t in tracks
-            if (title_pattern is None or title_pattern.match(t.title))
-            and (artist_pattern is None or artist_pattern.match(t.artist))
-            and (album_pattern is None or album_pattern.match(t.album))
-        ]
+        to_delete = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
     else:
         if interactive:
             selected = repick()
