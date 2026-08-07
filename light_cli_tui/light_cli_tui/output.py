@@ -28,6 +28,9 @@ def resolve_destructive_action(
     Returns:
         True if the caller should proceed with the action, False otherwise.
     """
+    if yes and dry_run:
+        raise click.UsageError("--yes and --dry-run are mutually exclusive.")
+
     if dry_run:
         render(data, render_human_readable)
         return False
