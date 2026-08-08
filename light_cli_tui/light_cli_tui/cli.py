@@ -597,9 +597,36 @@ def music_update(light: Light, title, new_title, new_artist, new_album):
 
 @music.command("list")
 @with_light
-def music_list(light: Light):
-    """List all tracks on your device."""
+@click.option(
+    "--title", "-t", "title_regex", help="Only show tracks whose title matches this regex pattern."
+)
+@click.option(
+    "--artist", "-a", "artist_regex", help="Only show tracks whose artist matches this regex pattern."
+)
+@click.option(
+    "--album", "-b", "album_regex", help="Only show tracks whose album matches this regex pattern."
+)
+def music_list(
+    light: Light,
+    title_regex: str | None,
+    artist_regex: str | None,
+    album_regex: str | None,
+):
+    """List all tracks on your device.
+
+    If more than one of --title, --artist, --album regex patterns are given,
+    tracks must match all of them.
+
+    **Examples:**
+
+    `light music list --title '^Live '`
+
+    `light music list --artist '^The '`
+
+    `light music list --album '(Deluxe|Remastered)'`
+    """
     tracks = light.music.get_tracks()
+    tracks = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
 
     def render_human_readable():
         table = Table(show_header=True)
