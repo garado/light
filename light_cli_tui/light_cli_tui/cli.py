@@ -190,21 +190,43 @@ def podcasts_list(light: Light):
 
 @podcasts.command("delete", help=_help("podcasts_delete"))
 @with_light
-@click.argument("title")
-def podcasts_delete(light: Light, title):
-    podcasts = light.podcast.get_podcasts()
-    matches = [p for p in podcasts if p.title == title]
+@click.argument("title", required=False)
+@click.option(
+    "--id",
+    "ids",
+    default=None,
+    help="Unfollow by exact followed_podcast_id; comma-separated for bulk deletes.",
+)
+def podcasts_delete(light: Light, title, ids):
+    if title and ids:
+        raise click.UsageError("Provide either TITLE or --id, not both.")
+    if not title and not ids:
+        raise click.UsageError("Provide TITLE or --id.")
 
-    if not matches:
-        console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
-        return
+    podcasts = light.podcast.get_podcasts()
+
+    if ids:
+        id_list = [i.strip() for i in ids.split(",")]
+        if any(not i for i in id_list):
+            raise click.UsageError(f"Could not parse --id value: {ids!r}")
+        by_id = {p.followed_podcast_id: p for p in podcasts}
+        missing = [i for i in id_list if i not in by_id]
+        if missing:
+            raise click.UsageError(f"No podcast(s) found with id: {', '.join(missing)}")
+        matches = [by_id[i] for i in id_list]
+    else:
+        matches = [p for p in podcasts if p.title == title]
+        if not matches:
+            console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
+            return
 
     for p in matches:
         console.print(f"  {p.title}")
     if not click.confirm("Unfollow?"):
         return
 
-    light.podcast.delete_podcast_by_title(title)
+    for p in matches:
+        light.podcast.delete_podcast_by_id(p.followed_podcast_id)
 
 
 # -- Music commands -------------------------------------------------------------
