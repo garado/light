@@ -28,7 +28,7 @@ from light_cli_tui.interactive import (
     prompt_batch_edit,
     prompt_track_edit,
 )
-from light_cli_tui.output import render, render_error
+from light_cli_tui.output import render, render_error, resolve_destructive_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -46,6 +46,19 @@ _HELP_DIR = Path(__file__).parent / "help"
 def _help(name: str) -> str:
     """Load a command's --help body from help/<name>.md."""
     return (_HELP_DIR / f"{name}.md").read_text()
+
+
+def destructive_options(dry_run_help: str):
+    """Bundle the shared --yes/--dry-run options for a destructive command."""
+
+    def decorator(f):
+        f = click.option("--dry-run", is_flag=True, default=False, help=dry_run_help)(f)
+        f = click.option(
+            "--yes", "-y", is_flag=True, default=False, help="Skip confirmation prompt."
+        )(f)
+        return f
+
+    return decorator
 
 
 class JsonAwareGroup(click.RichGroup):
