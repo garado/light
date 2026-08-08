@@ -51,6 +51,23 @@ def _help(name: str) -> str:
 class JsonAwareGroup(click.RichGroup):
     """Wrapper for command execution adding JSON output support for failures."""
 
+    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
+        """Let this group's boolean flags (e.g. --json) appear anywhere on the
+        command line, not just before the subcommand name.
+
+        This means you can do e.g. `light music list --json` instead of being restricted
+        to `light --json music list`.
+        """
+        flag_opts = {
+            opt
+            for param in self.params
+            if isinstance(param, click.Option) and param.is_flag
+            for opt in param.opts
+        }
+        flags = [a for a in args if a in flag_opts]
+        rest = [a for a in args if a not in flag_opts]
+        return super().parse_args(ctx, flags + rest)
+
     def invoke(self, ctx: click.Context):
         try:
             return super().invoke(ctx)
