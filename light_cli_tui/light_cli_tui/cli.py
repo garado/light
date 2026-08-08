@@ -227,7 +227,8 @@ def podcasts_list(light: Light):
     default=None,
     help="Unfollow by exact followed_podcast_id; comma-separated for bulk deletes.",
 )
-def podcasts_delete(light: Light, title, ids):
+@destructive_options("Show which podcasts would be unfollowed without unfollowing them.")
+def podcasts_delete(light: Light, title, ids, yes, dry_run):
     if title and ids:
         raise click.UsageError("Provide either TITLE or --id, not both.")
     if not title and not ids:
@@ -246,17 +247,32 @@ def podcasts_delete(light: Light, title, ids):
         matches = [by_id[i] for i in id_list]
     else:
         matches = [p for p in podcasts if p.title == title]
+
+    def render_human_readable():
         if not matches:
             console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
             return
+        for p in matches:
+            console.print(f"  {p.title}")
 
-    for p in matches:
-        console.print(f"  {p.title}")
-    if not click.confirm("Unfollow?"):
+    if not matches:
+        render(matches, render_human_readable)
+        return
+
+    proceed = resolve_destructive_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will unfollow the following podcast(s):",
+        confirm_message="Unfollow?",
+    )
+    if not proceed:
         return
 
     for p in matches:
         light.podcast.delete_podcast_by_id(p.followed_podcast_id)
+    render(matches, render_human_readable)
 
 
 # -- Music commands -------------------------------------------------------------
