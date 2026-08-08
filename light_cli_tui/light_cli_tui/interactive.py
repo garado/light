@@ -64,6 +64,104 @@ def fuzzy_pick_interactive(
     return selected
 
 
+def pick_interactive(
+    items: Iterable[T],
+    label: Callable[[T], str],
+    id_key: Callable[[T], Hashable],
+    console: Console,
+    message: str = "Select items:",
+) -> dict[Hashable, T] | None:
+    """Prompt the user to pick from a fixed, already-filtered list via a checkbox list.
+
+    Returns:
+        Selected items keyed by `id_key`, or None if the user aborted.
+    """
+    items = list(items)
+    truncated = len(items) > MAX_FUZZY_CANDIDATES
+    candidates = items[:MAX_FUZZY_CANDIDATES]
+    if truncated:
+        console.print(
+            f"[dim]{len(items)} tracks matched; showing top {MAX_FUZZY_CANDIDATES}. "
+            "Narrow your search to see more.[/dim]"
+        )
+
+    lookup = {id_key(t): t for t in candidates}
+
+    picked_ids = inquirer.checkbox(
+        message=message,
+        choices=[Choice(value=id_key(t), name=label(t), enabled=True) for t in candidates],
+        raise_keyboard_interrupt=False,
+        mandatory=False,
+        long_instruction="(space to toggle, enter to confirm, ctrl-c to cancel)",
+    ).execute()
+
+    if picked_ids is None:
+        return None
+
+    return {pid: lookup[pid] for pid in picked_ids}
+
+
+def prompt_track_edit(label: str, title: str, artist: str, album: str) -> tuple[str, str, str] | None:
+    """Prompt for a track's new title/artist/album, prefilled with its current values.
+
+    Returns:
+        (title, artist, album) with the edited values, or None if the user cancelled.
+    """
+    click.echo(f"Editing: {label}")
+
+    new_title = inquirer.text(
+        message="Title:", default=title, raise_keyboard_interrupt=False, mandatory=False
+    ).execute()
+    if new_title is None:
+        return None
+
+    new_artist = inquirer.text(
+        message="Artist:", default=artist, raise_keyboard_interrupt=False, mandatory=False
+    ).execute()
+    if new_artist is None:
+        return None
+
+    new_album = inquirer.text(
+        message="Album:", default=album, raise_keyboard_interrupt=False, mandatory=False
+    ).execute()
+    if new_album is None:
+        return None
+
+    return new_title, new_artist, new_album
+
+
+def prompt_batch_edit() -> tuple[str | None, str | None, str | None] | None:
+    """Prompt for new title/artist/album to apply to multiple tracks at once.
+
+    Fields are left blank by default; a blank field means "leave unchanged" on
+    every track, since tracks in a batch generally don't share the same values.
+
+    Returns:
+        (title, artist, album), each None if left blank, or None if cancelled.
+    """
+    click.echo("Batch editing: leave a field blank to leave it unchanged.")
+
+    new_title = inquirer.text(
+        message="Title:", default="", raise_keyboard_interrupt=False, mandatory=False
+    ).execute()
+    if new_title is None:
+        return None
+
+    new_artist = inquirer.text(
+        message="Artist:", default="", raise_keyboard_interrupt=False, mandatory=False
+    ).execute()
+    if new_artist is None:
+        return None
+
+    new_album = inquirer.text(
+        message="Album:", default="", raise_keyboard_interrupt=False, mandatory=False
+    ).execute()
+    if new_album is None:
+        return None
+
+    return (new_title or None, new_artist or None, new_album or None)
+
+
 def fuzzy_pick_best(
     queries: Iterable[str],
     items: Iterable[T],
