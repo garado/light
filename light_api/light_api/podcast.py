@@ -102,11 +102,15 @@ class LightPodcasts:
             log.info(f"No podcast found with title: {title!r}")
             return
         for p in matches:
-            resp = delete_api_followed_podcasts_followed_podcast_id.sync_detailed(
-                followed_podcast_id=p.followed_podcast_id,
-                client=self._l._api_client,
-            )
-            self._l._ensure_ok(resp, "Delete podcast", ok_codes=range(200, 300))
+            self.delete_podcast_by_id(p.followed_podcast_id)
+
+    def delete_podcast_by_id(self, followed_podcast_id: str) -> None:
+        """Unfollow a podcast by its followed_podcast_id (see `get_podcasts`)."""
+        resp = delete_api_followed_podcasts_followed_podcast_id.sync_detailed(
+            followed_podcast_id=followed_podcast_id,
+            client=self._l._api_client,
+        )
+        self._l._ensure_ok(resp, "Delete podcast", ok_codes=range(200, 300))
 
     def add_podcast(self, rss_feed_url: str) -> LightPodcast:
         """Add a podcast to the device by RSS feed URL.
