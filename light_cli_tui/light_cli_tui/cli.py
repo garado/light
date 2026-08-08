@@ -28,7 +28,7 @@ from light_cli_tui.interactive import (
     prompt_batch_edit,
     prompt_track_edit,
 )
-from light_cli_tui.output import render, render_error, resolve_destructive_action
+from light_cli_tui.output import is_json_mode, render, render_error, resolve_destructive_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -590,14 +590,7 @@ def music_sort(light: Light, field, order):
 @click.option("--new-title", default=None, help="New track title.")
 @click.option("--new-artist", default=None, help="New artist name.")
 @click.option("--new-album", default=None, help="New album name.")
-@click.option(
-    "--yes",
-    "-y",
-    is_flag=True,
-    default=False,
-    help="Skip the picker and batch/individual prompt. Requires --new-title/"
-    "--new-artist/--new-album.",
-)
+@destructive_options("Show what would be updated, without updating anything.")
 def music_update(
     light: Light,
     songs,
@@ -609,6 +602,7 @@ def music_update(
     new_artist,
     new_album,
     yes,
+    dry_run,
 ):
     songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
@@ -632,9 +626,14 @@ def music_update(
         )
 
     flags_given = new_title or new_artist or new_album
-    if yes and not flags_given:
+    if (yes or dry_run) and not flags_given:
         raise click.UsageError(
-            "--yes requires at least one of --new-title/--new-artist/--new-album."
+            "--yes/--dry-run require at least one of --new-title/--new-artist/--new-album."
+        )
+    if is_json_mode() and not flags_given:
+        raise click.UsageError(
+            "--json requires at least one of --new-title/--new-artist/--new-album "
+            "(interactive editing isn't scriptable)."
         )
 
     tracks = light.music.get_tracks()
@@ -660,7 +659,7 @@ def music_update(
     elif regex_given:
         candidates = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
         if not candidates:
-            console.print("[yellow]No matching tracks.[/yellow]")
+            render([], lambda: console.print("[yellow]No matching tracks.[/yellow]"))
             return
         to_update = pick_from(candidates)
     else:
@@ -688,12 +687,13 @@ def music_update(
         console.print("[yellow]Aborted.[/yellow]")
         return
     if not to_update:
-        console.print("[yellow]No matching tracks.[/yellow]")
+        render([], lambda: console.print("[yellow]No matching tracks.[/yellow]"))
         return
 
     if flags_given:
         batch_values = (new_title, new_artist, new_album)
-        if not yes:
+
+        def render_preview():
             console.print(f"[bold]This will update {len(to_update)} track(s):[/bold]")
             for track in to_update:
                 console.print(f"  [dim]{track.artist} — {track.album} — {track.title}[/dim]")
@@ -707,9 +707,31 @@ def music_update(
                 changes.append(f"Album -> [green]{new_album}[/green]")
             console.print("  " + ", ".join(changes))
 
-            if not click.confirm("Proceed?"):
-                console.print("[yellow]Aborted.[/yellow]")
-                return
+        preview_data = {
+            "tracks": [
+                {
+                    "audio_id": t.audio_id,
+                    "artist": t.artist,
+                    "album": t.album,
+                    "title": t.title,
+                }
+                for t in to_update
+            ],
+            "new_title": new_title,
+            "new_artist": new_artist,
+            "new_album": new_album,
+        }
+
+        proceed = resolve_destructive_action(
+            preview_data,
+            render_preview,
+            yes=yes,
+            dry_run=dry_run,
+            preview_header="",
+            confirm_message="Proceed?",
+        )
+        if not proceed:
+            return
     elif len(to_update) > 1:
         choice = click.prompt(
             f"{len(to_update)} tracks selected. [b]atch edit (same values for all) "
@@ -731,6 +753,7 @@ def music_update(
     else:
         batch_values = None
 
+    updated = []
     for track in to_update:
         if batch_values is not None:
             title, artist, album = batch_values
@@ -750,7 +773,18 @@ def music_update(
                 continue
 
         light.music.update_track_metadata(track.audio_id, title=title, artist=artist, album=album)
-        console.print(f"[green]Updated:[/green] {track.artist} — {track.title}")
+        updated.append(
+            {"audio_id": track.audio_id, "title": title, "artist": artist, "album": album}
+        )
+
+    def render_updated():
+        if not updated:
+            console.print("[yellow]No changes applied.[/yellow]")
+            return
+        for u in updated:
+            console.print(f"[green]Updated:[/green] {u['artist']} — {u['title']}")
+
+    render(updated, render_updated)
 
 
 @music.command("list", help=_help("music_list"))
