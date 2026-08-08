@@ -22,6 +22,9 @@ from light_cli_tui.interactive import (
     confirm_selection_with_repick,
     fuzzy_pick_best,
     fuzzy_pick_interactive,
+    pick_interactive,
+    prompt_batch_edit,
+    prompt_track_edit,
 )
 from light_cli_tui.output import render, render_error
 
@@ -569,30 +572,135 @@ def music_sort(light: Light, field, order):
 
 @music.command("update")
 @with_light
-@click.argument("title")
+@click.argument("songs", nargs=-1)
+@click.option(
+    "--title", "-t", "title_regex", help="Select tracks whose title matches this regex pattern."
+)
+@click.option(
+    "--artist", "-a", "artist_regex", help="Select tracks whose artist matches this regex pattern."
+)
+@click.option(
+    "--album", "-b", "album_regex", help="Select tracks whose album matches this regex pattern."
+)
 @click.option("--new-title", default=None, help="New track title.")
 @click.option("--new-artist", default=None, help="New artist name.")
 @click.option("--new-album", default=None, help="New album name.")
-def music_update(light: Light, title, new_title, new_artist, new_album):
-    """Update metadata for a track.
+def music_update(
+    light: Light,
+    songs,
+    title_regex,
+    artist_regex,
+    album_regex,
+    new_title,
+    new_artist,
+    new_album,
+):
+    """Update metadata for one or more tracks.
 
-    Matches by exact title. At least one of `--new-title`, `--new-artist`, or `--new-album` must be provided.
+    Select candidate tracks either by fuzzy search (SONGS arguments) or by
+    --title/--artist/--album regex pattern. A picker will open for you to finalize
+    the selection of tracks to edit.
 
-    **Example:**
+    If any of --new-title/--new-artist/--new-album are given, they are applied
+    directly to every selected track (batch editing). Otherwise, an interactive
+    edit screen opens for each selected track, prefilled with its current
+    title/artist/album.
 
-    `light music update "Old Title" --new-title "New Title" --new-artist "Artist" --new-album "Album"`
+    **Examples:**
+
+    `light music update "Old Title" --new-title "New Title"`
+
+    `light music update --artist '^The '`
     """
-    tracks = light.music.get_tracks()
-    matches = [t for t in tracks if t.title == title]
+    songs = tuple(s for s in songs if s.strip())
+    regex_given = title_regex or artist_regex or album_regex
 
-    if not matches:
-        console.print(f"[yellow]No track found with title: {title}[/yellow]")
+    if songs and regex_given:
+        raise click.UsageError(
+            "Provide either song titles or --title/--artist/--album, not both."
+        )
+
+    if not songs and not regex_given:
+        raise click.UsageError("Provide song titles, or one of --title/--artist/--album.")
+
+    tracks = light.music.get_tracks()
+
+    if regex_given:
+        candidates = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+        if not candidates:
+            console.print("[yellow]No matching tracks.[/yellow]")
+            return
+        selected = pick_interactive(
+            candidates,
+            label=lambda t: f"{t.artist} — {t.album} — {t.title}",
+            id_key=lambda t: t.audio_id,
+            console=console,
+            message="Select tracks to edit:",
+        )
+    else:
+        selected = fuzzy_pick_interactive(
+            songs,
+            tracks,
+            fields=lambda t: (t.title, t.artist, t.album),
+            label=lambda t: f"{t.artist} — {t.album} — {t.title}",
+            id_key=lambda t: t.audio_id,
+            console=console,
+        )
+
+    if selected is None:
+        console.print("[yellow]Aborted.[/yellow]")
         return
 
-    for track in matches:
-        light.music.update_track_metadata(
-            track.audio_id, title=new_title, artist=new_artist, album=new_album
+    to_update = list(selected.values())
+    if not to_update:
+        console.print("[yellow]No matching tracks.[/yellow]")
+        return
+
+    flags_given = new_title or new_artist or new_album
+
+    if flags_given:
+        batch_values = (new_title, new_artist, new_album)
+    elif len(to_update) > 1:
+        choice = click.prompt(
+            f"{len(to_update)} tracks selected. [b]atch edit (same values for all) "
+            "/ [i]ndividually edit each?",
+            default="i",
+            show_default=False,
+            type=click.Choice(["b", "i"], case_sensitive=False),
         )
+        if choice == "b":
+            batch_values = prompt_batch_edit()
+            if batch_values is None:
+                console.print("[yellow]Aborted.[/yellow]")
+                return
+            if all(v is None for v in batch_values):
+                console.print("[yellow]No fields set, nothing to update.[/yellow]")
+                return
+        else:
+            batch_values = None
+    else:
+        batch_values = None
+
+    for track in to_update:
+        if batch_values is not None:
+            title, artist, album = batch_values
+        else:
+            edited = prompt_track_edit(
+                label=f"{track.artist} — {track.album} — {track.title}",
+                title=track.title,
+                artist=track.artist,
+                album=track.album,
+            )
+            if edited is None:
+                console.print("[yellow]Skipped.[/yellow]")
+                continue
+            title, artist, album = edited
+            if (title, artist, album) == (track.title, track.artist, track.album):
+                console.print(f"[yellow]No changes:[/yellow] {track.artist} — {track.title}")
+                continue
+
+        light.music.update_track_metadata(track.audio_id, title=title, artist=artist, album=album)
+        console.print(f"[green]Updated:[/green] {track.artist} — {track.title}")
 
 
 @music.command("list")
