@@ -17,6 +17,7 @@ from light_api.tools import LightTool
 # NOTE: No way to autoderive this. Must be kept in sync w/ any added `render(...)` commands in cli.py.
 COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "podcasts list": list[LightPodcast],
+    "podcasts add": LightPodcast,
     "music list": list[LightTrack],
     "notes list": list[LightNote],
     "tools list": list[LightTool],

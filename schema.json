@@ -1,5 +1,5 @@
 {
-  "$hash": "e201aa5a42e2600537fe2f6d058bb4f2f48b79b41f09c68a9380a6c14f69fd44",
+  "$hash": "2bb02c0e060b2fc0060530e91d2c369f4485f8b8948957ef356e5099fb042367",
   "podcasts list": {
     "type": "object",
     "properties": {
@@ -44,6 +44,65 @@
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "podcasts add": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "podcast_id": {
+            "type": "string"
+          },
+          "followed_podcast_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "rss_feed_url": {
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "podcast_id",
+          "followed_podcast_id",
+          "title",
+          "publisher",
+          "rss_feed_url",
+          "description"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [
