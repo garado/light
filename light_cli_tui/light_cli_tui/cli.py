@@ -9,6 +9,8 @@ import json
 import logging
 import os
 import re
+from pathlib import Path
+
 import rich_click as click
 from rich.console import Console
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
@@ -38,6 +40,13 @@ click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
 
+_HELP_DIR = Path(__file__).parent / "help"
+
+
+def _help(name: str) -> str:
+    """Load a command's --help body from help/<name>.md."""
+    return (_HELP_DIR / f"{name}.md").read_text()
+
 
 class JsonAwareGroup(click.RichGroup):
     """Wrapper for command execution adding JSON output support for failures."""
@@ -53,7 +62,9 @@ class JsonAwareGroup(click.RichGroup):
 
 
 @click.group(
-    cls=JsonAwareGroup, context_settings={"help_option_names": ["-h", "--help"]}
+    cls=JsonAwareGroup,
+    context_settings={"help_option_names": ["-h", "--help"]},
+    help=_help("cli"),
 )
 @click.version_option(package_name="light-phone-cli-tui", prog_name="light")
 @click.option("--email", default=None, help="Light account email address.")
@@ -99,16 +110,6 @@ def cli(
     log_level,
     json_output,
 ):
-    """**Unofficial CLI for the Light Phone.**
-
-    Manages music, podcasts, notes, and more on your Light device from the terminal.
-
-    Credentials can be provided via options, files, or environment variables
-    (`LIGHT_EMAIL`, `LIGHT_PASSWORD`, `LIGHT_PHONE_NUMBER`, `LIGHT_DEVICE_ID`).
-
-    On accounts with multiple devices, select one via `--phone-number` or
-    `--device-id` (mutually exclusive).
-    """
     if (phone_number or phone_number_file) and (device_id or device_id_file):
         raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
 
@@ -131,67 +132,42 @@ def cli(
     )
 
 
-@cli.group()
+@cli.group(help=_help("music"))
 def music():
-    """Music library management.
-
-    Upload tracks, delete them, sort your playlist, and update metadata.
-    """
     pass
 
 
-@cli.group()
+@cli.group(help=_help("podcasts"))
 def podcasts():
-    """Podcast management.
-
-    Add podcasts by RSS feed URL and remove ones you no longer want.
-    """
     pass
 
 
-@cli.group()
+@cli.group(help=_help("notes"))
 def notes():
-    """Notes management.
-
-    List, add, and download text and audio notes.
-    """
     pass
 
 
-@cli.group()
+@cli.group(help=_help("devices"))
 def devices():
-    """Device introspection.
-
-    Shows device id, phone number, SKU, and serial number.
-    """
     pass
 
 
 # -- Podcast commands ----------------------------------------------------------
 
 
-@podcasts.command("add")
+@podcasts.command("add", help=_help("podcasts_add"))
 @with_light
 @click.argument("rss_feed_url")
 def podcasts_add(light: Light, rss_feed_url):
-    """Subscribe to a podcast by RSS feed URL.
-
-    The server resolves the title and publisher automatically from the feed.
-
-    **Example:**
-
-    `light podcasts add https://feeds.simplecast.com/FO6kxYGj`
-    """
     p = light.podcast.add_podcast(rss_feed_url)
     console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
     if p.publisher:
         console.print(f"[dim]Publisher:[/dim] {p.publisher}")
 
 
-@podcasts.command("list")
+@podcasts.command("list", help=_help("podcasts_list"))
 @with_light
 def podcasts_list(light: Light):
-    """List all followed podcasts on your device."""
     podcasts = light.podcast.get_podcasts()
 
     def render_human_readable():
@@ -212,14 +188,10 @@ def podcasts_list(light: Light):
     render(podcasts, render_human_readable)
 
 
-@podcasts.command("delete")
+@podcasts.command("delete", help=_help("podcasts_delete"))
 @with_light
 @click.argument("title")
 def podcasts_delete(light: Light, title):
-    """Unfollow a podcast by title.
-
-    Uses exact title matching. Run `light podcasts list` to see titles.
-    """
     podcasts = light.podcast.get_podcasts()
     matches = [p for p in podcasts if p.title == title]
 
@@ -258,7 +230,7 @@ def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
     ]
 
 
-@music.command("upload")
+@music.command("upload", help=_help("music_upload"))
 @with_light
 @click.argument("songs", nargs=-1, required=True)
 @click.option(
@@ -296,14 +268,6 @@ def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
 def music_upload(
     light: Light, songs, allow_duplicates, overwrite, no_convert, verbose, recursive
 ):
-    """Upload audio files (or directories of them) to your device.
-
-    **Examples:**
-
-    `light music upload track1.mp3 track2.mp3`
-
-    `light music upload ~/Music --recursive`
-    """
     if overwrite and allow_duplicates:
         raise click.UsageError(
             "--overwrite and --allow-duplicates are mutually exclusive."
@@ -401,10 +365,9 @@ def music_upload(
         )
 
 
-@music.command("delete-all")
+@music.command("delete-all", help=_help("music_delete_all"))
 @with_light
 def music_delete_all(light: Light):
-    """Delete ALL tracks on device."""
     if not click.confirm("This will delete ALL tracks on the device. Proceed?"):
         return
 
@@ -414,7 +377,7 @@ def music_delete_all(light: Light):
     light.music.delete_all_tracks()
 
 
-@music.command("delete")
+@music.command("delete", help=_help("music_delete"))
 @with_light
 @click.argument("songs", nargs=-1)
 @click.option(
@@ -441,26 +404,6 @@ def music_delete(
     album_regex: str | None,
     interactive: bool,
 ):
-    """Delete tracks by fuzzy search, or by regex pattern.
-
-    Each SONGS argument is fuzzy-matched against every track's title, artist,
-    and album. By default, the top-scoring match(es) per query are auto-selected
-    (ties may select multiple); pass --interactive to pick matches by hand instead.
-
-    If more than one of --title, --artist, --album regex patterns are given, tracks must match all of them.
-
-    **Examples:**
-
-    `light music delete "Playing God"`
-
-    `light music delete -i "Playing God"`
-
-    `light music delete --title '^Live '`
-
-    `light music delete --artist '^The '`
-
-    `light music delete --album '(Deluxe|Remastered)'`
-    """
     songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
 
@@ -528,7 +471,7 @@ def music_delete(
     light.music.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
 
-@music.command("sort")
+@music.command("sort", help=_help("music_sort"))
 @with_light
 @click.argument("field", type=click.Choice(["artist", "title", "artist-album", "none"]))
 @click.option(
@@ -540,18 +483,6 @@ def music_delete(
 )
 @click.option("--desc", "order", flag_value="descending", help="Sort descending.")
 def music_sort(light: Light, field, order):
-    """Sort tracks by artist, title, or reset to manual order.
-
-    `none` resets to the manual ordering you set in the app.
-
-    **Examples:**
-
-    `light music sort artist --desc`
-
-    `light music sort title`
-
-    `light music sort none`
-    """
     descending = order == "descending"
 
     if field == "artist":
@@ -570,7 +501,7 @@ def music_sort(light: Light, field, order):
         light.music.set_sort_mode(SortMode.RANK)
 
 
-@music.command("update")
+@music.command("update", help=_help("music_update"))
 @with_light
 @click.argument("songs", nargs=-1)
 @click.option(
@@ -611,37 +542,6 @@ def music_update(
     new_album,
     yes,
 ):
-    """Update metadata for one or more tracks.
-
-    Select tracks to edit by fuzzy search, regex, or by ID. Edits can be applied both interactively and non-interactively.
-
-    # Selection
-    - Fuzzy: `light music update "song title"`
-    - Regex: `light music update --title ".*substring.*"`
-        - Supports `--title`, `--artist`, and `--album`. Multiple filters will be applied together (logical AND).
-    - ID: `light music update --id abc123,def456`
-        - Use a comma-separated list to select multiple tracks.
-
-    # Editing
-
-    ## Selection picker and interactive editor (default)
-
-    After inputting selection criteria, a picker opens to fine-tune the selection. From there, you have the option to batch-edit
-    or individually edit tracks in the selection.
-
-    ## Skip selection picker and interactive editor
-
-    Use `--new-title`, `--new-artist`, and `--new-album` to skip the selection picker. This will open a confirmation screen
-    with preview of all tracks being edited.
-
-    `light music update --artist "The Warning" --new-artist "Las Wawas"`
-
-    ### Skip confirmation screen
-
-    Use `--yes` to skip the confirmation screen and auto-apply the edit.
-
-    `light music update --artist "The Warning" --new-artist "Las Wawas" --yes`
-    """
     songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
 
@@ -785,7 +685,7 @@ def music_update(
         console.print(f"[green]Updated:[/green] {track.artist} — {track.title}")
 
 
-@music.command("list")
+@music.command("list", help=_help("music_list"))
 @with_light
 @click.option(
     "--title", "-t", "title_regex", help="Only show tracks whose title matches this regex pattern."
@@ -802,19 +702,6 @@ def music_list(
     artist_regex: str | None,
     album_regex: str | None,
 ):
-    """List all tracks on your device.
-
-    If more than one of --title, --artist, --album regex patterns are given,
-    tracks must match all of them.
-
-    **Examples:**
-
-    `light music list --title '^Live '`
-
-    `light music list --artist '^The '`
-
-    `light music list --album '(Deluxe|Remastered)'`
-    """
     tracks = light.music.get_tracks()
     tracks = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
 
@@ -836,7 +723,7 @@ def music_list(
 # -- Notes commands -------------------------------------------------------------
 
 
-@notes.command("list")
+@notes.command("list", help=_help("notes_list"))
 @with_light
 @click.option(
     "--id",
@@ -856,10 +743,6 @@ def music_list(
     help="Include content preview in output.",
 )
 def notes_list(light: Light, show_id=False, content_preview=False):
-    """List all notes on your device.
-
-    Shows the first line of text notes and labels audio notes.
-    """
     all_notes = light.notes.get_notes()
 
     def render_human_readable():
@@ -904,23 +787,14 @@ def notes_list(light: Light, show_id=False, content_preview=False):
     render(all_notes, render_human_readable)
 
 
-@notes.command("download")
+@notes.command("download", help=_help("notes_download"))
 @with_light
 @click.argument("path")
 def notes_download(light: Light, path: str):
-    """Download all notes to a directory.
-
-    Text notes are saved as `.txt`, audio notes as `.m4a`.
-    If two notes share a title, the timestamp is appended to disambiguate.
-
-    **Example:**
-
-    `light notes download ~/my-notes`
-    """
     light.notes.download_notes(path)
 
 
-@notes.command("add")
+@notes.command("add", help=_help("notes_add"))
 @with_light
 @click.argument("title")
 @click.argument("content", default=None, required=False)
@@ -933,16 +807,6 @@ def notes_download(light: Light, path: str):
     help="Read note content from a file instead of inline.",
 )
 def notes_add(light: Light, title: str, content: str | None, content_file: str | None):
-    """Create a new text note.
-
-    Provide content inline as an argument, or from a file with `--file`.
-
-    **Examples:**
-
-    `light notes add "Shopping list" "eggs, milk, bread"`
-
-    `light notes add "Meeting notes" --file notes.txt`
-    """
     if content is None and content_file is None:
         raise click.UsageError("Provide CONTENT or --file.")
 
@@ -958,16 +822,14 @@ def notes_add(light: Light, title: str, content: str | None, content_file: str |
 # -- Tools commands ------------------------------------------------------------
 
 
-@cli.group()
+@cli.group(help=_help("tools"))
 def tools():
-    """Installed tools introspection."""
     pass
 
 
-@tools.command("list")
+@tools.command("list", help=_help("tools_list"))
 @with_light
 def tools_list(light: Light):
-    """List all tools installed on your device."""
     all_tools = light.tools.get_tools()
 
     def render_human_readable():
@@ -982,24 +844,22 @@ def tools_list(light: Light):
     render(all_tools, render_human_readable)
 
 
-@tools.command("add")
+@tools.command("add", help=_help("tools_add"))
 @with_light
 @click.argument(
     "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
 )
 def tools_add(light: Light, name: str):
-    """Install a tool on your device."""
     tool = light.tools.add_tool(name)
     console.print(f"[green]Installed:[/green] {tool.title}")
 
 
-@tools.command("remove")
+@tools.command("remove", help=_help("tools_remove"))
 @with_light
 @click.argument(
     "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
 )
 def tools_remove(light: Light, name: str):
-    """Uninstall a tool from your device."""
     if not click.confirm(f"Remove {name}?"):
         return
     light.tools.remove_tool(name)
@@ -1009,10 +869,9 @@ def tools_remove(light: Light, name: str):
 # -- Device commands ------------------------------------------------------------
 
 
-@devices.command("list")
+@devices.command("list", help=_help("devices_list"))
 @with_light
 def devices_list(light: Light):
-    """List information for all devices registered on this account."""
     all_devices = light.devices.list_devices()
 
     def render_human_readable():
@@ -1035,7 +894,7 @@ def devices_list(light: Light):
 # -- Schema ---------------------------------------------------------------------
 
 
-@cli.command()
+@cli.command(help=_help("schema"))
 @click.option(
     "--hash",
     "hash_only",
@@ -1043,7 +902,6 @@ def devices_list(light: Light):
     help="Show only the schema's SHA-256 hash.",
 )
 def schema(hash_only):
-    """Generate JSON Schema for every `--json`-enabled command's output."""
     from light_cli_tui.schema import generate_schema, schema_hash
 
     if hash_only:
@@ -1058,14 +916,9 @@ def schema(hash_only):
 # -- Auth -----------------------------------------------------------------------
 
 
-@cli.command()
+@cli.command(help=_help("logout"))
 @click.pass_context
 def logout(ctx):
-    """Clear the cached session.
-
-    Forces a fresh login and device lookup on the next command. Does not
-    require valid credentials or network access to run.
-    """
     obj = ctx.obj or {}
     light = Light(
         email=obj.get("email"),
@@ -1084,14 +937,9 @@ def logout(ctx):
 # -- TUI ------------------------------------------------------------------------
 
 
-@cli.command()
+@cli.command(help=_help("tui"))
 @click.pass_context
 def tui(ctx):
-    """Launch the interactive terminal UI.
-
-    A full-screen interface for browsing and managing your music library
-    with vim-style keybindings.
-    """
     try:
         from light_cli_tui.tui import LightConfig, run_tui
     except ImportError:
