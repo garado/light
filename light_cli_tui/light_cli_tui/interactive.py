@@ -89,10 +89,10 @@ def pick_interactive(
 
     picked_ids = inquirer.checkbox(
         message=message,
-        choices=[Choice(value=id_key(t), name=label(t)) for t in candidates],
+        choices=[Choice(value=id_key(t), name=label(t), enabled=True) for t in candidates],
         raise_keyboard_interrupt=False,
         mandatory=False,
-        long_instruction="(space to select, enter to confirm, ctrl-c to cancel)",
+        long_instruction="(space to toggle, enter to confirm, ctrl-c to cancel)",
     ).execute()
 
     if picked_ids is None:
