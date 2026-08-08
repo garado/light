@@ -51,6 +51,7 @@ def _command_schemas() -> dict[str, Any]:
                 "error": {"anyOf": [{"type": "string"}, {"type": "null"}]},
             },
             "required": ["data", "error"],
+            "additionalProperties": False,
         }
         for command, shape in COMMAND_OUTPUT_SHAPES.items()
     }
@@ -96,4 +97,5 @@ def _dataclass_json_schema(cls: type) -> dict[str, Any]:
         "type": "object",
         "properties": {f.name: _type_to_schema(hints[f.name]) for f in fields},
         "required": [f.name for f in fields],
+        "additionalProperties": False,
     }
