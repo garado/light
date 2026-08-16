@@ -784,12 +784,7 @@ def music_list(
 def notes_list(light: Light, show_id=False, content_preview=False):
     all_notes = light.notes.get_notes()
 
-    def render_human_readable():
-        if content_preview:
-            console.print(
-                f"[dim]Content preview enabled. This might take a while.[/dim]"
-            )
-
+    def _build_table(progress_cb=None) -> Table:
         table = Table(show_header=True)
         table.add_column("#", style="dim", width=4)
         if show_id:
@@ -820,6 +815,25 @@ def notes_list(light: Light, show_id=False, content_preview=False):
                 row.append(preview)
 
             table.add_row(*row)
+            if progress_cb:
+                progress_cb(i)
+
+        return table
+
+    def render_human_readable():
+        if content_preview and all_notes:
+            with Progress(
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=console,
+            ) as progress:
+                task_id = progress.add_task(
+                    "Fetching content previews...", total=len(all_notes)
+                )
+                table = _build_table(lambda i: progress.update(task_id, completed=i))
+        else:
+            table = _build_table()
 
         console.print(table)
 
