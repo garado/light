@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 
 import rich_click as click
-from rich.console import Console
+from rich.console import Console, HighlighterType
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 
@@ -771,7 +771,7 @@ def music_list(
     default=False,
     type=bool,
     is_flag=True,
-    help="Include note ID in output (use with `notes watch`).",
+    help="Include note ID in output.",
 )
 @click.option(
     "--content-preview",
@@ -784,12 +784,7 @@ def music_list(
 def notes_list(light: Light, show_id=False, content_preview=False):
     all_notes = light.notes.get_notes()
 
-    def render_human_readable():
-        if content_preview:
-            console.print(
-                f"[dim]Content preview enabled. This might take a while.[/dim]"
-            )
-
+    def _build_table(progress_cb=None) -> Table:
         table = Table(show_header=True)
         table.add_column("#", style="dim", width=4)
         if show_id:
@@ -812,7 +807,7 @@ def notes_list(light: Light, show_id=False, content_preview=False):
                 if note.note_type == "audio":
                     preview = "[dim](audio)[/dim]"
                 else:
-                    content = light.notes.get_note_content(note)
+                    content = light.notes.get_note_content(note).decode(errors="replace")
                     if content and content.strip():
                         preview = content.splitlines()[0]
                     else:
@@ -820,6 +815,25 @@ def notes_list(light: Light, show_id=False, content_preview=False):
                 row.append(preview)
 
             table.add_row(*row)
+            if progress_cb:
+                progress_cb(i)
+
+        return table
+
+    def render_human_readable():
+        if content_preview and all_notes:
+            with Progress(
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=console,
+            ) as progress:
+                task_id = progress.add_task(
+                    "Fetching content previews...", total=len(all_notes)
+                )
+                table = _build_table(lambda i: progress.update(task_id, completed=i))
+        else:
+            table = _build_table()
 
         console.print(table)
 

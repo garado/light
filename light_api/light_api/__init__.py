@@ -1,5 +1,6 @@
 import functools
 import click
+import httpx
 from .client import Light
 
 
@@ -22,5 +23,11 @@ def with_light(f):
             return f(light, *args, **kwargs)
         except RuntimeError as e:
             raise click.ClickException(str(e))
+        except httpx.TimeoutException:
+            raise click.ClickException(
+                "Request to Light API exceeded 30-second timeout. Please try again."
+            )
+        except httpx.HTTPError as e:
+            raise click.ClickException(f"Request to Light API failed: {e}")
 
     return wrapper

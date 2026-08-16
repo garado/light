@@ -1,6 +1,6 @@
 [project]
 name = "light-phone-cli-tui"
-version = "0.3.0"
+version = "0.3.1"
 description = "Unofficial CLI/TUI for the Light Phone"
 authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
