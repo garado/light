@@ -737,11 +737,20 @@ def music_update(
 @click.option(
     "--album", "-b", "album_regex", help="Only show tracks whose album matches this regex pattern."
 )
+@click.option(
+    "--show-id",
+    "-i",
+    "show_id",
+    is_flag=True,
+    default=False,
+    help="Include audio ID in output.",
+)
 def music_list(
     light: Light,
     title_regex: str | None,
     artist_regex: str | None,
     album_regex: str | None,
+    show_id: bool,
 ):
     tracks = light.music.get_tracks()
     tracks = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
@@ -752,9 +761,15 @@ def music_list(
         table.add_column("Title")
         table.add_column("Artist")
         table.add_column("Album")
+        if show_id:
+            table.add_column("ID")
 
         for i, track in enumerate(tracks, 1):
-            table.add_row(str(i), track.title, track.artist, track.album)
+            row = [str(i)]
+            row.extend([track.title, track.artist, track.album])
+            if show_id:
+                row.append(track.audio_id)
+            table.add_row(*row)
 
         console.print(table)
 
