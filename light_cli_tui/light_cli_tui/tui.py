@@ -947,7 +947,11 @@ class NotesPane(Widget):
 
     def _load_notes(self) -> None:
         assert self._pw is not None
-        notes = self._pw.submit(lambda light: light.notes.get_notes())
+        try:
+            notes = self._pw.submit(lambda light: light.notes.get_notes())
+        except Exception as e:
+            self._notify_error("load notes", e)
+            return
         self.app.call_from_thread(self._on_notes_loaded, notes)
 
     def _on_notes_loaded(self, notes: list[LightNote]) -> None:
@@ -964,6 +968,10 @@ class NotesPane(Widget):
         self._set_status(
             f"{len(self._notes)} notes  |  j/k nav  enter load  n new  y copy  e editor  R rename  dd delete  p play/stop  r refresh  h/l tabs  q quit"
         )
+
+    def _notify_error(self, action: str, exc: Exception) -> None:
+        self.app.call_from_thread(self._set_status, f"error: {action}: {exc}")
+        self.app.call_from_thread(self.set_timer, 3, self.update_status)
 
     def refresh_header(self) -> None:
         note = self._current_note()
@@ -1002,7 +1010,11 @@ class NotesPane(Widget):
 
     def _fetch_text(self, note: LightNote) -> None:
         assert self._pw is not None
-        content = self._pw.submit(lambda light: light.notes.get_note_content(note))
+        try:
+            content = self._pw.submit(lambda light: light.notes.get_note_content(note))
+        except Exception as e:
+            self._notify_error("load note content", e)
+            return
         self._content_cache[note.id] = content
         self.app.call_from_thread(self._show_text, content)
 
@@ -1037,7 +1049,11 @@ class NotesPane(Widget):
     def _start_audio(self, note: LightNote) -> None:
         assert self._pw is not None
         if note.id not in self._content_cache:
-            content = self._pw.submit(lambda light: light.notes.get_note_content(note))
+            try:
+                content = self._pw.submit(lambda light: light.notes.get_note_content(note))
+            except Exception as e:
+                self._notify_error("load audio", e)
+                return
             self._content_cache[note.id] = content
         content = self._content_cache[note.id]
 
@@ -1161,7 +1177,11 @@ class NotesPane(Widget):
 
     def _do_create_note(self, title: str) -> None:
         assert self._pw is not None
-        note = self._pw.submit(lambda light: light.notes.create_text_note(title, ""))
+        try:
+            note = self._pw.submit(lambda light: light.notes.create_text_note(title, ""))
+        except Exception as e:
+            self._notify_error("create note", e)
+            return
         self.app.call_from_thread(self._on_note_created, note)
 
     def _on_note_created(self, note: LightNote) -> None:
@@ -1189,7 +1209,11 @@ class NotesPane(Widget):
 
     def _do_delete_note(self, note: LightNote) -> None:
         assert self._pw is not None
-        self._pw.submit(lambda light: light.notes.delete_note(note.id))
+        try:
+            self._pw.submit(lambda light: light.notes.delete_note(note.id))
+        except Exception as e:
+            self._notify_error("delete note", e)
+            return
         self.app.call_from_thread(self._on_note_deleted, note)
 
     def _on_note_deleted(self, note: LightNote) -> None:
@@ -1262,7 +1286,11 @@ class NotesPane(Widget):
 
     def _do_rename(self, note: LightNote, title: str) -> None:
         assert self._pw is not None
-        self._pw.submit(lambda light: light.notes.update_note_title(note, title))
+        try:
+            self._pw.submit(lambda light: light.notes.update_note_title(note, title))
+        except Exception as e:
+            self._notify_error("rename note", e)
+            return
         self.app.call_from_thread(self._on_renamed, note)
 
     def _on_renamed(self, note: LightNote) -> None:
@@ -1280,7 +1308,11 @@ class NotesPane(Widget):
 
     def _save_note(self, note: LightNote, content: bytes) -> None:
         assert self._pw is not None
-        self._pw.submit(lambda light: light.notes.update_note_content(note, content))
+        try:
+            self._pw.submit(lambda light: light.notes.update_note_content(note, content))
+        except Exception as e:
+            self._notify_error("save note", e)
+            return
         self._content_cache[note.id] = content
         self.app.call_from_thread(self._show_text, content)
         self.app.call_from_thread(self._set_status, "saved")
