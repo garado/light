@@ -114,6 +114,7 @@ class Light:
             base_url=API_BASE,
             token=self._api_token,
             headers=API_HEADERS,
+            timeout=30,
         )
 
     def call_api(self, func: Callable[..., Any], **kwargs: Any) -> Any:
@@ -165,6 +166,7 @@ class Light:
             base_url=API_BASE,
             token=self._api_token,
             headers=API_HEADERS,
+            timeout=30,
         )
 
         expected = {"music", "notes", "podcast"}
@@ -267,6 +269,7 @@ class Light:
             base_url=API_BASE,
             token=self._api_token,
             headers=API_HEADERS,
+            timeout=30,
         )
         resp = get_api_playlists.sync_detailed(
             client=client,
