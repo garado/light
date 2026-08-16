@@ -51,6 +51,7 @@ class LightTrack:
     title: str
     artist: str
     album: str  # unused by dashboard, but they make it available
+    filename: str  # original uploaded filename
 
 
 class SortMode(StrEnum):
@@ -182,6 +183,9 @@ class LightMusic:
                 title=audio_info[audio_id]["attrs"].title or "",
                 artist=audio_info[audio_id]["attrs"].artist or "",
                 album=audio_info[audio_id]["attrs"].album or "",
+                filename=os.path.basename(
+                    file_attrs[audio_info[audio_id]["file_id"]].key or ""
+                ),
             )
             for item in items
         ]

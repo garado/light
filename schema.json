@@ -1,5 +1,5 @@
 {
-  "$hash": "e201aa5a42e2600537fe2f6d058bb4f2f48b79b41f09c68a9380a6c14f69fd44",
+  "$hash": "50a117ea00a5135fe84d3e5c1fc6d6459df873bc321fbd493d4a55fec250b43e",
   "podcasts list": {
     "type": "object",
     "properties": {
@@ -84,6 +84,9 @@
             },
             "album": {
               "type": "string"
+            },
+            "filename": {
+              "type": "string"
             }
           },
           "required": [
@@ -91,7 +94,8 @@
             "audio_id",
             "title",
             "artist",
-            "album"
+            "album",
+            "filename"
           ],
           "additionalProperties": false
         }

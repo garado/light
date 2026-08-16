@@ -745,12 +745,21 @@ def music_update(
     default=False,
     help="Include audio ID in output.",
 )
+@click.option(
+    "--show-filename",
+    "-f",
+    "show_filename",
+    is_flag=True,
+    default=False,
+    help="Include original uploaded filename in output.",
+)
 def music_list(
     light: Light,
     title_regex: str | None,
     artist_regex: str | None,
     album_regex: str | None,
     show_id: bool,
+    show_filename: bool,
 ):
     tracks = light.music.get_tracks()
     tracks = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
@@ -763,12 +772,16 @@ def music_list(
         table.add_column("Album")
         if show_id:
             table.add_column("ID")
+        if show_filename:
+            table.add_column("Filename")
 
         for i, track in enumerate(tracks, 1):
             row = [str(i)]
             row.extend([track.title, track.artist, track.album])
             if show_id:
                 row.append(track.audio_id)
+            if show_filename:
+                row.append(track.filename)
             table.add_row(*row)
 
         console.print(table)
