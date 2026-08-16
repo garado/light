@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 
 import rich_click as click
-from rich.console import Console
+from rich.console import Console, HighlighterType
 from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 
@@ -771,7 +771,7 @@ def music_list(
     default=False,
     type=bool,
     is_flag=True,
-    help="Include note ID in output (use with `notes watch`).",
+    help="Include note ID in output.",
 )
 @click.option(
     "--content-preview",
@@ -812,7 +812,7 @@ def notes_list(light: Light, show_id=False, content_preview=False):
                 if note.note_type == "audio":
                     preview = "[dim](audio)[/dim]"
                 else:
-                    content = light.notes.get_note_content(note)
+                    content = light.notes.get_note_content(note).decode(errors="replace")
                     if content and content.strip():
                         preview = content.splitlines()[0]
                     else:
