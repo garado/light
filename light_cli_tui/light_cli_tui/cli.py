@@ -29,7 +29,7 @@ from light_cli_tui.interactive import (
     prompt_batch_edit,
     prompt_track_edit,
 )
-from light_cli_tui.output import render, render_error, resolve_mutative_action
+from light_cli_tui.output import is_json_mode, render, render_error, resolve_mutative_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -1127,7 +1127,27 @@ def notes_get(light: Light, note_id: str, output_path: str | None):
 @with_light
 @click.argument("path")
 def notes_download(light: Light, path: str):
-    results = light.notes.download_notes(path)
+    if is_json_mode():
+        results = light.notes.download_notes(path)
+    else:
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+        ) as progress:
+            task_id = progress.add_task("Downloading notes...", total=None)
+
+            def on_progress(index: int, total: int, note) -> None:
+                progress.update(
+                    task_id,
+                    total=total,
+                    completed=index - 1,
+                    description=f"[{index}/{total}] Downloading {note.title or note.id}...",
+                )
+
+            results = light.notes.download_notes(path, on_progress=on_progress)
+            progress.update(task_id, completed=len(results))
 
     def render_human_readable():
         for r in results:

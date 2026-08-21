@@ -5,7 +5,7 @@ import logging
 import os
 from collections import Counter
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from open_api_specification_client.api.default import (
     delete_api_notes_note_id,
@@ -97,10 +97,19 @@ class LightNotes:
 
         return _make_light_note(resp.parsed.data)
 
-    def download_notes(self, dest: str) -> list[dict]:
+    def download_notes(
+        self,
+        dest: str,
+        on_progress: Callable[[int, int, "LightNote"], None] | None = None,
+    ) -> list[dict]:
         """Download all notes to dest directory.
 
         Text notes are saved as .txt and audio notes saved as .m4a.
+
+        Args:
+            dest: Directory to save notes into.
+            on_progress: Called as `on_progress(index, total, note)` before each note
+                starts downloading, 1-indexed.
 
         Returns:
             A list of per-note results: `{note_id, title, path, success, error}`.
@@ -110,9 +119,13 @@ class LightNotes:
 
         notes = self.get_notes()
         title_counts = Counter(note.title for note in notes)
+        total = len(notes)
 
         results = []
-        for note in notes:
+        for i, note in enumerate(notes, 1):
+            if on_progress:
+                on_progress(i, total, note)
+
             if note.title and title_counts[note.title] == 1:
                 slug = note.title
             else:
