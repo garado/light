@@ -10,7 +10,7 @@ import json
 from typing import Any, Callable
 
 
-def resolve_destructive_action(
+def resolve_mutative_action(
     data: Any,
     render_human_readable: Callable[[], None],
     *,
@@ -19,7 +19,7 @@ def resolve_destructive_action(
     preview_header: str,
     confirm_message: str,
 ) -> bool:
-    """Handle the shared --json/--yes/--dry-run/confirm flow for destructive commands.
+    """Handle the shared --json/--yes/--dry-run/confirm flow for mutative commands.
 
     On `--dry-run`, renders `data` as the preview and tells the caller not to proceed.
     Otherwise, resolves confirmation (skipped via `--yes`, or via an interactive prompt)
@@ -41,7 +41,7 @@ def resolve_destructive_action(
     if not yes:
         if is_json_mode():
             raise click.UsageError(
-                "--json requires --yes or --dry-run for destructive commands."
+                "--json requires --yes or --dry-run for mutative commands."
             )
         click.secho(preview_header, bold=True)
         render_human_readable()

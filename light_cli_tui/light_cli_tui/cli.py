@@ -28,7 +28,7 @@ from light_cli_tui.interactive import (
     prompt_batch_edit,
     prompt_track_edit,
 )
-from light_cli_tui.output import render, render_error, resolve_destructive_action
+from light_cli_tui.output import render, render_error, resolve_mutative_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -48,8 +48,8 @@ def _help(name: str) -> str:
     return (_HELP_DIR / f"{name}.md").read_text()
 
 
-def destructive_options(dry_run_help: str):
-    """Bundle the shared --yes/--dry-run options for a destructive command."""
+def mutative_options(dry_run_help: str):
+    """Bundle the shared --yes/--dry-run options for a mutative command."""
 
     def decorator(f):
         f = click.option("--dry-run", is_flag=True, default=False, help=dry_run_help)(f)
@@ -190,19 +190,19 @@ def devices():
 @podcasts.command("add", help=_help("podcasts_add"))
 @with_light
 @click.argument("rss_feed_urls", nargs=-1, required=True)
-@destructive_options("Show the podcast(s) that would be followed without following them.")
+@mutative_options("Show the podcast(s) that would be followed without following them.")
 def podcasts_add(light: Light, rss_feed_urls, yes, dry_run):
     def render_preview():
         for url in rss_feed_urls:
             console.print(f"  {url}")
 
-    proceed = resolve_destructive_action(
+    proceed = resolve_mutative_action(
         {"rss_feed_urls": list(rss_feed_urls)},
         render_preview,
         yes=yes,
         dry_run=dry_run,
         preview_header="This will follow the following podcast(s):",
-        confirm_message="Follow these podcasts?",
+        confirm_message="Continue?",
     )
     if not proceed:
         return
@@ -250,7 +250,7 @@ def podcasts_list(light: Light):
     default=None,
     help="Unfollow by exact followed_podcast_id; comma-separated for bulk deletes.",
 )
-@destructive_options("Show which podcasts would be unfollowed, without unfollowing them.")
+@mutative_options("Show which podcasts would be unfollowed, without unfollowing them.")
 def podcasts_delete(light: Light, title, ids, yes, dry_run):
     if title and ids:
         raise click.UsageError("Provide either TITLE or --id, not both.")
@@ -282,7 +282,7 @@ def podcasts_delete(light: Light, title, ids, yes, dry_run):
         render(matches, render_human_readable)
         return
 
-    proceed = resolve_destructive_action(
+    proceed = resolve_mutative_action(
         matches,
         render_human_readable,
         yes=yes,
@@ -438,7 +438,7 @@ def _render_file_list(files: list[str], verbose: bool) -> None:
     default=False,
     help="When SONGS includes a directory, also walk its subdirectories for audio files.",
 )
-@destructive_options("Show what would be uploaded without uploading anything.")
+@mutative_options("Show what would be uploaded without uploading anything.")
 def music_upload(
     light: Light,
     songs,
@@ -481,7 +481,7 @@ def music_upload(
     skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0
     plan = _build_upload_plan(files, invalid_files, matches, skip_count, overwrite, no_convert, light)
 
-    proceed = resolve_destructive_action(
+    proceed = resolve_mutative_action(
         plan,
         lambda: _render_upload_plan(plan, verbose),
         yes=yes,
