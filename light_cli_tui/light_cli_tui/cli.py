@@ -190,7 +190,22 @@ def devices():
 @podcasts.command("add", help=_help("podcasts_add"))
 @with_light
 @click.argument("rss_feed_url")
-def podcasts_add(light: Light, rss_feed_url):
+@destructive_options("Show the podcast that would be followed without following it.")
+def podcasts_add(light: Light, rss_feed_url, yes, dry_run):
+    def render_preview():
+        console.print(f"  {rss_feed_url}")
+
+    proceed = resolve_destructive_action(
+        {"rss_feed_url": rss_feed_url},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will follow the podcast at:",
+        confirm_message="Follow this podcast?",
+    )
+    if not proceed:
+        return
+
     p = light.podcast.add_podcast(rss_feed_url)
 
     def render_human_readable():
