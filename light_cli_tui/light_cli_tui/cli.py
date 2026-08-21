@@ -295,17 +295,12 @@ def podcasts_delete(light: Light, title, ids, yes, dry_run):
         matches = [by_id[i] for i in id_list]
     else:
         matches = [p for p in podcasts if p.title == title]
+        if not matches:
+            raise click.UsageError(f"No podcast found with title: {title}")
 
     def render_human_readable():
-        if not matches:
-            console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
-            return
         for p in matches:
             console.print(f"  {p.title}")
-
-    if not matches:
-        render(matches, render_human_readable)
-        return
 
     proceed = resolve_mutative_action(
         matches,
