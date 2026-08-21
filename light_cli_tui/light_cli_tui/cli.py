@@ -189,31 +189,33 @@ def devices():
 
 @podcasts.command("add", help=_help("podcasts_add"))
 @with_light
-@click.argument("rss_feed_url")
-@destructive_options("Show the podcast that would be followed without following it.")
-def podcasts_add(light: Light, rss_feed_url, yes, dry_run):
+@click.argument("rss_feed_urls", nargs=-1, required=True)
+@destructive_options("Show the podcast(s) that would be followed without following them.")
+def podcasts_add(light: Light, rss_feed_urls, yes, dry_run):
     def render_preview():
-        console.print(f"  {rss_feed_url}")
+        for url in rss_feed_urls:
+            console.print(f"  {url}")
 
     proceed = resolve_destructive_action(
-        {"rss_feed_url": rss_feed_url},
+        {"rss_feed_urls": list(rss_feed_urls)},
         render_preview,
         yes=yes,
         dry_run=dry_run,
-        preview_header="This will follow the podcast at:",
-        confirm_message="Follow this podcast?",
+        preview_header="This will follow the following podcast(s):",
+        confirm_message="Follow these podcasts?",
     )
     if not proceed:
         return
 
-    p = light.podcast.add_podcast(rss_feed_url)
+    added = [light.podcast.add_podcast(url) for url in rss_feed_urls]
 
     def render_human_readable():
-        console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
-        if p.publisher:
-            console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+        for p, url in zip(added, rss_feed_urls):
+            console.print(f"[green]Added:[/green] {p.title or url}")
+            if p.publisher:
+                console.print(f"[dim]Publisher:[/dim] {p.publisher}")
 
-    render(p, render_human_readable)
+    render(added, render_human_readable)
 
 
 @podcasts.command("list", help=_help("podcasts_list"))
