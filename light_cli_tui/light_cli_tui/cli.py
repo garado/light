@@ -1127,7 +1127,19 @@ def notes_get(light: Light, note_id: str, output_path: str | None):
 @with_light
 @click.argument("path")
 def notes_download(light: Light, path: str):
-    light.notes.download_notes(path)
+    results = light.notes.download_notes(path)
+
+    def render_human_readable():
+        for r in results:
+            if r["success"]:
+                console.print(f"[green]Saved:[/green] {r['title'] or r['note_id']} -> {r['path']}")
+            else:
+                console.print(f"[red]Failed:[/red] {r['title'] or r['note_id']} — {r['error']}")
+
+    render(results, render_human_readable)
+
+    if any(not r["success"] for r in results):
+        sys.exit(1)
 
 
 @notes.command("add", help=_help("notes_add"))

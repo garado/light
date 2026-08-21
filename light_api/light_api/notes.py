@@ -67,7 +67,9 @@ class LightNotes:
             note_id=note.id,
             client=self._l._api_client,
         )
-        self._l._ensure_ok(resp, f"Presigned get URL for {note.id}", require_parsed=True)
+        self._l._ensure_ok(
+            resp, f"Presigned get URL for {note.id}", require_parsed=True
+        )
 
         content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
         if not content_resp.is_success:
@@ -95,34 +97,60 @@ class LightNotes:
 
         return _make_light_note(resp.parsed.data)
 
-    def download_notes(self, dest: str) -> None:
+    def download_notes(self, dest: str) -> list[dict]:
         """Download all notes to dest directory.
 
-        Text notes saved as .txt, audio notes saved as .m4a.
+        Text notes are saved as .txt and audio notes saved as .m4a.
+
+        Returns:
+            A list of per-note results: `{note_id, title, path, success, error}`.
+            `path` is None and `error` is set when that note failed.
         """
         os.makedirs(dest, exist_ok=True)
 
         notes = self.get_notes()
         title_counts = Counter(note.title for note in notes)
 
+        results = []
         for note in notes:
             if note.title and title_counts[note.title] == 1:
                 slug = note.title
             else:
                 slug = f"{note.title}_{note.updated_at}" if note.title else note.id
 
-            content = self.get_note_content(note)
+            ext = "m4a" if note.note_type == "audio" else "txt"
+            path = os.path.join(dest, f"{slug}.{ext}")
 
-            if note.note_type == "audio":
-                path = os.path.join(dest, f"{slug}.m4a")
-                with open(path, "wb") as f:
-                    f.write(content)
-            else:
-                path = os.path.join(dest, f"{slug}.txt")
-                with open(path, "w") as f:
-                    f.write(content.decode())
+            try:
+                content = self.get_note_content(note)
+                if note.note_type == "audio":
+                    with open(path, "wb") as f:
+                        f.write(content)
+                else:
+                    with open(path, "w") as f:
+                        f.write(content.decode())
+                log.info(f"Saved {path}")
+                results.append(
+                    {
+                        "note_id": note.id,
+                        "title": note.title,
+                        "path": path,
+                        "success": True,
+                        "error": None,
+                    }
+                )
+            except RuntimeError as e:
+                results.append(
+                    {
+                        "note_id": note.id,
+                        "title": note.title,
+                        "path": None,
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
-            log.info(f"Saved {path}")
+        return results
 
     def create_text_note(
         self, title: str, content: str, content_is_path: bool = False
@@ -174,7 +202,9 @@ class LightNotes:
             client=self._l._api_client,
             note_id=note.id,
         )
-        self._l._ensure_ok(resp, f"Presigned put URL for {note.id}", require_parsed=True)
+        self._l._ensure_ok(
+            resp, f"Presigned put URL for {note.id}", require_parsed=True
+        )
         put_resp = httpx.put(resp.parsed.presigned_put_url, content=content, timeout=30)
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
