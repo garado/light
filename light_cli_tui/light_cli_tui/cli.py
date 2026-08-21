@@ -1075,6 +1075,54 @@ def notes_list(
     render(all_notes, render_human_readable)
 
 
+@notes.command("get", help=_help("notes_get"))
+@with_light
+@click.argument("note_id")
+@click.option(
+    "--output",
+    "-o",
+    "output_path",
+    default=None,
+    type=click.Path(),
+    help="Save note content to this file instead of printing it. Required for audio notes.",
+)
+def notes_get(light: Light, note_id: str, output_path: str | None):
+    note = light.notes.get_note_metadata(note_id)
+
+    if note.note_type == "audio" and not output_path:
+        raise click.UsageError(
+            "Audio notes can't be printed inline; pass --output/-o <path> to save one."
+        )
+
+    content = light.notes.get_note_content(note)
+
+    if output_path:
+        with open(output_path, "wb") as f:
+            f.write(content)
+
+    inline_content = None if output_path else content.decode(errors="replace")
+
+    def render_human_readable():
+        console.print(f"[bold]{note.title or '(untitled)'}[/bold] [dim]({note.id})[/dim]")
+        console.print(f"[dim]Type:[/dim] {note.note_type}")
+        console.print(f"[dim]Updated:[/dim] {note.updated_at}")
+        if output_path:
+            console.print(f"[dim]Saved to:[/dim] {output_path}")
+        else:
+            console.print()
+            console.print(inline_content)
+
+    data = {
+        "id": note.id,
+        "title": note.title,
+        "note_type": note.note_type,
+        "updated_at": note.updated_at,
+        "content": inline_content,
+        "saved_to": output_path,
+    }
+    render(data, render_human_readable)
+
+
 @notes.command("download", help=_help("notes_download"))
 @with_light
 @click.argument("path")
