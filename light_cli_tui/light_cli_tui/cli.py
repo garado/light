@@ -1094,17 +1094,46 @@ def notes_download(light: Light, path: str):
     type=click.Path(exists=True),
     help="Read note content from a file instead of inline.",
 )
-def notes_add(light: Light, title: str, content: str | None, content_file: str | None):
+@mutative_options("Show the note that would be created without creating it.")
+def notes_add(
+    light: Light,
+    title: str,
+    content: str | None,
+    content_file: str | None,
+    yes,
+    dry_run,
+):
     if content is None and content_file is None:
         raise click.UsageError("Provide CONTENT or --file.")
 
     if content is not None and content_file is not None:
         raise click.UsageError("CONTENT and --file are mutually exclusive.")
 
+    def render_preview():
+        console.print(f"  {title}")
+        if content_file:
+            console.print(f"[dim]Content from file:[/dim] {content_file}")
+
+    proceed = resolve_mutative_action(
+        {"title": title, "content": content, "content_file": content_file},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will create the following note:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
     if content_file:
-        light.notes.create_text_note(title, content_file, content_is_path=True)
+        note = light.notes.create_text_note(title, content_file, content_is_path=True)
     else:
-        light.notes.create_text_note(title, content)
+        note = light.notes.create_text_note(title, content)
+
+    def render_human_readable():
+        console.print(f"[green]Added:[/green] {note.title} [dim]({note.id})[/dim]")
+
+    render(note, render_human_readable)
 
 
 # -- Tools commands ------------------------------------------------------------
