@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import sys
 from pathlib import Path
 
 import rich_click as click
@@ -84,10 +85,17 @@ class JsonAwareGroup(click.RichGroup):
     def invoke(self, ctx: click.Context):
         try:
             return super().invoke(ctx)
+        except click.exceptions.Exit:
+            raise
         except click.ClickException as e:
             if (ctx.obj or {}).get("json"):
                 render_error(e.format_message())
                 ctx.exit(e.exit_code)
+            raise
+        except Exception as e:
+            if (ctx.obj or {}).get("json"):
+                render_error(str(e))
+                ctx.exit(1)
             raise
 
 
@@ -207,15 +215,32 @@ def podcasts_add(light: Light, rss_feed_urls, yes, dry_run):
     if not proceed:
         return
 
-    added = [light.podcast.add_podcast(url) for url in rss_feed_urls]
+    results = []
+    for url in rss_feed_urls:
+        try:
+            p = light.podcast.add_podcast(url)
+            results.append(
+                {"rss_feed_url": url, "success": True, "podcast": p, "error": None}
+            )
+        except RuntimeError as e:
+            results.append(
+                {"rss_feed_url": url, "success": False, "podcast": None, "error": str(e)}
+            )
 
     def render_human_readable():
-        for p, url in zip(added, rss_feed_urls):
-            console.print(f"[green]Added:[/green] {p.title or url}")
-            if p.publisher:
-                console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+        for r in results:
+            if r["success"]:
+                p = r["podcast"]
+                console.print(f"[green]Added:[/green] {p.title or r['rss_feed_url']}")
+                if p.publisher:
+                    console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+            else:
+                console.print(f"[red]Failed:[/red] {r['rss_feed_url']} — {r['error']}")
 
-    render(added, render_human_readable)
+    render(results, render_human_readable)
+
+    if any(not r["success"] for r in results):
+        sys.exit(1)
 
 
 @podcasts.command("list", help=_help("podcasts_list"))

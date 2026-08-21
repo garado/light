@@ -86,6 +86,8 @@ def _render_json(data: Any) -> None:
 def _to_jsonable(value: Any) -> Any:
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         return dataclasses.asdict(value)
+    if isinstance(value, dict):
+        return {k: _to_jsonable(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [_to_jsonable(v) for v in value]
     return value
