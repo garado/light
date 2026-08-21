@@ -28,7 +28,7 @@ from light_cli_tui.interactive import (
     prompt_batch_edit,
     prompt_track_edit,
 )
-from light_cli_tui.output import render, render_error
+from light_cli_tui.output import render, render_error, resolve_mutative_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -46,6 +46,19 @@ _HELP_DIR = Path(__file__).parent / "help"
 def _help(name: str) -> str:
     """Load a command's --help body from help/<name>.md."""
     return (_HELP_DIR / f"{name}.md").read_text()
+
+
+def mutative_options(dry_run_help: str):
+    """Bundle the shared --yes/--dry-run options for a mutative command."""
+
+    def decorator(f):
+        f = click.option("--dry-run", is_flag=True, default=False, help=dry_run_help)(f)
+        f = click.option(
+            "--yes", "-y", is_flag=True, default=False, help="Skip confirmation prompt."
+        )(f)
+        return f
+
+    return decorator
 
 
 class JsonAwareGroup(click.RichGroup):
@@ -176,12 +189,33 @@ def devices():
 
 @podcasts.command("add", help=_help("podcasts_add"))
 @with_light
-@click.argument("rss_feed_url")
-def podcasts_add(light: Light, rss_feed_url):
-    p = light.podcast.add_podcast(rss_feed_url)
-    console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
-    if p.publisher:
-        console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+@click.argument("rss_feed_urls", nargs=-1, required=True)
+@mutative_options("Show the podcast(s) that would be followed without following them.")
+def podcasts_add(light: Light, rss_feed_urls, yes, dry_run):
+    def render_preview():
+        for url in rss_feed_urls:
+            console.print(f"  {url}")
+
+    proceed = resolve_mutative_action(
+        {"rss_feed_urls": list(rss_feed_urls)},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will follow the following podcast(s):",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    added = [light.podcast.add_podcast(url) for url in rss_feed_urls]
+
+    def render_human_readable():
+        for p, url in zip(added, rss_feed_urls):
+            console.print(f"[green]Added:[/green] {p.title or url}")
+            if p.publisher:
+                console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+
+    render(added, render_human_readable)
 
 
 @podcasts.command("list", help=_help("podcasts_list"))
@@ -216,7 +250,8 @@ def podcasts_list(light: Light):
     default=None,
     help="Unfollow by exact followed_podcast_id; comma-separated for bulk deletes.",
 )
-def podcasts_delete(light: Light, title, ids):
+@mutative_options("Show which podcasts would be unfollowed, without unfollowing them.")
+def podcasts_delete(light: Light, title, ids, yes, dry_run):
     if title and ids:
         raise click.UsageError("Provide either TITLE or --id, not both.")
     if not title and not ids:
@@ -235,17 +270,32 @@ def podcasts_delete(light: Light, title, ids):
         matches = [by_id[i] for i in id_list]
     else:
         matches = [p for p in podcasts if p.title == title]
+
+    def render_human_readable():
         if not matches:
             console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
             return
+        for p in matches:
+            console.print(f"  {p.title}")
 
-    for p in matches:
-        console.print(f"  {p.title}")
-    if not click.confirm("Unfollow?"):
+    if not matches:
+        render(matches, render_human_readable)
+        return
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will unfollow the following podcast(s):",
+        confirm_message="Unfollow?",
+    )
+    if not proceed:
         return
 
     for p in matches:
         light.podcast.delete_podcast_by_id(p.followed_podcast_id)
+    render(matches, render_human_readable)
 
 
 # -- Music commands -------------------------------------------------------------
@@ -269,6 +319,88 @@ def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
         and (artist_pattern is None or artist_pattern.match(t.artist))
         and (album_pattern is None or album_pattern.match(t.album))
     ]
+
+
+def _build_upload_plan(
+    files: list[str],
+    invalid_files: list[str],
+    matches: dict,
+    skip_count: int,
+    overwrite: bool,
+    no_convert: bool,
+    light: Light,
+) -> dict:
+    """Build a JSON-able plan describing what `music upload` would do."""
+    to_upload_files = [f for f in files if f not in matches] if skip_count else files
+    new_uploads = [f for f in files if f not in matches]
+    convert_files = [
+        f for f in to_upload_files if not no_convert and light.music.is_convertible(f)
+    ]
+    matched_entries = [
+        {"file": f, "artist": t.artist, "title": t.title} for f, t in matches.items()
+    ]
+
+    return {
+        "invalid_files": invalid_files,
+        "new_uploads": new_uploads,
+        "to_skip": matched_entries if skip_count else [],
+        "to_replace": matched_entries if not skip_count and matches else [],
+        "replace_action": ("overwritten" if overwrite else "duplicated") if matches else None,
+        "to_convert": convert_files,
+    }
+
+
+def _render_upload_plan(plan: dict, verbose: bool) -> None:
+    """Print a human-readable summary of an upload plan."""
+    for file_path in plan["invalid_files"]:
+        console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+
+    upload_count = len(plan["new_uploads"]) + len(plan["to_replace"])
+    console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
+    if plan["new_uploads"]:
+        _render_file_list(plan["new_uploads"], verbose)
+
+    if plan["to_skip"]:
+        skip_count = len(plan["to_skip"])
+        console.print(
+            f"{skip_count} existing track{'s' if skip_count != 1 else ''} will be skipped:"
+        )
+        _render_matched_file_list(plan["to_skip"], verbose)
+    elif plan["to_replace"]:
+        replace_count = len(plan["to_replace"])
+        console.print(
+            f"{replace_count} of these already exist and will be {plan['replace_action']}:"
+        )
+        _render_matched_file_list(plan["to_replace"], verbose)
+
+    if plan["to_convert"]:
+        convert_count = len(plan["to_convert"])
+        console.print(
+            f"{convert_count} FLAC file{'s' if convert_count != 1 else ''} "
+            "will be pre-converted to MP3:"
+        )
+        if not verbose and convert_count > _VERBOSE_LIST_THRESHOLD:
+            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+        else:
+            for file_path in plan["to_convert"]:
+                base = os.path.splitext(os.path.basename(file_path))[0]
+                console.print(f"  {os.path.basename(file_path)} -> {base}.mp3")
+
+
+def _render_matched_file_list(entries: list[dict], verbose: bool) -> None:
+    if not verbose and len(entries) > _VERBOSE_LIST_THRESHOLD:
+        console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+    else:
+        for e in entries:
+            console.print(f"  {e['file']} -> {e['artist']} — {e['title']}")
+
+
+def _render_file_list(files: list[str], verbose: bool) -> None:
+    if not verbose and len(files) > _VERBOSE_LIST_THRESHOLD:
+        console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+    else:
+        for f in files:
+            console.print(f"  {f}")
 
 
 @music.command("upload", help=_help("music_upload"))
@@ -306,8 +438,17 @@ def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
     default=False,
     help="When SONGS includes a directory, also walk its subdirectories for audio files.",
 )
+@mutative_options("Show what would be uploaded without uploading anything.")
 def music_upload(
-    light: Light, songs, allow_duplicates, overwrite, no_convert, verbose, recursive
+    light: Light,
+    songs,
+    allow_duplicates,
+    overwrite,
+    no_convert,
+    verbose,
+    recursive,
+    yes,
+    dry_run,
 ):
     if overwrite and allow_duplicates:
         raise click.UsageError(
@@ -316,53 +457,39 @@ def music_upload(
 
     expanded = light.music.expand_music_paths(list(songs), recursive)
     files, invalid_files = light.music.filter_valid_tracks(expanded)
-    for file_path in invalid_files:
-        console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
 
     if not files:
-        console.print("[yellow]No audio files found.[/yellow]")
+        def render_no_files():
+            for file_path in invalid_files:
+                console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+            console.print("[yellow]No audio files found.[/yellow]")
+
+        render(
+            {
+                "invalid_files": invalid_files,
+                "new_uploads": [],
+                "to_skip": [],
+                "to_replace": [],
+                "replace_action": None,
+                "to_convert": [],
+            },
+            render_no_files,
+        )
         return
 
     matches = light.music.find_upload_matches(files)
-
     skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0
-    upload_count = len(files) - skip_count
+    plan = _build_upload_plan(files, invalid_files, matches, skip_count, overwrite, no_convert, light)
 
-    console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
-    if matches:
-        if skip_count:
-            console.print(
-                f"{skip_count} existing track{'s' if skip_count != 1 else ''} will be skipped:"
-            )
-        else:
-            verb = "duplicated" if allow_duplicates else "overwritten"
-            console.print(
-                f"{len(matches)} of these already exist and will be {verb}:"
-            )
-
-        if not verbose and len(matches) > _VERBOSE_LIST_THRESHOLD:
-            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
-        else:
-            for file_path, t in matches.items():
-                console.print(f"  {file_path} -> {t.artist} — {t.title}")
-
-    to_upload_files = [f for f in files if f not in matches] if skip_count else files
-    convert_files = [
-        f for f in to_upload_files if not no_convert and light.music.is_convertible(f)
-    ]
-    if convert_files:
-        console.print(
-            f"{len(convert_files)} FLAC file{'s' if len(convert_files) != 1 else ''} "
-            "will be pre-converted to MP3:"
-        )
-        if not verbose and len(convert_files) > _VERBOSE_LIST_THRESHOLD:
-            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
-        else:
-            for file_path in convert_files:
-                base = os.path.splitext(os.path.basename(file_path))[0]
-                console.print(f"  {os.path.basename(file_path)} -> {base}.mp3")
-
-    if not click.confirm("Proceed?"):
+    proceed = resolve_mutative_action(
+        plan,
+        lambda: _render_upload_plan(plan, verbose),
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="",
+        confirm_message="Proceed?",
+    )
+    if not proceed:
         return
 
     console.print()
@@ -404,6 +531,8 @@ def music_upload(
             on_convert=on_convert,
             on_file_start=on_file_start,
         )
+
+    render(plan, lambda: None)
 
 
 @music.command("delete-all", help=_help("music_delete_all"))
