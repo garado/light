@@ -1,5 +1,7 @@
 
 ## new on dev
 
-- (lots of things missing)
+- expose original uploaded filename in LightTrack
+- add option to show audio ID in 'light music list'
+- add -v as alias for --version
 - add --head and --tail to music list, notes list
