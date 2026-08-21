@@ -753,6 +753,22 @@ def music_update(
     default=False,
     help="Include original uploaded filename in output.",
 )
+@click.option(
+    "--head",
+    "-H",
+    "head",
+    type=int,
+    default=None,
+    help="Only show the first N tracks.",
+)
+@click.option(
+    "--tail",
+    "-T",
+    "tail",
+    type=int,
+    default=None,
+    help="Only show the last N tracks.",
+)
 def music_list(
     light: Light,
     title_regex: str | None,
@@ -760,9 +776,19 @@ def music_list(
     album_regex: str | None,
     show_id: bool,
     show_filename: bool,
+    head: int | None,
+    tail: int | None,
 ):
+    if head and tail:
+        raise click.UsageError("Only one of --head or --tail can be used at a time.")
+
     tracks = light.music.get_tracks()
     tracks = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+
+    if head is not None:
+        tracks = tracks[:head]
+    elif tail is not None:
+        tracks = tracks[len(tracks) - tail :] if tail > 0 else []
 
     def render_human_readable():
         table = Table(show_header=True)
@@ -811,8 +837,38 @@ def music_list(
     is_flag=True,
     help="Include content preview in output.",
 )
-def notes_list(light: Light, show_id=False, content_preview=False):
+@click.option(
+    "--head",
+    "-H",
+    "head",
+    type=int,
+    default=None,
+    help="Only show the first N notes.",
+)
+@click.option(
+    "--tail",
+    "-T",
+    "tail",
+    type=int,
+    default=None,
+    help="Only show the last N notes.",
+)
+def notes_list(
+    light: Light,
+    show_id=False,
+    content_preview=False,
+    head: int | None = None,
+    tail: int | None = None,
+):
+    if head and tail:
+        raise click.UsageError("Only one of --head or --tail can be used at a time.")
+
     all_notes = light.notes.get_notes()
+
+    if head is not None:
+        all_notes = all_notes[:head]
+    elif tail is not None:
+        all_notes = all_notes[len(all_notes) - tail :] if tail > 0 else []
 
     def _build_table(progress_cb=None) -> Table:
         table = Table(show_header=True)
