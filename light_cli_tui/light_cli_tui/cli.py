@@ -250,7 +250,7 @@ def podcasts_list(light: Light):
     default=None,
     help="Unfollow by exact followed_podcast_id; comma-separated for bulk deletes.",
 )
-@mutative_options("Show which podcasts would be unfollowed, without unfollowing them.")
+@mutative_options("Show which podcasts would be unfollowed without unfollowing them.")
 def podcasts_delete(light: Light, title, ids, yes, dry_run):
     if title and ids:
         raise click.UsageError("Provide either TITLE or --id, not both.")
