@@ -1123,10 +1123,10 @@ def notes_get(light: Light, note_id: str, output_path: str | None):
     render(data, render_human_readable)
 
 
-@notes.command("download", help=_help("notes_download"))
+@notes.command("download-all", help=_help("notes_download_all"))
 @with_light
 @click.argument("path")
-def notes_download(light: Light, path: str):
+def notes_download_all(light: Light, path: str):
     if is_json_mode():
         results = light.notes.download_notes(path)
     else:

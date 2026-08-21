@@ -6,4 +6,4 @@ If two notes share a title, the timestamp is appended to disambiguate.
 
 **Example:**
 
-`light notes download ~/my-notes`
+`light notes download-all ~/my-notes`
