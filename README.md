@@ -43,7 +43,7 @@ light --email-file=... --password-file=... --phone-number-file=... <command>
 
 After the first login, your auth token will be cached. Tokens are good for 30 days. Log out with `light logout`.
 
-Local response caching is also available (off by default) to speed up repeated commands - see [Caching](##caching).
+Local response caching is also available (off by default) to speed up repeated commands - see [Caching](#caching).
 
 ## Getting started: CLI/TUI
 

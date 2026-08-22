@@ -124,7 +124,7 @@ class LightMusic:
     def _set_sort_mode(self, sort_mode: SortMode, invalidate_cache: bool = True):
         """Set sort mode.
 
-        This is the private method offering the the ability to control cache invalidation.
+        This private method offers the the ability to control cache invalidation.
         The public method is `set_sort_mode`, which always invalidates cache.
 
         Args:
