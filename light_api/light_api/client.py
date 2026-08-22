@@ -62,6 +62,7 @@ class Light:
         phone_file: str | None = None,
         device_id: str | None = None,
         device_id_file: str | None = None,
+        cache_enabled: bool = False,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
@@ -83,6 +84,7 @@ class Light:
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
         self._playlist_id: str | None = None
+        self._cache_enabled: bool = cache_enabled
 
         self.music: LightMusic
         self.podcast: LightPodcasts
