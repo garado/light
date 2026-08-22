@@ -34,7 +34,7 @@ class CacheModule(StrEnum):
     PODCASTS = "podcasts"
     NOTES = "notes"
     MUSIC = "music"
-    # TOOLS = "tools"
+    TOOLS = "tools"
     DEVICES = "devices"
 
 
