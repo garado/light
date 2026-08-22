@@ -35,7 +35,7 @@ class CacheModule(StrEnum):
     NOTES = "notes"
     MUSIC = "music"
     # TOOLS = "tools"
-    # DEVICES = "devices"
+    DEVICES = "devices"
 
 
 @dataclass
