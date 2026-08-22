@@ -5,6 +5,7 @@ import json
 import keyring
 import logging
 import os
+import time
 
 from typing import (
     TYPE_CHECKING,
@@ -41,6 +42,11 @@ KEYRING_SERVICE = "unofficial-light-api"
 KEYRING_USER = "session"
 API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
+
+# How long a validated session is trusted before re-checking with the API.
+# Tokens are good for ~30 days server-side; this is mainly to improve perf by
+# avoid an extra auth check on every single invocation
+AUTH_VALIDATION_TTL_SECONDS = 15 * 60
 
 DeviceId = NewType("DeviceId", str)
 PhoneNumber = NewType("PhoneNumber", str)
@@ -84,6 +90,7 @@ class Light:
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
         self._playlist_id: str | None = None
+        self._validated_at: float | None = None
         self._cache_enabled: bool = cache_enabled
 
         self.music: LightMusic
@@ -170,10 +177,16 @@ class Light:
         """Sets up API session."""
         log.info("Authenticating")
 
-        if self._load_cache() and self._validate_cache():
+        cache_loaded = self._load_cache()
+        if cache_loaded and self._validated_recently():
+            log.info("Using cached session (recently validated)")
+        elif cache_loaded and self._validate_cache():
             log.info("Using cached session")
+            self._validated_at = time.time()
+            self._save_cache()
         else:
             self.login()
+            self._validated_at = time.time()
             self._save_cache()
 
         self._api_client = AuthenticatedClient(
@@ -230,6 +243,7 @@ class Light:
             self._api_token = data["api_token"]
             self._device_tool_ids = data["device_tool_ids"]
             self._playlist_id = data["playlist_id"]
+            self._validated_at = data.get("validated_at")
             log.debug("Cache loaded successfully")
             return True
         except (KeyError, json.JSONDecodeError) as e:
@@ -247,6 +261,7 @@ class Light:
                         "api_token": self._api_token,
                         "device_tool_ids": self._device_tool_ids,
                         "playlist_id": self._playlist_id,
+                        "validated_at": self._validated_at,
                     }
                 ),
             )
@@ -276,6 +291,14 @@ class Light:
         self._api_token = None
         self._device_tool_ids = {}
         self._playlist_id = None
+        self._validated_at = None
+
+    def _validated_recently(self) -> bool:
+        """Whether the session was validated within AUTH_VALIDATION_TTL_SECONDS."""
+        return (
+            self._validated_at is not None
+            and time.time() - self._validated_at < AUTH_VALIDATION_TTL_SECONDS
+        )
 
     def _validate_cache(self) -> bool:
         """Check if cached auth token is valid with a cheap API call."""
