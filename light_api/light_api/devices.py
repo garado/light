@@ -1,7 +1,10 @@
 """Device introspection."""
 
+import dataclasses
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+from light_api import cache
 
 if TYPE_CHECKING:
     from light_api.client import Light
@@ -21,6 +24,11 @@ class LightDevices:
 
     def list_devices(self) -> list[LightDevice]:
         """Return every device registered on this account."""
+        if self._l._cache_enabled:
+            cached = cache.load(cache.CacheModule.DEVICES, self._l._api_token)
+            if cached is not None:
+                return [LightDevice(**d) for d in cached]
+
         from open_api_specification_client.api.default import get_api_devices
 
         resp = self._l.call_api(
@@ -30,7 +38,7 @@ class LightDevices:
 
         phone_by_device = dict(self._l._device_phone_numbers(devices.included))
 
-        return [
+        result = [
             LightDevice(
                 id=d.id,
                 phone_number=phone_by_device.get(d.id),
@@ -39,3 +47,12 @@ class LightDevices:
             )
             for d in devices.data
         ]
+
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.DEVICES,
+                self._l._api_token,
+                [dataclasses.asdict(d) for d in result],
+            )
+
+        return result

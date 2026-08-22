@@ -56,6 +56,7 @@ class LightConfig:
     phone_file: str | None = None
     device_id: str | None = None
     device_id_file: str | None = None
+    cache_enabled: bool = False
 
 
 class LightThread:
@@ -87,6 +88,7 @@ class LightThread:
                 phone_file=self._config.phone_file,
                 device_id=self._config.device_id,
                 device_id_file=self._config.device_id_file,
+                cache_enabled=self._config.cache_enabled,
             ) as light:
                 self._ready.set()
                 while True:

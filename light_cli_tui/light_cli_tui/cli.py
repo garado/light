@@ -21,6 +21,7 @@ from light_api.client import Light
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
+from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
 from light_api.tools import ToolName
 from light_api import with_light
 from light_cli_tui.interactive import (
@@ -49,6 +50,37 @@ _HELP_DIR = Path(__file__).parent / "help"
 def _help(name: str) -> str:
     """Load a command's --help body from help/<name>.md."""
     return (_HELP_DIR / f"{name}.md").read_text()
+
+
+_TRUTHY = {"1", "true", "yes", "on"}
+_FALSY = {"0", "false", "no", "off"}
+
+
+def _resolve_cache_enabled(cache_override: bool | None) -> bool:
+    """Resolve whether local response caching is enabled for this invocation.
+
+    Precedence:
+        1. --cache/--no-cache (cache_override)
+        2. $LIGHT_CACHE
+        3. persistent 'light cache enable/disable' setting
+        4. default (off).
+    """
+    if cache_override is not None:
+        return cache_override
+
+    env = os.environ.get("LIGHT_CACHE")
+    if env is not None:
+        normalized = env.strip().lower()
+        if normalized in _TRUTHY:
+            return True
+        if normalized in _FALSY:
+            return False
+        raise click.UsageError(
+            f"Could not parse $LIGHT_CACHE value: {env!r} "
+            f"(expected one of {sorted(_TRUTHY | _FALSY)})"
+        )
+
+    return get_cache_enabled()
 
 
 def mutative_options(dry_run_help: str):
@@ -138,6 +170,13 @@ class JsonAwareGroup(click.RichGroup):
     default=False,
     help="Output machine-readable JSON instead of human-readable text.",
 )
+@click.option(
+    "--cache/--no-cache",
+    "cache_override",
+    default=None,
+    help="Override local response caching for this invocation only. Takes precedence "
+    "over $LIGHT_CACHE and the persistent 'light cache enable/disable' setting.",
+)
 @click.pass_context
 def cli(
     ctx,
@@ -151,6 +190,7 @@ def cli(
     device_id_file,
     log_level,
     json_output,
+    cache_override,
 ):
     if (phone_number or phone_number_file) and (device_id or device_id_file):
         raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
@@ -170,6 +210,7 @@ def cli(
             "device_id": device_id,
             "device_id_file": device_id_file,
             "json": json_output,
+            "cache_enabled": _resolve_cache_enabled(cache_override),
         }
     )
 
@@ -1517,6 +1558,42 @@ def schema(hash_only):
     render(doc, lambda: console.print_json(json.dumps(doc)))
 
 
+# -- Cache ----------------------------------------------------------------------
+
+
+@cli.group(help=_help("cache"))
+def cache():
+    pass
+
+
+@cache.command("enable", help=_help("cache_enable"))
+def cache_enable():
+    set_cache_enabled(True)
+    render(
+        CacheStatus(cache_enabled=True),
+        lambda: console.print("[green]Caching enabled.[/green]"),
+    )
+
+
+@cache.command("disable", help=_help("cache_disable"))
+def cache_disable():
+    set_cache_enabled(False)
+    render(
+        CacheStatus(cache_enabled=False),
+        lambda: console.print("[green]Caching disabled.[/green]"),
+    )
+
+
+@cache.command("status", help=_help("cache_status"))
+def cache_status():
+    enabled = get_cache_enabled()
+
+    def render_human_readable():
+        console.print(f"Caching is {'[green]enabled[/green]' if enabled else '[yellow]disabled[/yellow]'}.")
+
+    render(CacheStatus(cache_enabled=enabled), render_human_readable)
+
+
 # -- Auth -----------------------------------------------------------------------
 
 
@@ -1534,7 +1611,7 @@ def logout(ctx):
         device_id=obj.get("device_id"),
         device_id_file=obj.get("device_id_file"),
     )
-    light.clear_cache()
+    light.clear_auth_cache()
     console.print("[green]Logged out.[/green]")
 
 
@@ -1563,6 +1640,7 @@ def tui(ctx):
             phone_file=obj.get("phone_number_file"),
             device_id=obj.get("device_id"),
             device_id_file=obj.get("device_id_file"),
+            cache_enabled=obj.get("cache_enabled", False),
         )
     )
 

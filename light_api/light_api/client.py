@@ -5,6 +5,7 @@ import json
 import keyring
 import logging
 import os
+import time
 
 from typing import (
     TYPE_CHECKING,
@@ -42,6 +43,11 @@ KEYRING_USER = "session"
 API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
 
+# How long a validated session is trusted before re-checking with the API.
+# Tokens are good for ~30 days server-side; this is mainly to improve perf by
+# avoid an extra auth check on every single invocation
+AUTH_VALIDATION_TTL_SECONDS = 15 * 60
+
 DeviceId = NewType("DeviceId", str)
 PhoneNumber = NewType("PhoneNumber", str)
 
@@ -62,6 +68,7 @@ class Light:
         phone_file: str | None = None,
         device_id: str | None = None,
         device_id_file: str | None = None,
+        cache_enabled: bool = False,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
@@ -83,6 +90,8 @@ class Light:
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
         self._playlist_id: str | None = None
+        self._validated_at: float | None = None
+        self._cache_enabled: bool = cache_enabled
 
         self.music: LightMusic
         self.podcast: LightPodcasts
@@ -121,7 +130,7 @@ class Light:
         log.info("Re-authenticating")
         self._api_token = None
         self.login()
-        self._save_cache()
+        self._save_auth_cache()
         self._api_client = AuthenticatedClient(
             base_url=API_BASE,
             token=self._api_token,
@@ -168,11 +177,17 @@ class Light:
         """Sets up API session."""
         log.info("Authenticating")
 
-        if self._load_cache() and self._validate_cache():
+        cache_loaded = self._load_auth_cache()
+        if cache_loaded and self._validated_recently():
+            log.info("Using cached session (recently validated)")
+        elif cache_loaded and self._validate_auth_cache():
             log.info("Using cached session")
+            self._validated_at = time.time()
+            self._save_auth_cache()
         else:
             self.login()
-            self._save_cache()
+            self._validated_at = time.time()
+            self._save_auth_cache()
 
         self._api_client = AuthenticatedClient(
             base_url=API_BASE,
@@ -185,7 +200,7 @@ class Light:
         if not expected.issubset(self._device_tool_ids) or not self._playlist_id:
             self._fetch_device_tool_ids()
             self._fetch_playlist_id()
-            self._save_cache()
+            self._save_auth_cache()
 
         from light_api.devices import LightDevices
         from light_api.music import LightMusic
@@ -205,7 +220,7 @@ class Light:
     def __exit__(self, *_: object) -> None:
         pass
 
-    def _load_cache(self) -> bool:
+    def _load_auth_cache(self) -> bool:
         """Load cached data from keyring."""
         log.debug("Loading cache")
 
@@ -228,13 +243,14 @@ class Light:
             self._api_token = data["api_token"]
             self._device_tool_ids = data["device_tool_ids"]
             self._playlist_id = data["playlist_id"]
+            self._validated_at = data.get("validated_at")
             log.debug("Cache loaded successfully")
             return True
         except (KeyError, json.JSONDecodeError) as e:
             log.debug(f"Error: {e}")
             return False
 
-    def _save_cache(self) -> None:
+    def _save_auth_cache(self) -> None:
         """Cache data to keyring."""
         try:
             keyring.set_password(
@@ -245,6 +261,7 @@ class Light:
                         "api_token": self._api_token,
                         "device_tool_ids": self._device_tool_ids,
                         "playlist_id": self._playlist_id,
+                        "validated_at": self._validated_at,
                     }
                 ),
             )
@@ -255,7 +272,7 @@ class Light:
         ) as e:
             log.warning(f"Keyring error: {e}")
 
-    def clear_cache(self) -> None:
+    def clear_auth_cache(self) -> None:
         """Clear the cached session.
 
         Forces a fresh login and device lookup on the next `with Light(...)`.
@@ -274,8 +291,16 @@ class Light:
         self._api_token = None
         self._device_tool_ids = {}
         self._playlist_id = None
+        self._validated_at = None
 
-    def _validate_cache(self) -> bool:
+    def _validated_recently(self) -> bool:
+        """Whether the session was validated within AUTH_VALIDATION_TTL_SECONDS."""
+        return (
+            self._validated_at is not None
+            and time.time() - self._validated_at < AUTH_VALIDATION_TTL_SECONDS
+        )
+
+    def _validate_auth_cache(self) -> bool:
         """Check if cached auth token is valid with a cheap API call."""
         client = AuthenticatedClient(
             base_url=API_BASE,

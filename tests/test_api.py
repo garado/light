@@ -92,7 +92,7 @@ class TestClearCache:
 
         light = make_light()
         with patch("light_api.client.keyring.delete_password") as mock_delete:
-            light.clear_cache()
+            light.clear_auth_cache()
         mock_delete.assert_called_once_with(KEYRING_SERVICE, KEYRING_USER)
 
     def test_resets_in_memory_state(self):
@@ -101,7 +101,7 @@ class TestClearCache:
         light._playlist_id = "some-playlist"
 
         with patch("light_api.client.keyring.delete_password"):
-            light.clear_cache()
+            light.clear_auth_cache()
 
         assert light._api_token is None
         assert light._device_tool_ids == {}
@@ -115,7 +115,7 @@ class TestClearCache:
             "light_api.client.keyring.delete_password",
             side_effect=keyring.errors.PasswordDeleteError,
         ):
-            light.clear_cache()  # should not raise
+            light.clear_auth_cache()  # should not raise
 
     def test_no_raise_on_keyring_error(self):
         import keyring.errors
@@ -125,7 +125,7 @@ class TestClearCache:
             "light_api.client.keyring.delete_password",
             side_effect=keyring.errors.NoKeyringError,
         ):
-            light.clear_cache()  # should not raise
+            light.clear_auth_cache()  # should not raise
 
 
 class TestFetchDeviceToolIds:

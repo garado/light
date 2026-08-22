@@ -1,8 +1,11 @@
 """Podcast management for Light devices."""
 
+import dataclasses
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+from light_api import cache
 
 from open_api_specification_client.api.default import (
     delete_api_followed_podcasts_followed_podcast_id,
@@ -69,6 +72,11 @@ class LightPodcasts:
 
     def get_podcasts(self) -> list[LightPodcast]:
         """Fetch all followed podcasts for this device."""
+        if self._l._cache_enabled:
+            cached = cache.load(cache.CacheModule.PODCASTS, self._l._api_token)
+            if cached is not None:
+                return [LightPodcast(**d) for d in cached]
+
         resp = get_api_followed_podcasts.sync_detailed(
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["podcast"],
@@ -100,6 +108,14 @@ class LightPodcasts:
                     description=(attrs.description or None) if attrs else None,
                 )
             )
+
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.PODCASTS,
+                self._l._api_token,
+                [dataclasses.asdict(p) for p in podcasts],
+            )
+
         return podcasts
 
     def delete_podcast_by_title(self, title: str) -> None:
@@ -119,6 +135,8 @@ class LightPodcasts:
             client=self._l._api_client,
         )
         self._l._ensure_ok(resp, "Delete podcast", ok_codes=range(200, 300))
+
+        cache.invalidate(cache.CacheModule.PODCASTS)
 
     def add_podcast(self, rss_feed_url: str) -> LightPodcast:
         """Add a podcast to the device by RSS feed URL.
@@ -176,6 +194,8 @@ class LightPodcasts:
         )
 
         followed_podcast_id = followed.data.id
+
+        cache.invalidate(cache.CacheModule.PODCASTS)
 
         return LightPodcast(
             podcast_id=podcast_id,

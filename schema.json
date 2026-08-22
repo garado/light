@@ -1,5 +1,5 @@
 {
-  "$hash": "4512e80bcbf95b29c87c5650b3eb3ca8cd6a0a1b36b68e9e9105f9f3d5e1efe5",
+  "$hash": "df7d27fc77c77610c2c425b6e4ef1adaa3ef78401638cee95bf41f5cd2fcba82",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -801,6 +801,102 @@
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "cache enable": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "cache_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cache_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "cache disable": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "cache_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cache_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "cache status": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "cache_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cache_enabled"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [
