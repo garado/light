@@ -1640,6 +1640,7 @@ def tui(ctx):
             phone_file=obj.get("phone_number_file"),
             device_id=obj.get("device_id"),
             device_id_file=obj.get("device_id_file"),
+            cache_enabled=obj.get("cache_enabled", False),
         )
     )
 
