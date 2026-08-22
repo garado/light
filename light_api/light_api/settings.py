@@ -2,6 +2,7 @@
 
 import json
 import os
+from dataclasses import dataclass
 from typing import Any
 
 import platformdirs
@@ -9,6 +10,11 @@ import platformdirs
 _DEFAULTS: dict[str, Any] = {
     "cache_enabled": False,
 }
+
+
+@dataclass
+class CacheStatus:
+    cache_enabled: bool
 
 
 def _settings_path() -> str:

@@ -21,7 +21,7 @@ from light_api.client import Light
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
-from light_api.settings import get_cache_enabled, set_cache_enabled
+from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
 from light_api.tools import ToolName
 from light_api import with_light
 from light_cli_tui.interactive import (
@@ -1569,14 +1569,18 @@ def cache():
 @cache.command("enable", help=_help("cache_enable"))
 def cache_enable():
     set_cache_enabled(True)
-    render({"cache_enabled": True}, lambda: console.print("[green]Caching enabled.[/green]"))
+    render(
+        CacheStatus(cache_enabled=True),
+        lambda: console.print("[green]Caching enabled.[/green]"),
+    )
 
 
 @cache.command("disable", help=_help("cache_disable"))
 def cache_disable():
     set_cache_enabled(False)
     render(
-        {"cache_enabled": False}, lambda: console.print("[green]Caching disabled.[/green]")
+        CacheStatus(cache_enabled=False),
+        lambda: console.print("[green]Caching disabled.[/green]"),
     )
 
 
@@ -1587,7 +1591,7 @@ def cache_status():
     def render_human_readable():
         console.print(f"Caching is {'[green]enabled[/green]' if enabled else '[yellow]disabled[/yellow]'}.")
 
-    render({"cache_enabled": enabled}, render_human_readable)
+    render(CacheStatus(cache_enabled=enabled), render_human_readable)
 
 
 # -- Auth -----------------------------------------------------------------------

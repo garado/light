@@ -11,6 +11,7 @@ from light_api.devices import LightDevice
 from light_api.music import LightTrack, UploadResult
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
 from light_api.podcast import LightPodcast, PodcastAddResult
+from light_api.settings import CacheStatus
 from light_api.tools import LightTool
 
 # Map each `--json`-enabled command to its output dataclass.
@@ -30,6 +31,9 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "notes download-all": list[NoteDownloadResult],
     "tools list": list[LightTool],
     "devices list": list[LightDevice],
+    "cache enable": CacheStatus,
+    "cache disable": CacheStatus,
+    "cache status": CacheStatus,
 }
 
 _PRIMITIVE_SCHEMAS: dict[type, dict[str, Any]] = {
