@@ -1216,6 +1216,58 @@ def notes_add(
     render(note, render_human_readable)
 
 
+@notes.command("delete", help=_help("notes_delete"))
+@with_light
+@click.argument("title", required=False)
+@click.option(
+    "--id",
+    "ids",
+    default=None,
+    help="Delete by exact note ID; comma-separated for bulk deletes.",
+)
+@mutative_options("Show which notes would be deleted without deleting them.")
+def notes_delete(light: Light, title, ids, yes, dry_run):
+    if title and ids:
+        raise click.UsageError("Provide either TITLE or --id, not both.")
+    if not title and not ids:
+        raise click.UsageError("Provide TITLE or --id.")
+
+    all_notes = light.notes.get_notes()
+
+    if ids:
+        id_list = [i.strip() for i in ids.split(",")]
+        if any(not i for i in id_list):
+            raise click.UsageError(f"Could not parse --id value: {ids!r}")
+        by_id = {n.id: n for n in all_notes}
+        missing = [i for i in id_list if i not in by_id]
+        if missing:
+            raise click.UsageError(f"No note(s) found with id: {', '.join(missing)}")
+        matches = [by_id[i] for i in id_list]
+    else:
+        matches = [n for n in all_notes if n.title == title]
+        if not matches:
+            raise click.UsageError(f"No note found with title: {title}")
+
+    def render_human_readable():
+        for n in matches:
+            console.print(f"  {n.title or '(untitled)'} [dim]({n.id})[/dim]")
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will delete the following note(s):",
+        confirm_message="Delete?",
+    )
+    if not proceed:
+        return
+
+    for n in matches:
+        light.notes.delete_note(n.id)
+    render(matches, render_human_readable)
+
+
 # -- Tools commands ------------------------------------------------------------
 
 
