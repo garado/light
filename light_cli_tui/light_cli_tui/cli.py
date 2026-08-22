@@ -1268,6 +1268,61 @@ def notes_delete(light: Light, title, ids, yes, dry_run):
     render(matches, render_human_readable)
 
 
+@notes.command("rename", help=_help("notes_rename"))
+@with_light
+@click.argument("args", nargs=-1, required=True)
+@click.option("--id", "note_id", default=None, help="Rename by exact note ID.")
+@mutative_options("Show the note that would be renamed without renaming it.")
+def notes_rename(light: Light, args, note_id, yes, dry_run):
+    if note_id:
+        if len(args) != 1:
+            raise click.UsageError("Usage: light notes rename --id <id> NEW_TITLE")
+        title = None
+        (new_title,) = args
+    else:
+        if len(args) != 2:
+            raise click.UsageError("Usage: light notes rename TITLE NEW_TITLE")
+        title, new_title = args
+
+    all_notes = light.notes.get_notes()
+
+    if note_id:
+        by_id = {n.id: n for n in all_notes}
+        if note_id not in by_id:
+            raise click.UsageError(f"No note found with id: {note_id}")
+        note = by_id[note_id]
+    else:
+        matches = [n for n in all_notes if n.title == title]
+        if not matches:
+            raise click.UsageError(f"No note found with title: {title}")
+        if len(matches) > 1:
+            raise click.UsageError(
+                f"Multiple notes titled {title!r}; use --id to disambiguate."
+            )
+        note = matches[0]
+
+    def render_preview():
+        console.print(f"  {note.title or '(untitled)'} [dim]({note.id})[/dim] -> {new_title}")
+
+    proceed = resolve_mutative_action(
+        note,
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will rename the following note:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    light.notes.update_note_title(note, new_title)
+
+    def render_human_readable():
+        console.print(f"[green]Renamed:[/green] {note.title} [dim]({note.id})[/dim]")
+
+    render(note, render_human_readable)
+
+
 # -- Tools commands ------------------------------------------------------------
 
 
