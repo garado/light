@@ -1323,6 +1323,93 @@ def notes_rename(light: Light, args, note_id, yes, dry_run):
     render(note, render_human_readable)
 
 
+@notes.command("update", help=_help("notes_update"))
+@with_light
+@click.argument("args", nargs=-1)
+@click.option("--id", "note_id", default=None, help="Update by exact note ID.")
+@click.option(
+    "--file",
+    "-f",
+    "content_file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Read new content from a file instead of inline.",
+)
+@mutative_options("Show the note whose content would be replaced without replacing it.")
+def notes_update(light: Light, args, note_id, content_file, yes, dry_run):
+    args = list(args)
+
+    if note_id:
+        title = None
+        if content_file:
+            if args:
+                raise click.UsageError("Usage: light notes update --id <id> --file <path>")
+            content_arg = None
+        else:
+            if len(args) != 1:
+                raise click.UsageError("Usage: light notes update --id <id> CONTENT")
+            (content_arg,) = args
+    else:
+        if content_file:
+            if len(args) != 1:
+                raise click.UsageError("Usage: light notes update TITLE --file <path>")
+            (title,) = args
+            content_arg = None
+        else:
+            if len(args) != 2:
+                raise click.UsageError("Usage: light notes update TITLE CONTENT")
+            title, content_arg = args
+
+    all_notes = light.notes.get_notes()
+
+    if note_id:
+        by_id = {n.id: n for n in all_notes}
+        if note_id not in by_id:
+            raise click.UsageError(f"No note found with id: {note_id}")
+        note = by_id[note_id]
+    else:
+        matches = [n for n in all_notes if n.title == title]
+        if not matches:
+            raise click.UsageError(f"No note found with title: {title}")
+        if len(matches) > 1:
+            raise click.UsageError(
+                f"Multiple notes titled {title!r}; use --id to disambiguate."
+            )
+        note = matches[0]
+
+    if note.note_type == "audio":
+        raise click.UsageError("Updating audio note content isn't supported.")
+
+    def render_preview():
+        console.print(f"  {note.title or '(untitled)'} [dim]({note.id})[/dim]")
+        if content_file:
+            console.print(f"[dim]New content from file:[/dim] {content_file}")
+
+    proceed = resolve_mutative_action(
+        note,
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will replace the content of the following note:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    if content_file:
+        with open(content_file) as f:
+            content_bytes = f.read().encode()
+    else:
+        content_bytes = content_arg.encode()
+
+    light.notes.update_note_content(note, content_bytes)
+
+    def render_human_readable():
+        console.print(f"[green]Updated:[/green] {note.title} [dim]({note.id})[/dim]")
+
+    render(note, render_human_readable)
+
+
 # -- Tools commands ------------------------------------------------------------
 
 
