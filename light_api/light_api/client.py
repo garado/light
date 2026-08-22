@@ -92,6 +92,7 @@ class Light:
         self._playlist_id: str | None = None
         self._validated_at: float | None = None
         self._cache_enabled: bool = cache_enabled
+        self._resolved_device_id: str | None = None
 
         self.music: LightMusic
         self.podcast: LightPodcasts
@@ -347,6 +348,7 @@ class Light:
             devices_resp, "Could not fetch devices", require_data=True
         )
         device_id = self._select_device_id(devices)
+        self._resolved_device_id = device_id
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
