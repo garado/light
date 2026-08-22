@@ -17,6 +17,7 @@ from light_api import cache
 from light_api.client import Light
 from open_api_specification_client.api.default import (
     delete_api_audios_audio_id,
+    get_api_audio_capacity,
     get_api_playlist_items,
     get_api_playlists,
     patch_api_audios_audio_id,
@@ -48,6 +49,7 @@ log = logging.getLogger(f"light.{__name__}")
 
 @dataclass
 class LightTrack:
+    """Metadata for a track."""
     playlist_item_id: str
     audio_id: str
     title: str
@@ -58,14 +60,27 @@ class LightTrack:
 
 @dataclass
 class UploadResult:
+    """Result returned after attempting to uploading a track."""
     file: str
     audio_id: str | None
     success: bool
     error: str | None
 
 
+@dataclass
+class AudioCapacity:
+    """Device audio capacity information."""
+    total_capacity: int
+    remaining_capacity: int
+    used_capacity: int  # computed: total_capacity - remaining_capacity
+    processing_count: int
+    failed_count: int
+
+
 class SortMode(StrEnum):
-    # native API sort modes
+    """Sort modes available from the unofficial API."""
+
+    # native cloud API sort modes
     RANK = "rank"
     ARTIST_ASC = "artists_asc"
     ARTIST_DESC = "artists_desc"
@@ -101,6 +116,23 @@ class LightMusic:
     def _init_tracks(self):
         if not hasattr(self, "_tracks"):
             self._tracks = self.get_tracks()
+
+    def get_capacity(self) -> AudioCapacity:
+        """Fetch audio storage capacity/usage for this device."""
+        resp = self._l.call_api(
+            get_api_audio_capacity.sync_detailed,
+            client=self._l._api_client,
+            device_tool_id=self._l._device_tool_ids["music"],
+        )
+        parsed = self._l._ensure_ok(resp, "Get audio capacity", require_parsed=True)
+
+        return AudioCapacity(
+            total_capacity=parsed.total_capacity,
+            remaining_capacity=parsed.remaining_capacity,
+            used_capacity=parsed.total_capacity - parsed.remaining_capacity,
+            processing_count=parsed.processing_count,
+            failed_count=parsed.failed_count,
+        )
 
     def get_sort_mode(self) -> SortMode:
         """Get the current sort mode.

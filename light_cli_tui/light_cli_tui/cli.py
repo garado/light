@@ -1018,6 +1018,40 @@ def music_list(
     render(tracks, render_human_readable)
 
 
+def _human_size(num_bytes: int) -> str:
+    """Format a byte count as a human-readable size (e.g. 1.5 GB)."""
+    size = float(num_bytes)
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if size < 1000 or unit == "TB":
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} {unit}"
+        size /= 1000
+    return f"{size:.1f} TB"
+
+
+@music.command("capacity", help=_help("music_capacity"))
+@with_light
+def music_capacity(light: Light):
+    capacity = light.music.get_capacity()
+
+    def render_human_readable():
+        used_pct = (
+            (capacity.used_capacity / capacity.total_capacity * 100)
+            if capacity.total_capacity
+            else 0
+        )
+        console.print(
+            f"{_human_size(capacity.used_capacity)} / {_human_size(capacity.total_capacity)} "
+            f"used ({used_pct:.1f}%)"
+        )
+        console.print(f"[dim]Remaining:[/dim] {_human_size(capacity.remaining_capacity)}")
+        if capacity.processing_count:
+            console.print(f"[dim]Processing:[/dim] {capacity.processing_count}")
+        if capacity.failed_count:
+            console.print(f"[red]Failed:[/red] {capacity.failed_count}")
+
+    render(capacity, render_human_readable)
+
+
 # -- Notes commands -------------------------------------------------------------
 
 

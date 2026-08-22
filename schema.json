@@ -1,5 +1,5 @@
 {
-  "$hash": "df7d27fc77c77610c2c425b6e4ef1adaa3ef78401638cee95bf41f5cd2fcba82",
+  "$hash": "cc15eb08cca9bedeebfffd85185c0f2383b7da341a3a5b2c31ff95a229f8a8ef",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -319,6 +319,54 @@
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "music capacity": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "total_capacity": {
+            "type": "integer"
+          },
+          "remaining_capacity": {
+            "type": "integer"
+          },
+          "used_capacity": {
+            "type": "integer"
+          },
+          "processing_count": {
+            "type": "integer"
+          },
+          "failed_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_capacity",
+          "remaining_capacity",
+          "used_capacity",
+          "processing_count",
+          "failed_count"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [
