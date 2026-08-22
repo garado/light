@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import sys
 from pathlib import Path
 
 import rich_click as click
@@ -18,6 +19,8 @@ from rich.table import Table
 
 from light_api.client import Light
 from light_api.music import SortMode
+from light_api.notes import NoteContentResult, NoteDownloadResult
+from light_api.podcast import PodcastAddResult
 from light_api.tools import ToolName
 from light_api import with_light
 from light_cli_tui.interactive import (
@@ -28,7 +31,7 @@ from light_cli_tui.interactive import (
     prompt_batch_edit,
     prompt_track_edit,
 )
-from light_cli_tui.output import render, render_error
+from light_cli_tui.output import is_json_mode, render, render_error, resolve_mutative_action
 
 
 click.rich_click.USE_RICH_MARKUP = True
@@ -46,6 +49,19 @@ _HELP_DIR = Path(__file__).parent / "help"
 def _help(name: str) -> str:
     """Load a command's --help body from help/<name>.md."""
     return (_HELP_DIR / f"{name}.md").read_text()
+
+
+def mutative_options(dry_run_help: str):
+    """Bundle the shared --yes/--dry-run options for a mutative command."""
+
+    def decorator(f):
+        f = click.option("--dry-run", is_flag=True, default=False, help=dry_run_help)(f)
+        f = click.option(
+            "--yes", "-y", is_flag=True, default=False, help="Skip confirmation prompt."
+        )(f)
+        return f
+
+    return decorator
 
 
 class JsonAwareGroup(click.RichGroup):
@@ -71,10 +87,17 @@ class JsonAwareGroup(click.RichGroup):
     def invoke(self, ctx: click.Context):
         try:
             return super().invoke(ctx)
+        except click.exceptions.Exit:
+            raise
         except click.ClickException as e:
             if (ctx.obj or {}).get("json"):
                 render_error(e.format_message())
                 ctx.exit(e.exit_code)
+            raise
+        except Exception as e:
+            if (ctx.obj or {}).get("json"):
+                render_error(str(e))
+                ctx.exit(1)
             raise
 
 
@@ -83,7 +106,9 @@ class JsonAwareGroup(click.RichGroup):
     context_settings={"help_option_names": ["-h", "--help"]},
     help=_help("cli"),
 )
-@click.version_option(package_name="light-phone-cli-tui", prog_name="light")
+@click.version_option(
+    None, "-v", "--version", package_name="light-phone-cli-tui", prog_name="light"
+)
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
 @click.option("--password", default=None, help="Light account password.")
@@ -174,12 +199,51 @@ def devices():
 
 @podcasts.command("add", help=_help("podcasts_add"))
 @with_light
-@click.argument("rss_feed_url")
-def podcasts_add(light: Light, rss_feed_url):
-    p = light.podcast.add_podcast(rss_feed_url)
-    console.print(f"[green]Added:[/green] {p.title or rss_feed_url}")
-    if p.publisher:
-        console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+@click.argument("rss_feed_urls", nargs=-1, required=True)
+@mutative_options("Show the podcast(s) that would be followed without following them.")
+def podcasts_add(light: Light, rss_feed_urls, yes, dry_run):
+    def render_preview():
+        for url in rss_feed_urls:
+            console.print(f"  {url}")
+
+    proceed = resolve_mutative_action(
+        {"rss_feed_urls": list(rss_feed_urls)},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will follow the following podcast(s):",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    results = []
+    for url in rss_feed_urls:
+        try:
+            p = light.podcast.add_podcast(url)
+            results.append(
+                PodcastAddResult(rss_feed_url=url, success=True, podcast=p, error=None)
+            )
+        except RuntimeError as e:
+            results.append(
+                PodcastAddResult(
+                    rss_feed_url=url, success=False, podcast=None, error=str(e)
+                )
+            )
+
+    def render_human_readable():
+        for r in results:
+            if r.success:
+                console.print(f"[green]Added:[/green] {r.podcast.title or r.rss_feed_url}")
+                if r.podcast.publisher:
+                    console.print(f"[dim]Publisher:[/dim] {r.podcast.publisher}")
+            else:
+                console.print(f"[red]Failed:[/red] {r.rss_feed_url} — {r.error}")
+
+    render(results, render_human_readable)
+
+    if any(not r.success for r in results):
+        sys.exit(1)
 
 
 @podcasts.command("list", help=_help("podcasts_list"))
@@ -214,7 +278,8 @@ def podcasts_list(light: Light):
     default=None,
     help="Unfollow by exact followed_podcast_id; comma-separated for bulk deletes.",
 )
-def podcasts_delete(light: Light, title, ids):
+@mutative_options("Show which podcasts would be unfollowed without unfollowing them.")
+def podcasts_delete(light: Light, title, ids, yes, dry_run):
     if title and ids:
         raise click.UsageError("Provide either TITLE or --id, not both.")
     if not title and not ids:
@@ -234,16 +299,26 @@ def podcasts_delete(light: Light, title, ids):
     else:
         matches = [p for p in podcasts if p.title == title]
         if not matches:
-            console.print(f"[yellow]No podcast found with title: {title}[/yellow]")
-            return
+            raise click.UsageError(f"No podcast found with title: {title}")
 
-    for p in matches:
-        console.print(f"  {p.title}")
-    if not click.confirm("Unfollow?"):
+    def render_human_readable():
+        for p in matches:
+            console.print(f"  {p.title}")
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will unfollow the following podcast(s):",
+        confirm_message="Unfollow?",
+    )
+    if not proceed:
         return
 
     for p in matches:
         light.podcast.delete_podcast_by_id(p.followed_podcast_id)
+    render(matches, render_human_readable)
 
 
 # -- Music commands -------------------------------------------------------------
@@ -267,6 +342,88 @@ def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
         and (artist_pattern is None or artist_pattern.match(t.artist))
         and (album_pattern is None or album_pattern.match(t.album))
     ]
+
+
+def _build_upload_plan(
+    files: list[str],
+    invalid_files: list[str],
+    matches: dict,
+    skip_count: int,
+    overwrite: bool,
+    no_convert: bool,
+    light: Light,
+) -> dict:
+    """Build a JSON-able plan describing what `music upload` would do."""
+    to_upload_files = [f for f in files if f not in matches] if skip_count else files
+    new_uploads = [f for f in files if f not in matches]
+    convert_files = [
+        f for f in to_upload_files if not no_convert and light.music.is_convertible(f)
+    ]
+    matched_entries = [
+        {"file": f, "artist": t.artist, "title": t.title} for f, t in matches.items()
+    ]
+
+    return {
+        "invalid_files": invalid_files,
+        "new_uploads": new_uploads,
+        "to_skip": matched_entries if skip_count else [],
+        "to_replace": matched_entries if not skip_count and matches else [],
+        "replace_action": ("overwritten" if overwrite else "duplicated") if matches else None,
+        "to_convert": convert_files,
+    }
+
+
+def _render_upload_plan(plan: dict, verbose: bool) -> None:
+    """Print a human-readable summary of an upload plan."""
+    for file_path in plan["invalid_files"]:
+        console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+
+    upload_count = len(plan["new_uploads"]) + len(plan["to_replace"])
+    console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
+    if plan["new_uploads"]:
+        _render_file_list(plan["new_uploads"], verbose)
+
+    if plan["to_skip"]:
+        skip_count = len(plan["to_skip"])
+        console.print(
+            f"{skip_count} existing track{'s' if skip_count != 1 else ''} will be skipped:"
+        )
+        _render_matched_file_list(plan["to_skip"], verbose)
+    elif plan["to_replace"]:
+        replace_count = len(plan["to_replace"])
+        console.print(
+            f"{replace_count} of these already exist and will be {plan['replace_action']}:"
+        )
+        _render_matched_file_list(plan["to_replace"], verbose)
+
+    if plan["to_convert"]:
+        convert_count = len(plan["to_convert"])
+        console.print(
+            f"{convert_count} FLAC file{'s' if convert_count != 1 else ''} "
+            "will be pre-converted to MP3:"
+        )
+        if not verbose and convert_count > _VERBOSE_LIST_THRESHOLD:
+            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+        else:
+            for file_path in plan["to_convert"]:
+                base = os.path.splitext(os.path.basename(file_path))[0]
+                console.print(f"  {os.path.basename(file_path)} -> {base}.mp3")
+
+
+def _render_matched_file_list(entries: list[dict], verbose: bool) -> None:
+    if not verbose and len(entries) > _VERBOSE_LIST_THRESHOLD:
+        console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+    else:
+        for e in entries:
+            console.print(f"  {e['file']} -> {e['artist']} — {e['title']}")
+
+
+def _render_file_list(files: list[str], verbose: bool) -> None:
+    if not verbose and len(files) > _VERBOSE_LIST_THRESHOLD:
+        console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+    else:
+        for f in files:
+            console.print(f"  {f}")
 
 
 @music.command("upload", help=_help("music_upload"))
@@ -304,8 +461,17 @@ def _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex):
     default=False,
     help="When SONGS includes a directory, also walk its subdirectories for audio files.",
 )
+@mutative_options("Show what would be uploaded without uploading anything.")
 def music_upload(
-    light: Light, songs, allow_duplicates, overwrite, no_convert, verbose, recursive
+    light: Light,
+    songs,
+    allow_duplicates,
+    overwrite,
+    no_convert,
+    verbose,
+    recursive,
+    yes,
+    dry_run,
 ):
     if overwrite and allow_duplicates:
         raise click.UsageError(
@@ -314,53 +480,39 @@ def music_upload(
 
     expanded = light.music.expand_music_paths(list(songs), recursive)
     files, invalid_files = light.music.filter_valid_tracks(expanded)
-    for file_path in invalid_files:
-        console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
 
     if not files:
-        console.print("[yellow]No audio files found.[/yellow]")
+        def render_no_files():
+            for file_path in invalid_files:
+                console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+            console.print("[yellow]No audio files found.[/yellow]")
+
+        render(
+            {
+                "invalid_files": invalid_files,
+                "new_uploads": [],
+                "to_skip": [],
+                "to_replace": [],
+                "replace_action": None,
+                "to_convert": [],
+            },
+            render_no_files,
+        )
         return
 
     matches = light.music.find_upload_matches(files)
-
     skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0
-    upload_count = len(files) - skip_count
+    plan = _build_upload_plan(files, invalid_files, matches, skip_count, overwrite, no_convert, light)
 
-    console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
-    if matches:
-        if skip_count:
-            console.print(
-                f"{skip_count} existing track{'s' if skip_count != 1 else ''} will be skipped:"
-            )
-        else:
-            verb = "duplicated" if allow_duplicates else "overwritten"
-            console.print(
-                f"{len(matches)} of these already exist and will be {verb}:"
-            )
-
-        if not verbose and len(matches) > _VERBOSE_LIST_THRESHOLD:
-            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
-        else:
-            for file_path, t in matches.items():
-                console.print(f"  {file_path} -> {t.artist} — {t.title}")
-
-    to_upload_files = [f for f in files if f not in matches] if skip_count else files
-    convert_files = [
-        f for f in to_upload_files if not no_convert and light.music.is_convertible(f)
-    ]
-    if convert_files:
-        console.print(
-            f"{len(convert_files)} FLAC file{'s' if len(convert_files) != 1 else ''} "
-            "will be pre-converted to MP3:"
-        )
-        if not verbose and len(convert_files) > _VERBOSE_LIST_THRESHOLD:
-            console.print("[dim]Use --verbose/-v to show full list.[/dim]")
-        else:
-            for file_path in convert_files:
-                base = os.path.splitext(os.path.basename(file_path))[0]
-                console.print(f"  {os.path.basename(file_path)} -> {base}.mp3")
-
-    if not click.confirm("Proceed?"):
+    proceed = resolve_mutative_action(
+        plan,
+        lambda: _render_upload_plan(plan, verbose),
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="",
+        confirm_message="Proceed?",
+    )
+    if not proceed:
         return
 
     console.print()
@@ -393,7 +545,7 @@ def music_upload(
             mp3_name = os.path.splitext(filename)[0] + ".mp3"
             console.print(f"[dim]{batch_position}Converting {filename} -> {mp3_name}[/dim]")
 
-        light.music.upload_tracks(
+        results = light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
             overwrite=overwrite,
@@ -402,6 +554,18 @@ def music_upload(
             on_convert=on_convert,
             on_file_start=on_file_start,
         )
+
+    def render_results():
+        for r in results:
+            if r.success:
+                console.print(f"[green]Uploaded:[/green] {os.path.basename(r.file)}")
+            else:
+                console.print(f"[red]Failed:[/red] {os.path.basename(r.file)} — {r.error}")
+
+    render(results, render_results)
+
+    if any(not r.success for r in results):
+        sys.exit(1)
 
 
 @music.command("delete-all", help=_help("music_delete_all"))
@@ -735,14 +899,58 @@ def music_update(
 @click.option(
     "--album", "-b", "album_regex", help="Only show tracks whose album matches this regex pattern."
 )
+@click.option(
+    "--show-id",
+    "-i",
+    "show_id",
+    is_flag=True,
+    default=False,
+    help="Include audio ID in output.",
+)
+@click.option(
+    "--show-filename",
+    "-f",
+    "show_filename",
+    is_flag=True,
+    default=False,
+    help="Include original uploaded filename in output.",
+)
+@click.option(
+    "--head",
+    "-H",
+    "head",
+    type=int,
+    default=None,
+    help="Only show the first N tracks.",
+)
+@click.option(
+    "--tail",
+    "-T",
+    "tail",
+    type=int,
+    default=None,
+    help="Only show the last N tracks.",
+)
 def music_list(
     light: Light,
     title_regex: str | None,
     artist_regex: str | None,
     album_regex: str | None,
+    show_id: bool,
+    show_filename: bool,
+    head: int | None,
+    tail: int | None,
 ):
+    if head and tail:
+        raise click.UsageError("Only one of --head or --tail can be used at a time.")
+
     tracks = light.music.get_tracks()
     tracks = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+
+    if head is not None:
+        tracks = tracks[:head]
+    elif tail is not None:
+        tracks = tracks[len(tracks) - tail :] if tail > 0 else []
 
     def render_human_readable():
         table = Table(show_header=True)
@@ -750,9 +958,19 @@ def music_list(
         table.add_column("Title")
         table.add_column("Artist")
         table.add_column("Album")
+        if show_id:
+            table.add_column("ID")
+        if show_filename:
+            table.add_column("Filename")
 
         for i, track in enumerate(tracks, 1):
-            table.add_row(str(i), track.title, track.artist, track.album)
+            row = [str(i)]
+            row.extend([track.title, track.artist, track.album])
+            if show_id:
+                row.append(track.audio_id)
+            if show_filename:
+                row.append(track.filename)
+            table.add_row(*row)
 
         console.print(table)
 
@@ -781,8 +999,38 @@ def music_list(
     is_flag=True,
     help="Include content preview in output.",
 )
-def notes_list(light: Light, show_id=False, content_preview=False):
+@click.option(
+    "--head",
+    "-H",
+    "head",
+    type=int,
+    default=None,
+    help="Only show the first N notes.",
+)
+@click.option(
+    "--tail",
+    "-T",
+    "tail",
+    type=int,
+    default=None,
+    help="Only show the last N notes.",
+)
+def notes_list(
+    light: Light,
+    show_id=False,
+    content_preview=False,
+    head: int | None = None,
+    tail: int | None = None,
+):
+    if head and tail:
+        raise click.UsageError("Only one of --head or --tail can be used at a time.")
+
     all_notes = light.notes.get_notes()
+
+    if head is not None:
+        all_notes = all_notes[:head]
+    elif tail is not None:
+        all_notes = all_notes[len(all_notes) - tail :] if tail > 0 else []
 
     def _build_table(progress_cb=None) -> Table:
         table = Table(show_header=True)
@@ -840,11 +1088,91 @@ def notes_list(light: Light, show_id=False, content_preview=False):
     render(all_notes, render_human_readable)
 
 
-@notes.command("download", help=_help("notes_download"))
+@notes.command("get", help=_help("notes_get"))
+@with_light
+@click.argument("note_id")
+@click.option(
+    "--output",
+    "-o",
+    "output_path",
+    default=None,
+    type=click.Path(),
+    help="Save note content to this file instead of printing it. Required for audio notes.",
+)
+def notes_get(light: Light, note_id: str, output_path: str | None):
+    note = light.notes.get_note_metadata(note_id)
+
+    if note.note_type == "audio" and not output_path:
+        raise click.UsageError(
+            "Audio notes can't be printed inline; pass --output/-o <path> to save one."
+        )
+
+    content = light.notes.get_note_content(note)
+
+    if output_path:
+        with open(output_path, "wb") as f:
+            f.write(content)
+
+    inline_content = None if output_path else content.decode(errors="replace")
+
+    def render_human_readable():
+        console.print(f"[bold]{note.title or '(untitled)'}[/bold] [dim]({note.id})[/dim]")
+        console.print(f"[dim]Type:[/dim] {note.note_type}")
+        console.print(f"[dim]Updated:[/dim] {note.updated_at}")
+        if output_path:
+            console.print(f"[dim]Saved to:[/dim] {output_path}")
+        else:
+            console.print()
+            console.print(inline_content)
+
+    data = NoteContentResult(
+        id=note.id,
+        title=note.title,
+        note_type=note.note_type,
+        updated_at=note.updated_at,
+        content=inline_content,
+        saved_to=output_path,
+    )
+    render(data, render_human_readable)
+
+
+@notes.command("download-all", help=_help("notes_download_all"))
 @with_light
 @click.argument("path")
-def notes_download(light: Light, path: str):
-    light.notes.download_notes(path)
+def notes_download_all(light: Light, path: str):
+    if is_json_mode():
+        results = light.notes.download_notes(path)
+    else:
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+        ) as progress:
+            task_id = progress.add_task("Downloading notes...", total=None)
+
+            def on_progress(index: int, total: int, note) -> None:
+                progress.update(
+                    task_id,
+                    total=total,
+                    completed=index - 1,
+                    description=f"[{index}/{total}] Downloading {note.title or note.id}...",
+                )
+
+            results = light.notes.download_notes(path, on_progress=on_progress)
+            progress.update(task_id, completed=len(results))
+
+    def render_human_readable():
+        for r in results:
+            if r.success:
+                console.print(f"[green]Saved:[/green] {r.title or r.note_id} -> {r.path}")
+            else:
+                console.print(f"[red]Failed:[/red] {r.title or r.note_id} — {r.error}")
+
+    render(results, render_human_readable)
+
+    if any(not r.success for r in results):
+        sys.exit(1)
 
 
 @notes.command("add", help=_help("notes_add"))
@@ -859,17 +1187,240 @@ def notes_download(light: Light, path: str):
     type=click.Path(exists=True),
     help="Read note content from a file instead of inline.",
 )
-def notes_add(light: Light, title: str, content: str | None, content_file: str | None):
+@mutative_options("Show the note that would be created without creating it.")
+def notes_add(
+    light: Light,
+    title: str,
+    content: str | None,
+    content_file: str | None,
+    yes,
+    dry_run,
+):
     if content is None and content_file is None:
         raise click.UsageError("Provide CONTENT or --file.")
 
     if content is not None and content_file is not None:
         raise click.UsageError("CONTENT and --file are mutually exclusive.")
 
+    def render_preview():
+        console.print(f"  {title}")
+        if content_file:
+            console.print(f"[dim]Content from file:[/dim] {content_file}")
+
+    proceed = resolve_mutative_action(
+        {"title": title, "content": content, "content_file": content_file},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will create the following note:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
     if content_file:
-        light.notes.create_text_note(title, content_file, content_is_path=True)
+        note = light.notes.create_text_note(title, content_file, content_is_path=True)
     else:
-        light.notes.create_text_note(title, content)
+        note = light.notes.create_text_note(title, content)
+
+    def render_human_readable():
+        console.print(f"[green]Added:[/green] {note.title} [dim]({note.id})[/dim]")
+
+    render(note, render_human_readable)
+
+
+@notes.command("delete", help=_help("notes_delete"))
+@with_light
+@click.argument("title", required=False)
+@click.option(
+    "--id",
+    "ids",
+    default=None,
+    help="Delete by exact note ID; comma-separated for bulk deletes.",
+)
+@mutative_options("Show which notes would be deleted without deleting them.")
+def notes_delete(light: Light, title, ids, yes, dry_run):
+    if title and ids:
+        raise click.UsageError("Provide either TITLE or --id, not both.")
+    if not title and not ids:
+        raise click.UsageError("Provide TITLE or --id.")
+
+    all_notes = light.notes.get_notes()
+
+    if ids:
+        id_list = [i.strip() for i in ids.split(",")]
+        if any(not i for i in id_list):
+            raise click.UsageError(f"Could not parse --id value: {ids!r}")
+        by_id = {n.id: n for n in all_notes}
+        missing = [i for i in id_list if i not in by_id]
+        if missing:
+            raise click.UsageError(f"No note(s) found with id: {', '.join(missing)}")
+        matches = [by_id[i] for i in id_list]
+    else:
+        matches = [n for n in all_notes if n.title == title]
+        if not matches:
+            raise click.UsageError(f"No note found with title: {title}")
+
+    def render_human_readable():
+        for n in matches:
+            console.print(f"  {n.title or '(untitled)'} [dim]({n.id})[/dim]")
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will delete the following note(s):",
+        confirm_message="Delete?",
+    )
+    if not proceed:
+        return
+
+    for n in matches:
+        light.notes.delete_note(n.id)
+    render(matches, render_human_readable)
+
+
+@notes.command("rename", help=_help("notes_rename"))
+@with_light
+@click.argument("args", nargs=-1, required=True)
+@click.option("--id", "note_id", default=None, help="Rename by exact note ID.")
+@mutative_options("Show the note that would be renamed without renaming it.")
+def notes_rename(light: Light, args, note_id, yes, dry_run):
+    if note_id:
+        if len(args) != 1:
+            raise click.UsageError("Usage: light notes rename --id <id> NEW_TITLE")
+        title = None
+        (new_title,) = args
+    else:
+        if len(args) != 2:
+            raise click.UsageError("Usage: light notes rename TITLE NEW_TITLE")
+        title, new_title = args
+
+    all_notes = light.notes.get_notes()
+
+    if note_id:
+        by_id = {n.id: n for n in all_notes}
+        if note_id not in by_id:
+            raise click.UsageError(f"No note found with id: {note_id}")
+        note = by_id[note_id]
+    else:
+        matches = [n for n in all_notes if n.title == title]
+        if not matches:
+            raise click.UsageError(f"No note found with title: {title}")
+        if len(matches) > 1:
+            raise click.UsageError(
+                f"Multiple notes titled {title!r}; use --id to disambiguate."
+            )
+        note = matches[0]
+
+    def render_preview():
+        console.print(f"  {note.title or '(untitled)'} [dim]({note.id})[/dim] -> {new_title}")
+
+    proceed = resolve_mutative_action(
+        note,
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will rename the following note:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    light.notes.update_note_title(note, new_title)
+
+    def render_human_readable():
+        console.print(f"[green]Renamed:[/green] {note.title} [dim]({note.id})[/dim]")
+
+    render(note, render_human_readable)
+
+
+@notes.command("update", help=_help("notes_update"))
+@with_light
+@click.argument("args", nargs=-1)
+@click.option("--id", "note_id", default=None, help="Update by exact note ID.")
+@click.option(
+    "--file",
+    "-f",
+    "content_file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Read new content from a file instead of inline.",
+)
+@mutative_options("Show the note whose content would be replaced without replacing it.")
+def notes_update(light: Light, args, note_id, content_file, yes, dry_run):
+    args = list(args)
+
+    if note_id:
+        title = None
+        if content_file:
+            if args:
+                raise click.UsageError("Usage: light notes update --id <id> --file <path>")
+            content_arg = None
+        else:
+            if len(args) != 1:
+                raise click.UsageError("Usage: light notes update --id <id> CONTENT")
+            (content_arg,) = args
+    else:
+        if content_file:
+            if len(args) != 1:
+                raise click.UsageError("Usage: light notes update TITLE --file <path>")
+            (title,) = args
+            content_arg = None
+        else:
+            if len(args) != 2:
+                raise click.UsageError("Usage: light notes update TITLE CONTENT")
+            title, content_arg = args
+
+    all_notes = light.notes.get_notes()
+
+    if note_id:
+        by_id = {n.id: n for n in all_notes}
+        if note_id not in by_id:
+            raise click.UsageError(f"No note found with id: {note_id}")
+        note = by_id[note_id]
+    else:
+        matches = [n for n in all_notes if n.title == title]
+        if not matches:
+            raise click.UsageError(f"No note found with title: {title}")
+        if len(matches) > 1:
+            raise click.UsageError(
+                f"Multiple notes titled {title!r}; use --id to disambiguate."
+            )
+        note = matches[0]
+
+    if note.note_type == "audio":
+        raise click.UsageError("Updating audio note content isn't supported.")
+
+    def render_preview():
+        console.print(f"  {note.title or '(untitled)'} [dim]({note.id})[/dim]")
+        if content_file:
+            console.print(f"[dim]New content from file:[/dim] {content_file}")
+
+    proceed = resolve_mutative_action(
+        note,
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will replace the content of the following note:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    if content_file:
+        with open(content_file) as f:
+            content_bytes = f.read().encode()
+    else:
+        content_bytes = content_arg.encode()
+
+    light.notes.update_note_content(note, content_bytes)
+
+    def render_human_readable():
+        console.print(f"[green]Updated:[/green] {note.title} [dim]({note.id})[/dim]")
+
+    render(note, render_human_readable)
 
 
 # -- Tools commands ------------------------------------------------------------

@@ -5,7 +5,7 @@ import logging
 import os
 from collections import Counter
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from open_api_specification_client.api.default import (
     delete_api_notes_note_id,
@@ -54,6 +54,25 @@ def _make_light_note(data) -> "LightNote":
     )
 
 
+@dataclass
+class NoteContentResult:
+    id: str
+    title: str
+    note_type: str
+    updated_at: str
+    content: str | None
+    saved_to: str | None
+
+
+@dataclass
+class NoteDownloadResult:
+    note_id: str
+    title: str
+    path: str | None
+    success: bool
+    error: str | None
+
+
 class LightNotes:
     def __init__(self, light: "Light") -> None:
         self._l = light
@@ -67,7 +86,9 @@ class LightNotes:
             note_id=note.id,
             client=self._l._api_client,
         )
-        self._l._ensure_ok(resp, f"Presigned get URL for {note.id}", require_parsed=True)
+        self._l._ensure_ok(
+            resp, f"Presigned get URL for {note.id}", require_parsed=True
+        )
 
         content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
         if not content_resp.is_success:
@@ -95,34 +116,73 @@ class LightNotes:
 
         return _make_light_note(resp.parsed.data)
 
-    def download_notes(self, dest: str) -> None:
+    def download_notes(
+        self,
+        dest: str,
+        on_progress: Callable[[int, int, "LightNote"], None] | None = None,
+    ) -> list[NoteDownloadResult]:
         """Download all notes to dest directory.
 
-        Text notes saved as .txt, audio notes saved as .m4a.
+        Text notes are saved as .txt and audio notes saved as .m4a.
+
+        Args:
+            dest: Directory to save notes into.
+            on_progress: Called as `on_progress(index, total, note)` before each note
+                starts downloading, 1-indexed.
+
+        Returns:
+            A list of per-note results. `path` is None and `error` is set when
+            that note failed.
         """
         os.makedirs(dest, exist_ok=True)
 
         notes = self.get_notes()
         title_counts = Counter(note.title for note in notes)
+        total = len(notes)
 
-        for note in notes:
+        results = []
+        for i, note in enumerate(notes, 1):
+            if on_progress:
+                on_progress(i, total, note)
+
             if note.title and title_counts[note.title] == 1:
                 slug = note.title
             else:
                 slug = f"{note.title}_{note.updated_at}" if note.title else note.id
 
-            content = self.get_note_content(note)
+            ext = "m4a" if note.note_type == "audio" else "txt"
+            path = os.path.join(dest, f"{slug}.{ext}")
 
-            if note.note_type == "audio":
-                path = os.path.join(dest, f"{slug}.m4a")
-                with open(path, "wb") as f:
-                    f.write(content)
-            else:
-                path = os.path.join(dest, f"{slug}.txt")
-                with open(path, "w") as f:
-                    f.write(content.decode())
+            try:
+                content = self.get_note_content(note)
+                if note.note_type == "audio":
+                    with open(path, "wb") as f:
+                        f.write(content)
+                else:
+                    with open(path, "w") as f:
+                        f.write(content.decode())
+                log.info(f"Saved {path}")
+                results.append(
+                    NoteDownloadResult(
+                        note_id=note.id,
+                        title=note.title,
+                        path=path,
+                        success=True,
+                        error=None,
+                    )
+                )
+            except RuntimeError as e:
+                results.append(
+                    NoteDownloadResult(
+                        note_id=note.id,
+                        title=note.title,
+                        path=None,
+                        success=False,
+                        error=str(e),
+                    )
+                )
 
-            log.info(f"Saved {path}")
+        return results
 
     def create_text_note(
         self, title: str, content: str, content_is_path: bool = False
@@ -174,7 +234,9 @@ class LightNotes:
             client=self._l._api_client,
             note_id=note.id,
         )
-        self._l._ensure_ok(resp, f"Presigned put URL for {note.id}", require_parsed=True)
+        self._l._ensure_ok(
+            resp, f"Presigned put URL for {note.id}", require_parsed=True
+        )
         put_resp = httpx.put(resp.parsed.presigned_put_url, content=content, timeout=30)
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")

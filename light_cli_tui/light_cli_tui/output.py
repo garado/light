@@ -10,6 +10,47 @@ import json
 from typing import Any, Callable
 
 
+def resolve_mutative_action(
+    data: Any,
+    render_human_readable: Callable[[], None],
+    *,
+    yes: bool,
+    dry_run: bool,
+    preview_header: str,
+    confirm_message: str,
+) -> bool:
+    """Handle the shared --json/--yes/--dry-run/confirm flow for mutative commands.
+
+    On `--dry-run`, renders `data` as the preview and tells the caller not to proceed.
+    Otherwise, resolves confirmation (skipped via `--yes`, or via an interactive prompt)
+    and tells the caller whether to proceed with the action. `--json` requires either
+    `--yes` or `--dry-run`.
+
+    Returns:
+        True if the caller should proceed with the action, False otherwise.
+    """
+    if yes and dry_run:
+        raise click.UsageError("--yes and --dry-run are mutually exclusive.")
+
+    if dry_run:
+        if not is_json_mode() and preview_header:
+            click.secho(preview_header, bold=True)
+        render(data, render_human_readable)
+        return False
+
+    if not yes:
+        if is_json_mode():
+            raise click.UsageError(
+                "--json requires --yes or --dry-run for mutative commands."
+            )
+        click.secho(preview_header, bold=True)
+        render_human_readable()
+        if not click.confirm(confirm_message):
+            return False
+
+    return True
+
+
 def render(data: Any, human: Callable[[], None]) -> None:
     """Render data in either JSON or human-readable format based on if CLI `--json` flag was set.
 
@@ -45,6 +86,8 @@ def _render_json(data: Any) -> None:
 def _to_jsonable(value: Any) -> Any:
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         return dataclasses.asdict(value)
+    if isinstance(value, dict):
+        return {k: _to_jsonable(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [_to_jsonable(v) for v in value]
     return value

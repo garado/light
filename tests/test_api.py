@@ -370,14 +370,17 @@ class TestDeleteTracksPredicateAndRegex:
             LightTrack(
                 playlist_item_id="1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="Riot!",
+                filename="",
             ),
             LightTrack(
                 playlist_item_id="2", audio_id="a2",
                 title="Playing God", artist="Polyphia", album="New Levels New Devils",
+                filename="",
             ),
             LightTrack(
                 playlist_item_id="3", audio_id="a3",
                 title="Live at Wembley", artist="Queen", album="Live Magic",
+                filename="",
             ),
         ]
         return light
@@ -447,6 +450,7 @@ class TestFindMatchingTrack:
             LightTrack(
                 playlist_item_id="1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="",
+                filename="",
             ),
         ]
 
@@ -461,6 +465,7 @@ class TestFindMatchingTrack:
             LightTrack(
                 playlist_item_id="2", audio_id="a2",
                 title="Some Old Rip", artist="Unknown", album="",
+                filename="",
             ),
         ]
 
@@ -496,10 +501,12 @@ class TestFindUploadMatches:
             LightTrack(
                 playlist_item_id="1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="",
+                filename="",
             ),
             LightTrack(
                 playlist_item_id="2", audio_id="a2",
                 title="New Song", artist="New Artist", album="",
+                filename="",
             ),
         ]
 
@@ -527,6 +534,7 @@ class TestResolveUploadPlan:
             LightTrack(
                 playlist_item_id="1", audio_id="a1",
                 title="Song", artist="Artist", album="",
+                filename="",
             ),
         ]
         return light
@@ -581,6 +589,7 @@ class TestUploadTracksExcludesMissingFiles:
             LightTrack(
                 playlist_item_id="1", audio_id="a1",
                 title="Song", artist="Artist", album="",
+                filename="",
             ),
         ]
         light.music.delete_tracks_predicate = MagicMock()
@@ -640,15 +649,17 @@ class TestUploadTracksOnConvert:
 
         with patch("light_api.music._flac_to_mp3", side_effect=fake_convert) as mock_convert, \
              patch.object(light, "call_api", side_effect=RuntimeError("stop after convert")):
-            with pytest.raises(RuntimeError, match="stop after convert"):
-                light.music.upload_tracks(
-                    [str(flac_file)],
-                    allow_duplicates=True,
-                    on_convert=calls.append,
-                )
+            results = light.music.upload_tracks(
+                [str(flac_file)],
+                allow_duplicates=True,
+                on_convert=calls.append,
+            )
 
         assert calls == [str(flac_file)]
         mock_convert.assert_called_once_with(str(flac_file))
+        assert len(results) == 1
+        assert results[0].success is False
+        assert "stop after convert" in results[0].error
 
     def test_on_convert_not_called_for_mp3(self, tmp_path):
         light = make_light()
@@ -661,14 +672,15 @@ class TestUploadTracksOnConvert:
         calls = []
 
         with patch.object(light, "call_api", side_effect=RuntimeError("stop after convert check")):
-            with pytest.raises(RuntimeError):
-                light.music.upload_tracks(
-                    [str(mp3_file)],
-                    allow_duplicates=True,
-                    on_convert=calls.append,
-                )
+            results = light.music.upload_tracks(
+                [str(mp3_file)],
+                allow_duplicates=True,
+                on_convert=calls.append,
+            )
 
         assert calls == []
+        assert len(results) == 1
+        assert results[0].success is False
 
 
 def make_note(overrides: dict | None = None) -> LightNote:

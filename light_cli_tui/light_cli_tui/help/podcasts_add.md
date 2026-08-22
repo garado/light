@@ -1,7 +1,9 @@
-Subscribe to a podcast by RSS feed URL.
+Subscribe to one or more podcasts by RSS feed URL.
 
-The server resolves the title and publisher automatically from the feed.
+The server resolves the title and publisher automatically from each feed.
 
-**Example:**
+**Examples:**
 
 `light podcasts add https://feeds.simplecast.com/FO6kxYGj`
+
+`light podcasts add https://feeds.simplecast.com/FO6kxYGj https://feeds.megaphone.fm/replyall`

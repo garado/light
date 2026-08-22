@@ -55,6 +55,14 @@ class LightPodcast:
     description: str | None
 
 
+@dataclass
+class PodcastAddResult:
+    rss_feed_url: str
+    success: bool
+    podcast: LightPodcast | None
+    error: str | None
+
+
 class LightPodcasts:
     def __init__(self, light: "Light") -> None:
         self._l = light

@@ -51,6 +51,15 @@ class LightTrack:
     title: str
     artist: str
     album: str  # unused by dashboard, but they make it available
+    filename: str  # original uploaded filename
+
+
+@dataclass
+class UploadResult:
+    file: str
+    audio_id: str | None
+    success: bool
+    error: str | None
 
 
 class SortMode(StrEnum):
@@ -182,6 +191,9 @@ class LightMusic:
                 title=audio_info[audio_id]["attrs"].title or "",
                 artist=audio_info[audio_id]["attrs"].artist or "",
                 album=audio_info[audio_id]["attrs"].album or "",
+                filename=os.path.basename(
+                    file_attrs[audio_info[audio_id]["file_id"]].key or ""
+                ),
             )
             for item in items
         ]
@@ -391,7 +403,7 @@ class LightMusic:
         on_progress: "Callable[[str, int, int], None] | None" = None,
         on_convert: "Callable[[str], None] | None" = None,
         on_file_start: "Callable[[int, int, str], None] | None" = None,
-    ) -> None:
+    ) -> list[UploadResult]:
         """Upload tracks to device.
 
         Args:
@@ -405,6 +417,9 @@ class LightMusic:
             on_file_start: Called with (index, total, file_path) - 1-based index into
                             the files actually being uploaded - right before each file
                             starts processing (before conversion, if any).
+
+        Returns:
+            A list of per-file results, one per file attempted.
         """
         if overwrite and allow_duplicates:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
@@ -422,6 +437,7 @@ class LightMusic:
             self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
         total_files = len(to_upload)
+        results = []
         for index, file_path in enumerate(to_upload, 1):
             log.info(f"Uploading {file_path}")
             if on_file_start:
@@ -491,11 +507,22 @@ class LightMusic:
                     raise RuntimeError(
                         f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
                     )
+
+                results.append(
+                    UploadResult(
+                        file=file_path, audio_id=created.data.id, success=True, error=None
+                    )
+                )
+            except RuntimeError as e:
+                results.append(
+                    UploadResult(file=file_path, audio_id=None, success=False, error=str(e))
+                )
             finally:
                 if tmp_path:
                     os.unlink(tmp_path)
 
         log.info("All uploads complete")
+        return results
 
     def update_track_metadata(
         self,
