@@ -23,7 +23,7 @@ from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
 from light_api.tools import ToolName
-from light_api import with_light
+from light_api import set_shared_light, with_light
 from light_cli_tui.interactive import (
     confirm_selection_with_repick,
     fuzzy_pick_best,
@@ -1613,6 +1613,59 @@ def logout(ctx):
     )
     light.clear_auth_cache()
     console.print("[green]Logged out.[/green]")
+
+
+# -- Shell (prototype) -----------------------------------------------------------
+
+
+@cli.command("shell", help="Interactive shell (prototype)")
+@click.pass_context
+def shell(ctx):
+    import shlex
+
+    obj = ctx.obj or {}
+    light = Light(
+        email=obj.get("email"),
+        email_file=obj.get("email_file"),
+        password=obj.get("password"),
+        password_file=obj.get("password_file"),
+        phone=obj.get("phone_number"),
+        phone_file=obj.get("phone_number_file"),
+        device_id=obj.get("device_id"),
+        device_id_file=obj.get("device_id_file"),
+        cache_enabled=obj.get("cache_enabled", False),
+    )
+    try:
+        light.__enter__()
+    except RuntimeError as e:
+        raise click.ClickException(str(e))
+
+    set_shared_light(light)
+    console.print("[dim]light shell (prototype) — type a command, 'exit'/'quit' to leave[/dim]")
+
+    try:
+        while True:
+            try:
+                line = input("light> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                console.print()
+                break
+
+            if not line:
+                continue
+            if line in ("exit", "quit"):
+                break
+
+            try:
+                cli.main(args=shlex.split(line), prog_name="light", standalone_mode=False, obj=dict(obj))
+            except click.ClickException as e:
+                e.show()
+            except SystemExit:
+                pass
+            except Exception as e:
+                console.print(f"[red]Error:[/red] {e}")
+    finally:
+        set_shared_light(None)
 
 
 # -- TUI ------------------------------------------------------------------------

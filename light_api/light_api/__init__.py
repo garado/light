@@ -3,10 +3,23 @@ import click
 import httpx
 from .client import Light
 
+# prototype hook for `light shell` - when set, with_light() reuses this already-
+# authenticated instance instead of constructing+authenticating a new one per
+# command
+_shared_light: Light | None = None
+
+
+def set_shared_light(light: Light | None) -> None:
+    global _shared_light
+    _shared_light = light
+
 
 def with_light(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        if _shared_light is not None:
+            return f(_shared_light, *args, **kwargs)
+
         obj = click.get_current_context().find_root().obj or {}
         try:
             light = Light(
