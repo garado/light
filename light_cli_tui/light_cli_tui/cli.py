@@ -19,6 +19,8 @@ from rich.table import Table
 
 from light_api.client import Light
 from light_api.music import SortMode
+from light_api.notes import NoteContentResult, NoteDownloadResult
+from light_api.podcast import PodcastAddResult
 from light_api.tools import ToolName
 from light_api import with_light
 from light_cli_tui.interactive import (
@@ -220,26 +222,27 @@ def podcasts_add(light: Light, rss_feed_urls, yes, dry_run):
         try:
             p = light.podcast.add_podcast(url)
             results.append(
-                {"rss_feed_url": url, "success": True, "podcast": p, "error": None}
+                PodcastAddResult(rss_feed_url=url, success=True, podcast=p, error=None)
             )
         except RuntimeError as e:
             results.append(
-                {"rss_feed_url": url, "success": False, "podcast": None, "error": str(e)}
+                PodcastAddResult(
+                    rss_feed_url=url, success=False, podcast=None, error=str(e)
+                )
             )
 
     def render_human_readable():
         for r in results:
-            if r["success"]:
-                p = r["podcast"]
-                console.print(f"[green]Added:[/green] {p.title or r['rss_feed_url']}")
-                if p.publisher:
-                    console.print(f"[dim]Publisher:[/dim] {p.publisher}")
+            if r.success:
+                console.print(f"[green]Added:[/green] {r.podcast.title or r.rss_feed_url}")
+                if r.podcast.publisher:
+                    console.print(f"[dim]Publisher:[/dim] {r.podcast.publisher}")
             else:
-                console.print(f"[red]Failed:[/red] {r['rss_feed_url']} — {r['error']}")
+                console.print(f"[red]Failed:[/red] {r.rss_feed_url} — {r.error}")
 
     render(results, render_human_readable)
 
-    if any(not r["success"] for r in results):
+    if any(not r.success for r in results):
         sys.exit(1)
 
 
@@ -1112,14 +1115,14 @@ def notes_get(light: Light, note_id: str, output_path: str | None):
             console.print()
             console.print(inline_content)
 
-    data = {
-        "id": note.id,
-        "title": note.title,
-        "note_type": note.note_type,
-        "updated_at": note.updated_at,
-        "content": inline_content,
-        "saved_to": output_path,
-    }
+    data = NoteContentResult(
+        id=note.id,
+        title=note.title,
+        note_type=note.note_type,
+        updated_at=note.updated_at,
+        content=inline_content,
+        saved_to=output_path,
+    )
     render(data, render_human_readable)
 
 
@@ -1151,14 +1154,14 @@ def notes_download_all(light: Light, path: str):
 
     def render_human_readable():
         for r in results:
-            if r["success"]:
-                console.print(f"[green]Saved:[/green] {r['title'] or r['note_id']} -> {r['path']}")
+            if r.success:
+                console.print(f"[green]Saved:[/green] {r.title or r.note_id} -> {r.path}")
             else:
-                console.print(f"[red]Failed:[/red] {r['title'] or r['note_id']} — {r['error']}")
+                console.print(f"[red]Failed:[/red] {r.title or r.note_id} — {r.error}")
 
     render(results, render_human_readable)
 
-    if any(not r["success"] for r in results):
+    if any(not r.success for r in results):
         sys.exit(1)
 
 

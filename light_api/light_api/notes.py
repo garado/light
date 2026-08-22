@@ -54,6 +54,25 @@ def _make_light_note(data) -> "LightNote":
     )
 
 
+@dataclass
+class NoteContentResult:
+    id: str
+    title: str
+    note_type: str
+    updated_at: str
+    content: str | None
+    saved_to: str | None
+
+
+@dataclass
+class NoteDownloadResult:
+    note_id: str
+    title: str
+    path: str | None
+    success: bool
+    error: str | None
+
+
 class LightNotes:
     def __init__(self, light: "Light") -> None:
         self._l = light
@@ -101,7 +120,7 @@ class LightNotes:
         self,
         dest: str,
         on_progress: Callable[[int, int, "LightNote"], None] | None = None,
-    ) -> list[dict]:
+    ) -> list[NoteDownloadResult]:
         """Download all notes to dest directory.
 
         Text notes are saved as .txt and audio notes saved as .m4a.
@@ -112,8 +131,8 @@ class LightNotes:
                 starts downloading, 1-indexed.
 
         Returns:
-            A list of per-note results: `{note_id, title, path, success, error}`.
-            `path` is None and `error` is set when that note failed.
+            A list of per-note results. `path` is None and `error` is set when
+            that note failed.
         """
         os.makedirs(dest, exist_ok=True)
 
@@ -144,23 +163,23 @@ class LightNotes:
                         f.write(content.decode())
                 log.info(f"Saved {path}")
                 results.append(
-                    {
-                        "note_id": note.id,
-                        "title": note.title,
-                        "path": path,
-                        "success": True,
-                        "error": None,
-                    }
+                    NoteDownloadResult(
+                        note_id=note.id,
+                        title=note.title,
+                        path=path,
+                        success=True,
+                        error=None,
+                    )
                 )
             except RuntimeError as e:
                 results.append(
-                    {
-                        "note_id": note.id,
-                        "title": note.title,
-                        "path": None,
-                        "success": False,
-                        "error": str(e),
-                    }
+                    NoteDownloadResult(
+                        note_id=note.id,
+                        title=note.title,
+                        path=None,
+                        success=False,
+                        error=str(e),
+                    )
                 )
 
         return results
