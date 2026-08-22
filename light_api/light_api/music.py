@@ -1,5 +1,6 @@
 """Music management for Light devices."""
 
+import dataclasses
 import httpx
 import logging
 import mimetypes
@@ -12,6 +13,7 @@ from typing import Callable
 from dataclasses import dataclass
 from mutagen._file import File
 
+from light_api import cache
 from light_api.client import Light
 from open_api_specification_client.api.default import (
     delete_api_audios_audio_id,
@@ -153,12 +155,20 @@ class LightMusic:
         elif sort_mode in (SortMode.ARTIST_ALBUM_ASC, SortMode.ARTIST_ALBUM_DESC):
             self._sort_by_artist_album(sort_mode == SortMode.ARTIST_ALBUM_DESC)
 
+        if self._l._cache_enabled:
+            cache.invalidate(cache.CacheModule.MUSIC)
+
     def get_tracks(self) -> list[LightTrack]:
         """Fetch list of all tracks on the device.
 
         Returns:
             List of LightTracks in the current playlist order.
         """
+        if self._l._cache_enabled:
+            cached = cache.load(cache.CacheModule.MUSIC, self._l._api_token)
+            if cached is not None:
+                return [LightTrack(**d) for d in cached]
+
         resp = self._l.call_api(
             get_api_playlist_items.sync_detailed,
             client=self._l._api_client,
@@ -167,36 +177,54 @@ class LightMusic:
         )
         body = self._l._ensure_ok(resp, "Get tracks", require_parsed=True)
 
+        # Light returns 2 separate collections:
+        # - body.data[] - a track's position + a reference to its associated body.included member
+        # - body.included - full track metadata + file storage info ("attributes")
+        # we need to reassemble the info in these into 1 list[LightTracks]
+
         if not body.data:
-            return []
-
-        file_attrs = {
-            item.id: item.attributes for item in body.included if item.type_ == "files"
-        }
-        audio_info = {
-            item.id: {
-                "attrs": item.attributes,
-                "file_id": item.relationships.processed_file.data.id,
+            tracks = []
+        else:
+            # build dict to look up attributes from file id
+            file_attrs = {
+                item.id: item.attributes for item in body.included if item.type_ == "files"
             }
-            for item in body.included
-            if item.type_ == "audios"
-        }
 
-        items = sorted(body.data, key=lambda x: x.attributes.position)
+            # build dict to look up attrs, file id from audio id
+            audio_info = {
+                item.id: {
+                    "attrs": item.attributes,
+                    "file_id": item.relationships.processed_file.data.id,
+                }
+                for item in body.included
+                if item.type_ == "audios"
+            }
 
-        return [
-            LightTrack(
-                playlist_item_id=item.id,
-                audio_id=(audio_id := item.relationships.audio.data.id),
-                title=audio_info[audio_id]["attrs"].title or "",
-                artist=audio_info[audio_id]["attrs"].artist or "",
-                album=audio_info[audio_id]["attrs"].album or "",
-                filename=os.path.basename(
-                    file_attrs[audio_info[audio_id]["file_id"]].key or ""
-                ),
+            # order tracks
+            items = sorted(body.data, key=lambda x: x.attributes.position)
+
+            tracks = [
+                LightTrack(
+                    playlist_item_id=item.id,
+                    audio_id=(audio_id := item.relationships.audio.data.id),
+                    title=audio_info[audio_id]["attrs"].title or "",
+                    artist=audio_info[audio_id]["attrs"].artist or "",
+                    album=audio_info[audio_id]["attrs"].album or "",
+                    filename=os.path.basename(
+                        file_attrs[audio_info[audio_id]["file_id"]].key or ""
+                    ),
+                )
+                for item in items
+            ]
+
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.MUSIC,
+                self._l._api_token,
+                [dataclasses.asdict(t) for t in tracks],
             )
-            for item in items
-        ]
+
+        return tracks
 
     def delete_all_tracks(self) -> None:
         """Delete all tracks from the device.
@@ -213,6 +241,9 @@ class LightMusic:
         )
         self._l._ensure_ok(resp, "Failed to delete all tracks", ok_codes=range(200, 300))
         log.info("All tracks deleted")
+
+        if self._l._cache_enabled:
+            cache.invalidate(cache.CacheModule.MUSIC)
 
     def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
@@ -243,6 +274,9 @@ class LightMusic:
                 tracks_deleted += 1
 
         log.info(f"Deleted {tracks_deleted}/{len(to_delete)} tracks")
+
+        if self._l._cache_enabled and tracks_deleted > 0:
+            cache.invalidate(cache.CacheModule.MUSIC)
 
     def delete_tracks_by_title(self, titles: list[str]) -> None:
         """Delete tracks by title.
@@ -522,6 +556,10 @@ class LightMusic:
                     os.unlink(tmp_path)
 
         log.info("All uploads complete")
+
+        if self._l._cache_enabled and any(r.success for r in results):
+            cache.invalidate(cache.CacheModule.MUSIC)
+
         return results
 
     def update_track_metadata(
@@ -563,6 +601,9 @@ class LightMusic:
         self._l._ensure_ok(resp, "update metadata", ok_codes=range(200, 300))
 
         log.info("Metadata updated")
+
+        if self._l._cache_enabled:
+            cache.invalidate(cache.CacheModule.MUSIC)
 
     def reorder_subset(self, ordered_item_ids: list[str]) -> None:
         """Reorder a subset of tracks among the position slots they currently occupy.
