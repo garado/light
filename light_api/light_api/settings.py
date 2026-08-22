@@ -27,6 +27,11 @@ def _load() -> dict[str, Any]:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return dict(_DEFAULTS)
+
+    # invalid json should return a default dict
+    if not isinstance(data, dict):
+        return dict(_DEFAULTS)
+
     return {**_DEFAULTS, **data}
 
 
