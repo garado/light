@@ -15,6 +15,7 @@ import hashlib
 import json
 import logging
 import os
+import tempfile
 import time
 from dataclasses import dataclass
 from enum import StrEnum
@@ -110,17 +111,26 @@ def load(module: CacheModule, token: str, key: str | None = None) -> Any | None:
 def save(module: CacheModule, token: str, data: Any, key: str | None = None) -> None:
     """Encrypt and cache `data` for `module` (optionally scoped to `key`)."""
     path = _cache_path(module, key)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    cache_dir = os.path.dirname(path)
+    os.makedirs(cache_dir, exist_ok=True)
 
     fernet = Fernet(_derive_key(token))
     encrypted = fernet.encrypt(json.dumps(data).encode()).decode()
     entry = CacheEntry(cached_at=time.time(), encrypted_data=encrypted)
     payload = json.dumps(dataclasses.asdict(entry))
 
-    # create file with restrictive permissions
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        f.write(payload)
+    # to avoid concurrent access issues: write to a tmp file, then atomically replace
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=cache_dir, prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(tmp_fd, "w") as f:
+            f.write(payload)
+        os.replace(tmp_path, path)
+    except BaseException:
+        try:
+            os.remove(tmp_path)
+        except FileNotFoundError:
+            pass
+        raise
 
     log.debug(f"Cache for {_label(module, key)} saved")
 
