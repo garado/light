@@ -8,7 +8,7 @@ import os
 import re
 import tempfile
 from enum import StrEnum
-from typing import Callable
+from typing import Any, Callable
 
 from dataclasses import dataclass
 from mutagen._file import File
@@ -159,7 +159,8 @@ class LightMusic:
         elif sort_mode in (SortMode.ARTIST_ALBUM_ASC, SortMode.ARTIST_ALBUM_DESC):
             self._sort_by_artist_album(sort_mode == SortMode.ARTIST_ALBUM_DESC)
 
-        cache.invalidate(cache.CacheModule.MUSIC)
+        if invalidate_cache:
+            cache.invalidate(cache.CacheModule.MUSIC)
 
     def set_sort_mode(self, sort_mode: SortMode):
         """Set sort mode.
@@ -624,6 +625,9 @@ class LightMusic:
                 Any matched tracks not present in ordered_item_ids are appended
                 at the end of the subset.
         """
+        # always work off fresh data when doing position-dependent work
+        cache.invalidate(cache.CacheModule.MUSIC)
+
         tracks = self.get_tracks()
         id_to_track = {t.playlist_item_id: t for t in tracks}
 
@@ -685,9 +689,16 @@ class LightMusic:
                 [dataclasses.asdict(t) for t in reordered],
             )
 
-    def _apply_sort_positions(self, sorted_tracks: list[LightTrack], original_tracks: list[LightTrack]) -> None:
-        """PATCH playlist item positions to match the given sort order."""
-        original_positions = {t.audio_id: i for i, t in enumerate(original_tracks)}
+    def _apply_sort_positions(self, sort_key: Callable[[LightTrack], Any], reverse: bool) -> None:
+        """Fetch fresh tracks, set RANK (manual) mode, and PATCH positions to match `sort_key`."""
+        # always work off fresh data when doing position-dependent work
+        cache.invalidate(cache.CacheModule.MUSIC)
+
+        tracks = self.get_tracks()
+        self._set_sort_mode(SortMode.RANK, invalidate_cache=False)
+        sorted_tracks = sorted(tracks, key=sort_key, reverse=reverse)
+
+        original_positions = {t.audio_id: i for i, t in enumerate(tracks)}
         for new_position, track in enumerate(sorted_tracks):
             if original_positions[track.audio_id] == new_position:
                 continue
@@ -721,12 +732,7 @@ class LightMusic:
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
         """
-        tracks = self.get_tracks()
-        self.set_sort_mode(SortMode.RANK)
-        self._apply_sort_positions(
-            sorted(tracks, key=lambda t: t.title.casefold(), reverse=descending),
-            tracks,
-        )
+        self._apply_sort_positions(lambda t: t.title.casefold(), descending)
 
     def _sort_by_artist_album(self, descending: bool = False) -> None:
         """Sort tracks on device by artist, then by album.
@@ -737,9 +743,6 @@ class LightMusic:
         Args:
             descending: True to sort descending; False for ascending.
         """
-        tracks = self.get_tracks()
-        self.set_sort_mode(SortMode.RANK)
         self._apply_sort_positions(
-            sorted(tracks, key=lambda t: (t.artist.casefold(), t.album.casefold()), reverse=descending),
-            tracks,
+            lambda t: (t.artist.casefold(), t.album.casefold()), descending
         )

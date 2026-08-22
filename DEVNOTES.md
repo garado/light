@@ -8,6 +8,9 @@
     - off by default. `light cache enable/disable/status`, `--cache`/`--no-cache`, `$LIGHT_CACHE` to control it
     - mutating commands invalidate whatever they change
     - `music reorder` updates the cache in place instead of invalidating
+    - risks of data changing externally:
+        - all music position-patching operations force a fresh data fetch to avoid working off stale info
+        - delete/rename lookups can still theoretically act on a stale data within the TTL window, but lower risk since it fails loudly. so whatever
 
 ## to do
 - I think device tool IDs are fixed. Can hardcode them instead of needing to parse them.
