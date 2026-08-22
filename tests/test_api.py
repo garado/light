@@ -649,15 +649,17 @@ class TestUploadTracksOnConvert:
 
         with patch("light_api.music._flac_to_mp3", side_effect=fake_convert) as mock_convert, \
              patch.object(light, "call_api", side_effect=RuntimeError("stop after convert")):
-            with pytest.raises(RuntimeError, match="stop after convert"):
-                light.music.upload_tracks(
-                    [str(flac_file)],
-                    allow_duplicates=True,
-                    on_convert=calls.append,
-                )
+            results = light.music.upload_tracks(
+                [str(flac_file)],
+                allow_duplicates=True,
+                on_convert=calls.append,
+            )
 
         assert calls == [str(flac_file)]
         mock_convert.assert_called_once_with(str(flac_file))
+        assert len(results) == 1
+        assert results[0].success is False
+        assert "stop after convert" in results[0].error
 
     def test_on_convert_not_called_for_mp3(self, tmp_path):
         light = make_light()
@@ -670,14 +672,15 @@ class TestUploadTracksOnConvert:
         calls = []
 
         with patch.object(light, "call_api", side_effect=RuntimeError("stop after convert check")):
-            with pytest.raises(RuntimeError):
-                light.music.upload_tracks(
-                    [str(mp3_file)],
-                    allow_duplicates=True,
-                    on_convert=calls.append,
-                )
+            results = light.music.upload_tracks(
+                [str(mp3_file)],
+                allow_duplicates=True,
+                on_convert=calls.append,
+            )
 
         assert calls == []
+        assert len(results) == 1
+        assert results[0].success is False
 
 
 def make_note(overrides: dict | None = None) -> LightNote:
