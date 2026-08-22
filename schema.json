@@ -1,5 +1,5 @@
 {
-  "$hash": "011ea0f87b53d621a535feda83902995b110e70993cb14fbaa58cecd22ea1335",
+  "$hash": "4512e80bcbf95b29c87c5650b3eb3ca8cd6a0a1b36b68e9e9105f9f3d5e1efe5",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -255,6 +255,67 @@
             "artist",
             "album",
             "filename"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "music upload": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string"
+            },
+            "audio_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "file",
+            "audio_id",
+            "success",
+            "error"
           ],
           "additionalProperties": false
         }

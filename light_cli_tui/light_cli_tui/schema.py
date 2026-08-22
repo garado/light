@@ -8,7 +8,7 @@ import typing
 from typing import Any
 
 from light_api.devices import LightDevice
-from light_api.music import LightTrack
+from light_api.music import LightTrack, UploadResult
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
 from light_api.podcast import LightPodcast, PodcastAddResult
 from light_api.tools import LightTool
@@ -20,6 +20,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "podcasts list": list[LightPodcast],
     "podcasts delete": list[LightPodcast],
     "music list": list[LightTrack],
+    "music upload": list[UploadResult],
     "notes list": list[LightNote],
     "notes get": NoteContentResult,
     "notes add": LightNote,

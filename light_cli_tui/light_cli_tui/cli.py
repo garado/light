@@ -545,7 +545,7 @@ def music_upload(
             mp3_name = os.path.splitext(filename)[0] + ".mp3"
             console.print(f"[dim]{batch_position}Converting {filename} -> {mp3_name}[/dim]")
 
-        light.music.upload_tracks(
+        results = light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
             overwrite=overwrite,
@@ -555,7 +555,17 @@ def music_upload(
             on_file_start=on_file_start,
         )
 
-    render(plan, lambda: None)
+    def render_results():
+        for r in results:
+            if r.success:
+                console.print(f"[green]Uploaded:[/green] {os.path.basename(r.file)}")
+            else:
+                console.print(f"[red]Failed:[/red] {os.path.basename(r.file)} — {r.error}")
+
+    render(results, render_results)
+
+    if any(not r.success for r in results):
+        sys.exit(1)
 
 
 @music.command("delete-all", help=_help("music_delete_all"))
