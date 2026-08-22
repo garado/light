@@ -112,25 +112,32 @@ def save(module: CacheModule, token: str, data: Any, key: str | None = None) -> 
     """Encrypt and cache `data` for `module` (optionally scoped to `key`)."""
     path = _cache_path(module, key)
     cache_dir = os.path.dirname(path)
-    os.makedirs(cache_dir, exist_ok=True)
 
     fernet = Fernet(_derive_key(token))
     encrypted = fernet.encrypt(json.dumps(data).encode()).decode()
     entry = CacheEntry(cached_at=time.time(), encrypted_data=encrypted)
     payload = json.dumps(dataclasses.asdict(entry))
 
-    # to avoid concurrent access issues: write to a tmp file, then atomically replace
-    tmp_fd, tmp_path = tempfile.mkstemp(dir=cache_dir, prefix=".tmp-", suffix=".json")
     try:
-        with os.fdopen(tmp_fd, "w") as f:
-            f.write(payload)
-        os.replace(tmp_path, path)
-    except BaseException:
+        os.makedirs(cache_dir, exist_ok=True)
+
+        # to avoid concurrent access issues: write to a tmp file, then atomically replace
+        tmp_fd, tmp_path = tempfile.mkstemp(
+            dir=cache_dir, prefix=".tmp-", suffix=".json"
+        )
         try:
-            os.remove(tmp_path)
-        except FileNotFoundError:
-            pass
-        raise
+            with os.fdopen(tmp_fd, "w") as f:
+                f.write(payload)
+            os.replace(tmp_path, path)
+        except BaseException:
+            try:
+                os.remove(tmp_path)
+            except FileNotFoundError:
+                pass
+            raise
+    except OSError as e:
+        log.warning(f"Cache for {_label(module, key)} could not be saved: {e}")
+        return
 
     log.debug(f"Cache for {_label(module, key)} saved")
 
@@ -141,3 +148,5 @@ def invalidate(module: CacheModule, key: str | None = None) -> None:
         os.remove(_cache_path(module, key))
     except FileNotFoundError:
         pass
+    except OSError as e:
+        log.warning(f"Cache for {_label(module, key)} could not be invalidated: {e}")

@@ -9,7 +9,8 @@
     - mutating commands invalidate whatever they change
     - `music reorder` updates the cache in place instead of invalidating
 
-## To do
+## to do
 - I think device tool IDs are fixed. Can hardcode them instead of needing to parse them.
 - Include the associated playlist in LightTracks
-- theres some new stuff in developer tools ?
+- theres some new stuff in dashboard settings (developer tools) that I could support
+- ahh fuck. there is no real support for multi-device accounts. this is a much larger lift
