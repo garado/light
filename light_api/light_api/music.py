@@ -159,8 +159,7 @@ class LightMusic:
         elif sort_mode in (SortMode.ARTIST_ALBUM_ASC, SortMode.ARTIST_ALBUM_DESC):
             self._sort_by_artist_album(sort_mode == SortMode.ARTIST_ALBUM_DESC)
 
-        if invalidate_cache and self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.MUSIC)
+        cache.invalidate(cache.CacheModule.MUSIC)
 
     def set_sort_mode(self, sort_mode: SortMode):
         """Set sort mode.
@@ -254,8 +253,7 @@ class LightMusic:
         self._l._ensure_ok(resp, "Failed to delete all tracks", ok_codes=range(200, 300))
         log.info("All tracks deleted")
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.MUSIC)
+        cache.invalidate(cache.CacheModule.MUSIC)
 
     def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
@@ -287,7 +285,7 @@ class LightMusic:
 
         log.info(f"Deleted {tracks_deleted}/{len(to_delete)} tracks")
 
-        if self._l._cache_enabled and tracks_deleted > 0:
+        if tracks_deleted > 0:
             cache.invalidate(cache.CacheModule.MUSIC)
 
     def delete_tracks_by_title(self, titles: list[str]) -> None:
@@ -569,7 +567,7 @@ class LightMusic:
 
         log.info("All uploads complete")
 
-        if self._l._cache_enabled and any(r.success for r in results):
+        if any(r.success for r in results):
             cache.invalidate(cache.CacheModule.MUSIC)
 
         return results
@@ -614,8 +612,7 @@ class LightMusic:
 
         log.info("Metadata updated")
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.MUSIC)
+        cache.invalidate(cache.CacheModule.MUSIC)
 
     def reorder_subset(self, ordered_item_ids: list[str]) -> None:
         """Reorder a subset of tracks among the position slots they currently occupy.
@@ -675,8 +672,7 @@ class LightMusic:
                     resp, f"reorder_subset position {new_position}", ok_codes=range(200, 300)
                 )
         except Exception:
-            if self._l._cache_enabled:
-                cache.invalidate(cache.CacheModule.MUSIC)
+            cache.invalidate(cache.CacheModule.MUSIC)
             raise
 
         # If this is reached, every PATCH above succeeded, so the new track ordering is known.

@@ -257,8 +257,7 @@ class LightNotes:
         note = _make_light_note(parsed.data)
         log.info(f"Note {note.id} created")
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.NOTES)
+        cache.invalidate(cache.CacheModule.NOTES)
 
         return note
 
@@ -281,10 +280,9 @@ class LightNotes:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
         log.info(f"Note {note.id} updated")
 
-        if self._l._cache_enabled:
-            # invalidate the list too: `updated_at` (shown there) just changed
-            cache.invalidate(cache.CacheModule.NOTES)
-            cache.invalidate(cache.CacheModule.NOTES, key=note.id)
+        # invalidate the list too: `updated_at` (shown there) just changed
+        cache.invalidate(cache.CacheModule.NOTES)
+        cache.invalidate(cache.CacheModule.NOTES, key=note.id)
 
     def update_note_title(self, note: LightNote, title: str) -> None:
         """Update the title of an existing note."""
@@ -316,8 +314,7 @@ class LightNotes:
         note.title = title
         log.info(f"Note {note.id} title updated to {title!r}")
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.NOTES)
+        cache.invalidate(cache.CacheModule.NOTES)
 
     def delete_note(self, note_id: str) -> None:
         """Delete a note."""
@@ -329,6 +326,5 @@ class LightNotes:
         self._l._ensure_ok(resp, "Delete note", ok_codes=(200, 204))
         log.info(f"Note {note_id} deleted")
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.NOTES)
-            cache.invalidate(cache.CacheModule.NOTES, key=note_id)
+        cache.invalidate(cache.CacheModule.NOTES)
+        cache.invalidate(cache.CacheModule.NOTES, key=note_id)

@@ -158,8 +158,7 @@ class LightTools:
             resp, "Install tool", ok_codes=(200, 201), require_parsed=True
         )
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.TOOLS)
+        cache.invalidate(cache.CacheModule.TOOLS)
 
         return LightTool(
             device_tool_id=parsed.data.id,
@@ -191,5 +190,4 @@ class LightTools:
         )
         self._l._ensure_ok(resp, "Remove tool", ok_codes=range(200, 300))
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.TOOLS)
+        cache.invalidate(cache.CacheModule.TOOLS)

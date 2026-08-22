@@ -136,8 +136,7 @@ class LightPodcasts:
         )
         self._l._ensure_ok(resp, "Delete podcast", ok_codes=range(200, 300))
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.PODCASTS)
+        cache.invalidate(cache.CacheModule.PODCASTS)
 
     def add_podcast(self, rss_feed_url: str) -> LightPodcast:
         """Add a podcast to the device by RSS feed URL.
@@ -196,8 +195,7 @@ class LightPodcasts:
 
         followed_podcast_id = followed.data.id
 
-        if self._l._cache_enabled:
-            cache.invalidate(cache.CacheModule.PODCASTS)
+        cache.invalidate(cache.CacheModule.PODCASTS)
 
         return LightPodcast(
             podcast_id=podcast_id,
