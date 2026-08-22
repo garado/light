@@ -29,10 +29,10 @@ CACHE_TTL_SECONDS = 15 * 60
 
 
 class CacheModule(StrEnum):
-    """Modules with their own cache file."""
+    """Modules with their own cache file(s)."""
 
     PODCASTS = "podcasts"
-    # NOTES = "notes"
+    NOTES = "notes"
     # MUSIC = "music"
     # TOOLS = "tools"
     # DEVICES = "devices"
@@ -50,8 +50,20 @@ def _cache_dir() -> str:
     return platformdirs.user_cache_dir("light-api-cli-tui")
 
 
-def _cache_path(module: CacheModule) -> str:
-    return os.path.join(_cache_dir(), f"{module}.json")
+def _cache_path(module: CacheModule, key: str | None = None) -> str:
+    """Path for a module's (or an item within a module's) cache file.
+
+    `key=None` represents the entire module (e.g. cached `notes list`).
+    Providing a key scopes the cachefile to an individual item (e.g. a specific note)
+    under a per-module subdirectory.
+    """
+    if key is None:
+        return os.path.join(_cache_dir(), f"{module}.json")
+    return os.path.join(_cache_dir(), str(module), f"{key}.json")
+
+
+def _label(module: CacheModule, key: str | None) -> str:
+    return f"{module!r}" if key is None else f"{module!r}/{key!r}"
 
 
 def _derive_key(token: str) -> bytes:
@@ -60,37 +72,44 @@ def _derive_key(token: str) -> bytes:
     return base64.urlsafe_b64encode(digest)
 
 
-def load(module: CacheModule, token: str) -> Any | None:
-    """Load cached data for `module` if it is present, unexpired, and decryptable.
+def load(module: CacheModule, token: str, key: str | None = None) -> Any | None:
+    """Load cached data for `module` (optionally scoped to `key`) if it is
+    present, unexpired, and decryptable.
 
     Returns None on any failure (missing file, expired, corrupt, wrong/stale token).
     """
+    label = _label(module, key)
     try:
-        with open(_cache_path(module), "rb") as f:
+        with open(_cache_path(module, key), "rb") as f:
             entry = CacheEntry(**json.loads(f.read()))
     except (FileNotFoundError, json.JSONDecodeError, OSError, TypeError):
+        log.debug(f"Cache for {label} missing")
         return None
 
     if time.time() - entry.cached_at > CACHE_TTL_SECONDS:
-        log.debug(f"Cache for {module!r} expired")
+        log.debug(f"Cache for {label} expired")
         return None
 
     try:
         fernet = Fernet(_derive_key(token))
         plaintext = fernet.decrypt(entry.encrypted_data.encode())
     except InvalidToken:
-        log.debug(f"Cache for {module!r} undecryptable (stale/rotated token)")
+        log.debug(f"Cache for {label} undecryptable (stale/rotated token)")
         return None
 
     try:
-        return json.loads(plaintext)
+        result = json.loads(plaintext)
     except json.JSONDecodeError:
+        log.debug(f"Cache for {label} corrupt (bad JSON after decrypt)")
         return None
 
+    log.debug(f"Cache for {label} hit")
+    return result
 
-def save(module: CacheModule, token: str, data: Any) -> None:
-    """Encrypt and cache `data` for `module`."""
-    path = _cache_path(module)
+
+def save(module: CacheModule, token: str, data: Any, key: str | None = None) -> None:
+    """Encrypt and cache `data` for `module` (optionally scoped to `key`)."""
+    path = _cache_path(module, key)
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     fernet = Fernet(_derive_key(token))
@@ -103,10 +122,12 @@ def save(module: CacheModule, token: str, data: Any) -> None:
     with os.fdopen(fd, "w") as f:
         f.write(payload)
 
+    log.debug(f"Cache for {_label(module, key)} saved")
 
-def invalidate(module: CacheModule) -> None:
-    """Delete the cache file for `module`, if any."""
+
+def invalidate(module: CacheModule, key: str | None = None) -> None:
+    """Delete the cache file for `module` (optionally scoped to `key`), if any."""
     try:
-        os.remove(_cache_path(module))
+        os.remove(_cache_path(module, key))
     except FileNotFoundError:
         pass
