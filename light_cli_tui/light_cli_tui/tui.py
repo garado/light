@@ -19,27 +19,6 @@ from textual.theme import Theme
 from textual.widget import Widget
 from textual.widgets import Button, ContentSwitcher, DataTable, Input, Label, Static
 
-NORD = Theme(
-    name="nord",
-    dark=True,
-    background="#1e2127",
-    surface="#282c34",
-    panel="#2c313a",
-    primary="#61afef",
-    secondary="#56b6c2",
-    accent="#61afef",
-    foreground="#abb2bf",
-    error="#e06c75",
-    warning="#e5c07b",
-    success="#98c379",
-    variables={
-        "text-muted": "#5c6370",
-        "surface-lighten-1": "#2c313a",
-        "surface-lighten-2": "#3e4451",
-        "text-disabled": "#3e4451",
-    },
-)
-
 from light_api.client import Light
 from light_api.music import LightTrack, SortMode
 from light_api.notes import LightNote
@@ -1409,8 +1388,7 @@ class LightApp(App):
         yield Static("connecting...", id="status")
 
     def on_mount(self) -> None:
-        self.register_theme(NORD)
-        self.theme = "nord"
+        self.theme = "ansi-dark"
         self.query_one(MusicPane).query_one(DataTable).focus()
         self.run_worker(self._init_light, exclusive=True, thread=True)
 
