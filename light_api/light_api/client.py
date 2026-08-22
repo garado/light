@@ -8,7 +8,7 @@ import os
 
 from typing import TYPE_CHECKING, Any, Callable, Container, Iterable, Iterator, NewType, final
 
-from open_api_specification_client.api.default import get_api_playlists
+from open_api_specification_client.api.default import get_api_playlists, get_api_users_current
 from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.types import Unset
 
@@ -264,17 +264,14 @@ class Light:
         self._playlist_id = None
 
     def _validate_cache(self) -> bool:
-        """Check if cached auth token is valid."""
+        """Check if cached auth token is valid with a cheap API call."""
         client = AuthenticatedClient(
             base_url=API_BASE,
             token=self._api_token,
             headers=API_HEADERS,
             timeout=30,
         )
-        resp = get_api_playlists.sync_detailed(
-            client=client,
-            device_tool_id=self._device_tool_ids.get("music"),
-        )
+        resp = get_api_users_current.sync_detailed(client=client)
         return resp.status_code == 200
 
     def _fetch_playlist_id(self) -> None:
