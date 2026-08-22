@@ -6,9 +6,21 @@ import keyring
 import logging
 import os
 
-from typing import TYPE_CHECKING, Any, Callable, Container, Iterable, Iterator, NewType, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Container,
+    Iterable,
+    Iterator,
+    NewType,
+    final,
+)
 
-from open_api_specification_client.api.default import get_api_playlists, get_api_users_current
+from open_api_specification_client.api.default import (
+    get_api_playlists,
+    get_api_users_current,
+)
 from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.types import Unset
 
@@ -306,13 +318,17 @@ class Light:
         )
 
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
-        devices = self._ensure_ok(devices_resp, "Could not fetch devices", require_data=True)
+        devices = self._ensure_ok(
+            devices_resp, "Could not fetch devices", require_data=True
+        )
         device_id = self._select_device_id(devices)
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
         )
-        tools = self._ensure_ok(tools_resp, "Could not fetch tools", require_parsed=True)
+        tools = self._ensure_ok(
+            tools_resp, "Could not fetch tools", require_parsed=True
+        )
 
         tool_ns: dict[str, str] = {
             t.id: t.attributes.namespace.lower() for t in tools.data
