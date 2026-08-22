@@ -130,7 +130,7 @@ class Light:
         log.info("Re-authenticating")
         self._api_token = None
         self.login()
-        self._save_cache()
+        self._save_auth_cache()
         self._api_client = AuthenticatedClient(
             base_url=API_BASE,
             token=self._api_token,
@@ -177,17 +177,17 @@ class Light:
         """Sets up API session."""
         log.info("Authenticating")
 
-        cache_loaded = self._load_cache()
+        cache_loaded = self._load_auth_cache()
         if cache_loaded and self._validated_recently():
             log.info("Using cached session (recently validated)")
-        elif cache_loaded and self._validate_cache():
+        elif cache_loaded and self._validate_auth_cache():
             log.info("Using cached session")
             self._validated_at = time.time()
-            self._save_cache()
+            self._save_auth_cache()
         else:
             self.login()
             self._validated_at = time.time()
-            self._save_cache()
+            self._save_auth_cache()
 
         self._api_client = AuthenticatedClient(
             base_url=API_BASE,
@@ -200,7 +200,7 @@ class Light:
         if not expected.issubset(self._device_tool_ids) or not self._playlist_id:
             self._fetch_device_tool_ids()
             self._fetch_playlist_id()
-            self._save_cache()
+            self._save_auth_cache()
 
         from light_api.devices import LightDevices
         from light_api.music import LightMusic
@@ -220,7 +220,7 @@ class Light:
     def __exit__(self, *_: object) -> None:
         pass
 
-    def _load_cache(self) -> bool:
+    def _load_auth_cache(self) -> bool:
         """Load cached data from keyring."""
         log.debug("Loading cache")
 
@@ -250,7 +250,7 @@ class Light:
             log.debug(f"Error: {e}")
             return False
 
-    def _save_cache(self) -> None:
+    def _save_auth_cache(self) -> None:
         """Cache data to keyring."""
         try:
             keyring.set_password(
@@ -272,7 +272,7 @@ class Light:
         ) as e:
             log.warning(f"Keyring error: {e}")
 
-    def clear_cache(self) -> None:
+    def clear_auth_cache(self) -> None:
         """Clear the cached session.
 
         Forces a fresh login and device lookup on the next `with Light(...)`.
@@ -300,7 +300,7 @@ class Light:
             and time.time() - self._validated_at < AUTH_VALIDATION_TTL_SECONDS
         )
 
-    def _validate_cache(self) -> bool:
+    def _validate_auth_cache(self) -> bool:
         """Check if cached auth token is valid with a cheap API call."""
         client = AuthenticatedClient(
             base_url=API_BASE,

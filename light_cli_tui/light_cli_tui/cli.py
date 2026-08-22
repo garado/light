@@ -1607,7 +1607,7 @@ def logout(ctx):
         device_id=obj.get("device_id"),
         device_id_file=obj.get("device_id_file"),
     )
-    light.clear_cache()
+    light.clear_auth_cache()
     console.print("[green]Logged out.[/green]")
 
 
