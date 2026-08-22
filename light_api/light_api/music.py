@@ -120,12 +120,16 @@ class LightMusic:
 
         playlist = parsed.data[0]
         return SortMode(playlist.attributes.sort_mode)
-
-    def set_sort_mode(self, sort_mode: SortMode):
+    
+    def _set_sort_mode(self, sort_mode: SortMode, invalidate_cache: bool = True):
         """Set sort mode.
+
+        This is the private method offering the the ability to control cache invalidation.
+        The public method is `set_sort_mode`, which always invalidates cache.
 
         Args:
             sort_mode: The new sort mode to set.
+            invalidate_cache: Whether the cache should be invalidated.
         """
         if sort_mode in (SortMode.ARTIST_ASC, SortMode.ARTIST_DESC, SortMode.RANK):
             if sort_mode is not SortMode.RANK:
@@ -155,9 +159,17 @@ class LightMusic:
         elif sort_mode in (SortMode.ARTIST_ALBUM_ASC, SortMode.ARTIST_ALBUM_DESC):
             self._sort_by_artist_album(sort_mode == SortMode.ARTIST_ALBUM_DESC)
 
-        if self._l._cache_enabled:
+        if invalidate_cache and self._l._cache_enabled:
             cache.invalidate(cache.CacheModule.MUSIC)
 
+    def set_sort_mode(self, sort_mode: SortMode):
+        """Set sort mode.
+
+        Args:
+            sort_mode: The new sort mode to set.
+        """
+        self._set_sort_mode(sort_mode, invalidate_cache=True)
+    
     def get_tracks(self) -> list[LightTrack]:
         """Fetch list of all tracks on the device.
 
@@ -635,30 +647,46 @@ class LightMusic:
         for slot, item_id in zip(slots, full_order):
             final_order[slot] = item_id
 
-        self.set_sort_mode(SortMode.RANK)
+        self._set_sort_mode(SortMode.RANK, invalidate_cache=False)
 
         original_positions = {t.playlist_item_id: i for i, t in enumerate(tracks)}
 
-        for new_position, item_id in enumerate(final_order):
-            if original_positions[item_id] == new_position:
-                continue
-            track = id_to_track[item_id]
-            resp = self._l.call_api(
-                patch_api_playlist_items_playlist_item_id.sync_detailed,
-                playlist_item_id=track.playlist_item_id,
-                client=self._l._api_client,
-                body=PatchApiPlaylistItemsPlaylistItemIdBody(
-                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
-                        id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
-                            position=new_position,
-                        ),
-                    )
-                ),
-            )
-            self._l._ensure_ok(
-                resp, f"reorder_subset position {new_position}", ok_codes=range(200, 300)
+        try:
+            for new_position, item_id in enumerate(final_order):
+                if original_positions[item_id] == new_position:
+                    continue
+
+                track = id_to_track[item_id]
+                resp = self._l.call_api(
+                    patch_api_playlist_items_playlist_item_id.sync_detailed,
+                    playlist_item_id=track.playlist_item_id,
+                    client=self._l._api_client,
+                    body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                        data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                            id=track.playlist_item_id,
+                            type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                            attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                                position=new_position,
+                            ),
+                        )
+                    ),
+                )
+                self._l._ensure_ok(
+                    resp, f"reorder_subset position {new_position}", ok_codes=range(200, 300)
+                )
+        except Exception:
+            if self._l._cache_enabled:
+                cache.invalidate(cache.CacheModule.MUSIC)
+            raise
+
+        # If this is reached, every PATCH above succeeded, so the new track ordering is known.
+        # Update the cache in-place to avoid a needless refetch.
+        if self._l._cache_enabled:
+            reordered = [id_to_track[iid] for iid in final_order]
+            cache.save(
+                cache.CacheModule.MUSIC,
+                self._l._api_token,
+                [dataclasses.asdict(t) for t in reordered],
             )
 
     def _apply_sort_positions(self, sorted_tracks: list[LightTrack], original_tracks: list[LightTrack]) -> None:
