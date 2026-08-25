@@ -8,7 +8,7 @@ import typing
 from typing import Any
 
 from light_api.contacts import ContactsExportResult, ContactsImportResult, LightContact
-from light_api.devices import LightDevice
+from light_api.devices import DeveloperModeStatus, LightDevice
 from light_api.music import AudioCapacity, LightTrack, UploadResult
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
 from light_api.podcast import LightPodcast, PodcastAddResult

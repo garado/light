@@ -31,6 +31,12 @@ class LightDevice:
     developer_mode: bool | None
 
 
+@dataclass
+class DeveloperModeStatus:
+    device_id: str
+    developer_mode: bool | None
+
+
 class LightDevices:
     def __init__(self, light: "Light") -> None:
         self._l = light

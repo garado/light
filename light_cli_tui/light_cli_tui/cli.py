@@ -19,6 +19,7 @@ from rich.table import Table
 
 from light_api.client import Light
 from light_api.contacts import ContactsExportResult, ContactsImportResult
+from light_api.devices import DeveloperModeStatus
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
@@ -1569,6 +1570,69 @@ def devices_list(light: Light):
         console.print(table)
 
     render(all_devices, render_human_readable)
+
+
+# -- Settings commands -----------------------------------------------------------
+
+
+@cli.group("settings", help=_help("settings"))
+def settings_group():
+    pass
+
+
+@settings_group.command("developer-mode", help=_help("settings_developer_mode"))
+@with_light
+@click.argument("state", type=click.Choice(["on", "off"]), required=False)
+@mutative_options("Show what developer mode would change to without changing it.")
+def settings_developer_mode(light: Light, state: str | None, yes, dry_run):
+    device_id = light.current_device_id
+
+    if state is None:
+        device = next(
+            (d for d in light.devices.list_devices() if d.id == device_id), None
+        )
+        if device is None:
+            raise click.UsageError(f"Could not find device {device_id}")
+        result = DeveloperModeStatus(
+            device_id=device_id, developer_mode=device.developer_mode
+        )
+
+        def render_current():
+            status = (
+                "unknown"
+                if result.developer_mode is None
+                else ("on" if result.developer_mode else "off")
+            )
+            console.print(f"Developer mode: {status}")
+
+        render(result, render_current)
+        return
+
+    enabled = state == "on"
+
+    def render_preview():
+        console.print(f"  developer mode -> {state}")
+
+    proceed = resolve_mutative_action(
+        DeveloperModeStatus(device_id=device_id, developer_mode=enabled),
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will change developer mode:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    new_state = light.devices.set_developer_mode(device_id, enabled)
+    result = DeveloperModeStatus(device_id=device_id, developer_mode=new_state)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Developer mode:[/green] {'on' if new_state else 'off'}"
+        )
+
+    render(result, render_human_readable)
 
 
 # -- Contacts commands -------------------------------------------------------------
