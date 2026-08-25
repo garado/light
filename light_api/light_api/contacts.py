@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from open_api_specification_client.api.default import (
     get_api_contacts_v2,
+    get_api_contacts_v2_export_vcf,
     patch_api_contacts_v2_contact_id,
     post_api_contacts_v2,
 )
@@ -38,6 +39,12 @@ class LightContact:
     first_name: str
     last_name: str
     number: str
+
+
+@dataclass
+class ContactsExportResult:
+    saved_to: str
+    contact_count: int
 
 
 class LightContacts:
@@ -154,3 +161,18 @@ class LightContacts:
             last_name=parsed.data.attributes.last_name,
             number=parsed.data.attributes.number,
         )
+
+    def export_vcf(self) -> str:
+        """Export every contact on this device as a single vCard-format string."""
+        device_id = self._l.current_device_id
+
+        resp = self._l.call_api(
+            get_api_contacts_v2_export_vcf.sync_detailed,
+            client=self._l._api_client,
+            device_id=device_id,
+        )
+        parsed = self._l._ensure_ok(
+            resp, "Could not export contacts", require_parsed=True
+        )
+
+        return parsed.data

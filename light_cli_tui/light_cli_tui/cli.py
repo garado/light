@@ -18,6 +18,7 @@ from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressC
 from rich.table import Table
 
 from light_api.client import Light
+from light_api.contacts import ContactsExportResult
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
@@ -1708,6 +1709,27 @@ def contacts_update(
         )
 
     render(contact, render_human_readable)
+
+
+@contacts.command("export", help=_help("contacts_export"))
+@with_light
+@click.argument("path")
+def contacts_export(light: Light, path: str):
+    vcf = light.contacts.export_vcf()
+
+    with open(path, "w") as f:
+        f.write(vcf)
+
+    result = ContactsExportResult(
+        saved_to=path, contact_count=vcf.count("BEGIN:VCARD")
+    )
+
+    def render_human_readable():
+        console.print(
+            f"[green]Exported:[/green] {result.contact_count} contact(s) -> {result.saved_to}"
+        )
+
+    render(result, render_human_readable)
 
 
 # -- Schema ---------------------------------------------------------------------
