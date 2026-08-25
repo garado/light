@@ -17,8 +17,16 @@ class MusicPane(Widget):
         height: 1fr;
         padding: 0 1;
     }
-    MusicPane DataTable { height: 1fr; }
+    MusicPane DataTable {
+        height: 1fr;
+        overflow-x: hidden;
+        scrollbar-size-vertical: 1;
+    }
     """
+
+    _TITLE_WIDTH = 40
+    _ARTIST_WIDTH = 25
+    _ALBUM_WIDTH = 25
 
     def compose(self) -> ComposeResult:
         yield DataTable()
@@ -29,8 +37,14 @@ class MusicPane(Widget):
         self.border_title = "Tracks"
         self.border_subtitle = "connecting..."
         table = self.query_one(DataTable)
-        table.add_columns("Title", "Artist", "Album")
+        table.add_column("Title", width=self._TITLE_WIDTH)
+        table.add_column("Artist", width=self._ARTIST_WIDTH)
+        table.add_column("Album", width=self._ALBUM_WIDTH)
         table.cursor_type = "row"
+
+    @staticmethod
+    def _truncate(text: str, width: int) -> str:
+        return text if len(text) <= width else text[: width - 1] + "…"
 
     def ensure_loaded(self, pw: "LightThread") -> None:
         """Fetch tracks, but only the first time this pane is shown."""
@@ -49,5 +63,9 @@ class MusicPane(Widget):
         table = self.query_one(DataTable)
         table.clear()
         for t in tracks:
-            table.add_row(t.title, t.artist, t.album)
+            table.add_row(
+                self._truncate(t.title, self._TITLE_WIDTH),
+                self._truncate(t.artist, self._ARTIST_WIDTH),
+                self._truncate(t.album, self._ALBUM_WIDTH),
+            )
         self.border_subtitle = f"{len(tracks)} track{'s' if len(tracks) != 1 else ''}"
