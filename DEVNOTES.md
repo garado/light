@@ -15,6 +15,7 @@
 - (feat) contacts: list all, add one, edit one, delete one, export
 - (feat) settings: developer mode get/set
 - (fix) potential fix for endless hang
+- (fix) dependency mismatch between CLI/TUI and API
 
 ## to do
 - I think device tool IDs are fixed. Can hardcode them instead of needing to parse them.
