@@ -1,5 +1,5 @@
 {
-  "$hash": "c76d20e793e4bb57b85c0eba4cf4bc291debc34cdd626cbfac7aa979c2761a85",
+  "$hash": "2b5aa2863efd7330d4230d16089439f95fc114f06902d953f82f09386c7ebedd",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -839,13 +839,24 @@
             },
             "sku": {
               "type": "string"
+            },
+            "developer_mode": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
             "id",
             "phone_number",
             "serial_number",
-            "sku"
+            "sku",
+            "developer_mode"
           ],
           "additionalProperties": false
         }
