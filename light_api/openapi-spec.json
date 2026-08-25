@@ -4829,6 +4829,52 @@
           }
         ]
       }
+    },
+    "/api/contacts_v2/import/file": {
+      "post": {
+        "summary": "Import contacts from a vCard file",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device_id": {
+                    "type": "string"
+                  },
+                  "Content-Type": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "device_id",
+                  "Content-Type",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Contacts imported"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      }
     }
   },
   "components": {

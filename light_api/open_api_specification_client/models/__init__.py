@@ -411,6 +411,7 @@ from .post_api_contacts_v2_body_data_relationships_device_data_type import (
     PostApiContactsV2BodyDataRelationshipsDeviceDataType,
 )
 from .post_api_contacts_v2_body_data_type import PostApiContactsV2BodyDataType
+from .post_api_contacts_v2_import_file_body import PostApiContactsV2ImportFileBody
 from .post_api_contacts_v2_response_201 import PostApiContactsV2Response201
 from .post_api_contacts_v2_response_201_data import PostApiContactsV2Response201Data
 from .post_api_contacts_v2_response_201_data_attributes import PostApiContactsV2Response201DataAttributes
@@ -745,6 +746,7 @@ __all__ = (
     "PostApiContactsV2BodyDataRelationshipsDeviceData",
     "PostApiContactsV2BodyDataRelationshipsDeviceDataType",
     "PostApiContactsV2BodyDataType",
+    "PostApiContactsV2ImportFileBody",
     "PostApiContactsV2Response201",
     "PostApiContactsV2Response201Data",
     "PostApiContactsV2Response201DataAttributes",
