@@ -762,25 +762,38 @@ class LightMusic:
         sorted_tracks = sorted(tracks, key=sort_key, reverse=reverse)
 
         original_positions = {t.audio_id: i for i, t in enumerate(tracks)}
-        for new_position, track in enumerate(sorted_tracks):
-            if original_positions[track.audio_id] == new_position:
-                continue
-            resp = self._l.call_api(
-                patch_api_playlist_items_playlist_item_id.sync_detailed,
-                playlist_item_id=track.playlist_item_id,
-                client=self._l._api_client,
-                body=PatchApiPlaylistItemsPlaylistItemIdBody(
-                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
-                        id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
-                            position=new_position,
-                        ),
-                    )
-                ),
-            )
-            self._l._ensure_ok(
-                resp, f"Apply sort position {new_position}", ok_codes=range(200, 300)
+        try:
+            for new_position, track in enumerate(sorted_tracks):
+                if original_positions[track.audio_id] == new_position:
+                    continue
+                resp = self._l.call_api(
+                    patch_api_playlist_items_playlist_item_id.sync_detailed,
+                    playlist_item_id=track.playlist_item_id,
+                    client=self._l._api_client,
+                    body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                        data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                            id=track.playlist_item_id,
+                            type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                            attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                                position=new_position,
+                            ),
+                        )
+                    ),
+                )
+                self._l._ensure_ok(
+                    resp, f"Apply sort position {new_position}", ok_codes=range(200, 300)
+                )
+        except Exception:
+            cache.invalidate(cache.CacheModule.MUSIC)
+            raise
+
+        # If this is reached, every PATCH above succeeded, so the new track ordering is known.
+        # Update the cache in-place to avoid a needless refetch.
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.MUSIC,
+                self._l._api_token,
+                [dataclasses.asdict(t) for t in sorted_tracks],
             )
 
     def _sort_by_title(self, descending: bool = False) -> None:

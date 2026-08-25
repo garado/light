@@ -1629,7 +1629,10 @@ def tools_add(light: Light, name: str, yes, dry_run):
     if not proceed:
         return
 
-    tool = light.tools.add_tool(name)
+    try:
+        tool = light.tools.add_tool(name)
+    except RuntimeError as e:
+        raise click.UsageError(str(e)) from e
 
     def render_human_readable():
         console.print(f"[green]Installed:[/green] {tool.title}")
@@ -1642,7 +1645,10 @@ def tools_add(light: Light, name: str, yes, dry_run):
 @click.argument("name")
 @mutative_options("Show the tool that would be removed without removing it.")
 def tools_remove(light: Light, name: str, yes, dry_run):
-    tool = light.tools.resolve_installed_tool(name)
+    try:
+        tool = light.tools.resolve_installed_tool(name)
+    except RuntimeError as e:
+        raise click.UsageError(str(e)) from e
 
     def render_preview():
         console.print(f"  {tool.title}")

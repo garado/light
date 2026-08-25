@@ -190,19 +190,21 @@ class LightContacts:
         device_id = self._l.current_device_id
 
         with open(path, "rb") as f:
-            resp = self._l.call_api(
-                post_api_contacts_v2_import_file.sync_detailed,
-                client=self._l._api_client,
-                body=PostApiContactsV2ImportFileBody(
-                    device_id=device_id,
-                    content_type="text/vcard",
-                    file=File(
-                        payload=f,
-                        file_name=os.path.basename(path),
-                        mime_type="text/vcard",
-                    ),
+            content = f.read()
+
+        resp = self._l.call_api(
+            post_api_contacts_v2_import_file.sync_detailed,
+            client=self._l._api_client,
+            body=PostApiContactsV2ImportFileBody(
+                device_id=device_id,
+                content_type="text/vcard",
+                file=File(
+                    payload=content,
+                    file_name=os.path.basename(path),
+                    mime_type="text/vcard",
                 ),
-            )
+            ),
+        )
 
         self._l._ensure_ok(resp, "Could not import contacts", ok_codes=(200, 204))
 
