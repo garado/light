@@ -3889,7 +3889,9 @@
             "name": "note_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Note ID"
           }
         ],
@@ -3903,14 +3905,24 @@
                   "data": {
                     "type": "object",
                     "properties": {
-                      "id": { "type": "string" },
-                      "type": { "type": "string" },
+                      "id": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
                       "attributes": {
                         "type": "object",
                         "properties": {
-                          "title": { "type": "string" },
-                          "updated_at": { "type": "string" },
-                          "note_type": { "type": "string" }
+                          "title": {
+                            "type": "string"
+                          },
+                          "updated_at": {
+                            "type": "string"
+                          },
+                          "note_type": {
+                            "type": "string"
+                          }
                         }
                       },
                       "relationships": {
@@ -3922,8 +3934,12 @@
                               "data": {
                                 "type": "object",
                                 "properties": {
-                                  "type": { "type": "string" },
-                                  "id": { "type": "string" }
+                                  "type": {
+                                    "type": "string"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  }
                                 }
                               }
                             }
@@ -3948,14 +3964,24 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "id": { "type": "string" },
-                        "type": { "type": "string" },
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
                         "attributes": {
                           "type": "object",
                           "properties": {
-                            "title": { "type": "string" },
-                            "updated_at": { "type": "string" },
-                            "note_type": { "type": "string" }
+                            "title": {
+                              "type": "string"
+                            },
+                            "updated_at": {
+                              "type": "string"
+                            },
+                            "note_type": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -3967,8 +3993,12 @@
           }
         },
         "security": [
-          { "bearer": [] },
-          { "apikey_header_authorization": [] }
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
         ]
       },
       "delete": {
@@ -3979,16 +4009,24 @@
             "name": "note_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Note ID"
           }
         ],
         "responses": {
-          "204": { "description": "No content" }
+          "204": {
+            "description": "No content"
+          }
         },
         "security": [
-          { "bearer": [] },
-          { "apikey_header_authorization": [] }
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
         ]
       }
     },
@@ -4210,6 +4248,622 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      }
+    },
+    "/api/contacts_v2": {
+      "post": {
+        "summary": "Add a contact",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "contacts"
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "attributes": {
+                        "type": "object",
+                        "properties": {
+                          "first_name": {
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "type": "string"
+                          },
+                          "number": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "first_name",
+                          "last_name",
+                          "number"
+                        ]
+                      },
+                      "relationships": {
+                        "type": "object",
+                        "properties": {
+                          "device": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "devices"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "type"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "data"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "device"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id",
+                      "attributes",
+                      "relationships"
+                    ]
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contact created",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "first_name": {
+                              "type": "string"
+                            },
+                            "last_name": {
+                              "type": "string"
+                            },
+                            "number": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "first_name",
+                            "last_name",
+                            "number"
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "relationships": {
+                          "type": "object",
+                          "properties": {
+                            "device": {
+                              "type": "object",
+                              "properties": {
+                                "data": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "type"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "data"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "device"
+                          ]
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "attributes",
+                        "id",
+                        "relationships",
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "List contacts",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "attributes": {
+                            "type": "object",
+                            "properties": {
+                              "first_name": {
+                                "type": "string"
+                              },
+                              "last_name": {
+                                "type": "string"
+                              },
+                              "number": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "first_name",
+                              "last_name",
+                              "number"
+                            ]
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "relationships": {
+                            "type": "object",
+                            "properties": {
+                              "device": {
+                                "type": "object",
+                                "properties": {
+                                  "data": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "type"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "data"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "device"
+                            ]
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "attributes",
+                          "id",
+                          "relationships",
+                          "type"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/contacts_v2/{contact_id}": {
+      "delete": {
+        "summary": "Delete a contact",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Contact deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Update a contact",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "contacts"
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "attributes": {
+                        "type": "object",
+                        "properties": {
+                          "first_name": {
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "type": "string"
+                          },
+                          "number": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "first_name",
+                          "last_name",
+                          "number"
+                        ]
+                      },
+                      "relationships": {
+                        "type": "object",
+                        "properties": {
+                          "device": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "devices"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "type"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "data"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "device"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id",
+                      "attributes",
+                      "relationships"
+                    ]
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact updated",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "first_name": {
+                              "type": "string"
+                            },
+                            "last_name": {
+                              "type": "string"
+                            },
+                            "number": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "first_name",
+                            "last_name",
+                            "number"
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "relationships": {
+                          "type": "object",
+                          "properties": {
+                            "device": {
+                              "type": "object",
+                              "properties": {
+                                "data": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "type"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "data"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "device"
+                          ]
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "attributes",
+                        "id",
+                        "relationships",
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      }
+    },
+    "/api/contacts_v2/export/vcf": {
+      "get": {
+        "summary": "Export contacts as vCard",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/contacts_v2/import/file": {
+      "post": {
+        "summary": "Import contacts from a vCard file",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device_id": {
+                    "type": "string"
+                  },
+                  "Content-Type": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "device_id",
+                  "Content-Type",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Contacts imported"
           }
         },
         "security": [

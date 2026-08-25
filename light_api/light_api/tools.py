@@ -108,16 +108,9 @@ class LightTools:
 
         return results
 
-    def _get_device_id(self) -> str:
-        resp = self._l.call_api(
-            get_api_devices.sync_detailed, client=self._l._api_client
-        )
-        devices = self._l._ensure_ok(resp, "Could not fetch devices", require_data=True)
-        return self._l._select_device_id(devices)
-
     def _resolve_global_tool_id(self, name: str) -> tuple[str, str]:
         """Return (global_tool_id, title) for a tool matching name (case-insensitive)."""
-        device_id = self._get_device_id()
+        device_id = self._l.current_device_id
         resp = get_api_tools.sync_detailed(
             client=self._l._api_client, device_id=device_id
         )
@@ -139,7 +132,7 @@ class LightTools:
     def add_tool(self, name: ToolName | str) -> LightTool:
         """Install a tool on the device by name (e.g. 'calendar')."""
         global_tool_id, title = self._resolve_global_tool_id(name)
-        device_id = self._get_device_id()
+        device_id = self._l.current_device_id
 
         resp = self._l.call_api(
             post_api_device_tools.sync_detailed,

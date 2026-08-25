@@ -52,6 +52,21 @@ from .delete_api_followed_podcasts_followed_podcast_id_response_200_jsonapi impo
     DeleteApiFollowedPodcastsFollowedPodcastIdResponse200Jsonapi,
 )
 from .get_api_audio_capacity_response_200 import GetApiAudioCapacityResponse200
+from .get_api_contacts_v2_export_vcf_response_200 import GetApiContactsV2ExportVcfResponse200
+from .get_api_contacts_v2_response_200 import GetApiContactsV2Response200
+from .get_api_contacts_v2_response_200_data_item import GetApiContactsV2Response200DataItem
+from .get_api_contacts_v2_response_200_data_item_attributes import (
+    GetApiContactsV2Response200DataItemAttributes,
+)
+from .get_api_contacts_v2_response_200_data_item_relationships import (
+    GetApiContactsV2Response200DataItemRelationships,
+)
+from .get_api_contacts_v2_response_200_data_item_relationships_device import (
+    GetApiContactsV2Response200DataItemRelationshipsDevice,
+)
+from .get_api_contacts_v2_response_200_data_item_relationships_device_data import (
+    GetApiContactsV2Response200DataItemRelationshipsDeviceData,
+)
 from .get_api_devices_response_200 import GetApiDevicesResponse200
 from .get_api_devices_response_200_data_item import GetApiDevicesResponse200DataItem
 from .get_api_devices_response_200_data_item_attributes import GetApiDevicesResponse200DataItemAttributes
@@ -294,6 +309,36 @@ from .patch_api_audios_audio_id_response_200_included_item_attributes import (
     PatchApiAudiosAudioIdResponse200IncludedItemAttributes,
 )
 from .patch_api_audios_audio_id_response_200_jsonapi import PatchApiAudiosAudioIdResponse200Jsonapi
+from .patch_api_contacts_v2_contact_id_body import PatchApiContactsV2ContactIdBody
+from .patch_api_contacts_v2_contact_id_body_data import PatchApiContactsV2ContactIdBodyData
+from .patch_api_contacts_v2_contact_id_body_data_attributes import PatchApiContactsV2ContactIdBodyDataAttributes
+from .patch_api_contacts_v2_contact_id_body_data_relationships import (
+    PatchApiContactsV2ContactIdBodyDataRelationships,
+)
+from .patch_api_contacts_v2_contact_id_body_data_relationships_device import (
+    PatchApiContactsV2ContactIdBodyDataRelationshipsDevice,
+)
+from .patch_api_contacts_v2_contact_id_body_data_relationships_device_data import (
+    PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceData,
+)
+from .patch_api_contacts_v2_contact_id_body_data_relationships_device_data_type import (
+    PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceDataType,
+)
+from .patch_api_contacts_v2_contact_id_body_data_type import PatchApiContactsV2ContactIdBodyDataType
+from .patch_api_contacts_v2_contact_id_response_200 import PatchApiContactsV2ContactIdResponse200
+from .patch_api_contacts_v2_contact_id_response_200_data import PatchApiContactsV2ContactIdResponse200Data
+from .patch_api_contacts_v2_contact_id_response_200_data_attributes import (
+    PatchApiContactsV2ContactIdResponse200DataAttributes,
+)
+from .patch_api_contacts_v2_contact_id_response_200_data_relationships import (
+    PatchApiContactsV2ContactIdResponse200DataRelationships,
+)
+from .patch_api_contacts_v2_contact_id_response_200_data_relationships_device import (
+    PatchApiContactsV2ContactIdResponse200DataRelationshipsDevice,
+)
+from .patch_api_contacts_v2_contact_id_response_200_data_relationships_device_data import (
+    PatchApiContactsV2ContactIdResponse200DataRelationshipsDeviceData,
+)
 from .patch_api_notes_note_id_body import PatchApiNotesNoteIdBody
 from .patch_api_notes_note_id_body_data import PatchApiNotesNoteIdBodyData
 from .patch_api_notes_note_id_body_data_attributes import PatchApiNotesNoteIdBodyDataAttributes
@@ -353,6 +398,29 @@ from .post_api_authorizations_response_200_data_attributes import PostApiAuthori
 from .post_api_authorizations_response_200_included_item import PostApiAuthorizationsResponse200IncludedItem
 from .post_api_authorizations_response_200_included_item_attributes import (
     PostApiAuthorizationsResponse200IncludedItemAttributes,
+)
+from .post_api_contacts_v2_body import PostApiContactsV2Body
+from .post_api_contacts_v2_body_data import PostApiContactsV2BodyData
+from .post_api_contacts_v2_body_data_attributes import PostApiContactsV2BodyDataAttributes
+from .post_api_contacts_v2_body_data_relationships import PostApiContactsV2BodyDataRelationships
+from .post_api_contacts_v2_body_data_relationships_device import PostApiContactsV2BodyDataRelationshipsDevice
+from .post_api_contacts_v2_body_data_relationships_device_data import (
+    PostApiContactsV2BodyDataRelationshipsDeviceData,
+)
+from .post_api_contacts_v2_body_data_relationships_device_data_type import (
+    PostApiContactsV2BodyDataRelationshipsDeviceDataType,
+)
+from .post_api_contacts_v2_body_data_type import PostApiContactsV2BodyDataType
+from .post_api_contacts_v2_import_file_body import PostApiContactsV2ImportFileBody
+from .post_api_contacts_v2_response_201 import PostApiContactsV2Response201
+from .post_api_contacts_v2_response_201_data import PostApiContactsV2Response201Data
+from .post_api_contacts_v2_response_201_data_attributes import PostApiContactsV2Response201DataAttributes
+from .post_api_contacts_v2_response_201_data_relationships import PostApiContactsV2Response201DataRelationships
+from .post_api_contacts_v2_response_201_data_relationships_device import (
+    PostApiContactsV2Response201DataRelationshipsDevice,
+)
+from .post_api_contacts_v2_response_201_data_relationships_device_data import (
+    PostApiContactsV2Response201DataRelationshipsDeviceData,
 )
 from .post_api_device_tools_body import PostApiDeviceToolsBody
 from .post_api_device_tools_body_data import PostApiDeviceToolsBodyData
@@ -485,6 +553,13 @@ __all__ = (
     "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsToolData",
     "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200Jsonapi",
     "GetApiAudioCapacityResponse200",
+    "GetApiContactsV2ExportVcfResponse200",
+    "GetApiContactsV2Response200",
+    "GetApiContactsV2Response200DataItem",
+    "GetApiContactsV2Response200DataItemAttributes",
+    "GetApiContactsV2Response200DataItemRelationships",
+    "GetApiContactsV2Response200DataItemRelationshipsDevice",
+    "GetApiContactsV2Response200DataItemRelationshipsDeviceData",
     "GetApiDevicesResponse200",
     "GetApiDevicesResponse200DataItem",
     "GetApiDevicesResponse200DataItemAttributes",
@@ -609,6 +684,20 @@ __all__ = (
     "PatchApiAudiosAudioIdResponse200IncludedItem",
     "PatchApiAudiosAudioIdResponse200IncludedItemAttributes",
     "PatchApiAudiosAudioIdResponse200Jsonapi",
+    "PatchApiContactsV2ContactIdBody",
+    "PatchApiContactsV2ContactIdBodyData",
+    "PatchApiContactsV2ContactIdBodyDataAttributes",
+    "PatchApiContactsV2ContactIdBodyDataRelationships",
+    "PatchApiContactsV2ContactIdBodyDataRelationshipsDevice",
+    "PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceData",
+    "PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceDataType",
+    "PatchApiContactsV2ContactIdBodyDataType",
+    "PatchApiContactsV2ContactIdResponse200",
+    "PatchApiContactsV2ContactIdResponse200Data",
+    "PatchApiContactsV2ContactIdResponse200DataAttributes",
+    "PatchApiContactsV2ContactIdResponse200DataRelationships",
+    "PatchApiContactsV2ContactIdResponse200DataRelationshipsDevice",
+    "PatchApiContactsV2ContactIdResponse200DataRelationshipsDeviceData",
     "PatchApiNotesNoteIdBody",
     "PatchApiNotesNoteIdBodyData",
     "PatchApiNotesNoteIdBodyDataAttributes",
@@ -649,6 +738,21 @@ __all__ = (
     "PostApiAuthorizationsResponse200DataAttributes",
     "PostApiAuthorizationsResponse200IncludedItem",
     "PostApiAuthorizationsResponse200IncludedItemAttributes",
+    "PostApiContactsV2Body",
+    "PostApiContactsV2BodyData",
+    "PostApiContactsV2BodyDataAttributes",
+    "PostApiContactsV2BodyDataRelationships",
+    "PostApiContactsV2BodyDataRelationshipsDevice",
+    "PostApiContactsV2BodyDataRelationshipsDeviceData",
+    "PostApiContactsV2BodyDataRelationshipsDeviceDataType",
+    "PostApiContactsV2BodyDataType",
+    "PostApiContactsV2ImportFileBody",
+    "PostApiContactsV2Response201",
+    "PostApiContactsV2Response201Data",
+    "PostApiContactsV2Response201DataAttributes",
+    "PostApiContactsV2Response201DataRelationships",
+    "PostApiContactsV2Response201DataRelationshipsDevice",
+    "PostApiContactsV2Response201DataRelationshipsDeviceData",
     "PostApiDeviceToolsBody",
     "PostApiDeviceToolsBodyData",
     "PostApiDeviceToolsBodyDataAttributes",

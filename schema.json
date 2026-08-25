@@ -1,5 +1,5 @@
 {
-  "$hash": "cc15eb08cca9bedeebfffd85185c0f2383b7da341a3a5b2c31ff95a229f8a8ef",
+  "$hash": "c76d20e793e4bb57b85c0eba4cf4bc291debc34cdd626cbfac7aa979c2761a85",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -846,6 +846,260 @@
             "phone_number",
             "serial_number",
             "sku"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "first_name",
+            "last_name",
+            "number"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts add": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "number"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts update": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "number"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts export": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "saved_to": {
+            "type": "string"
+          },
+          "contact_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "saved_to",
+          "contact_count"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts import": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "contact_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "contact_count"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts delete": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "first_name",
+            "last_name",
+            "number"
           ],
           "additionalProperties": false
         }

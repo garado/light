@@ -18,6 +18,7 @@ from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressC
 from rich.table import Table
 
 from light_api.client import Light
+from light_api.contacts import ContactsExportResult, ContactsImportResult
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
@@ -1568,6 +1569,232 @@ def devices_list(light: Light):
         console.print(table)
 
     render(all_devices, render_human_readable)
+
+
+# -- Contacts commands -------------------------------------------------------------
+
+
+@cli.group(help=_help("contacts"))
+def contacts():
+    pass
+
+
+@contacts.command("list", help=_help("contacts_list"))
+@with_light
+@click.option(
+    "--id", "show_id", is_flag=True, default=False, help="Show contact UUIDs."
+)
+def contacts_list(light: Light, show_id):
+    all_contacts = light.contacts.get_contacts()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("First Name")
+        table.add_column("Last Name")
+        table.add_column("Number")
+        if show_id:
+            table.add_column("UUID")
+
+        for c in all_contacts:
+            row = [c.first_name, c.last_name, c.number]
+            row += [c.id] if show_id else []
+            table.add_row(*row)
+
+        console.print(table)
+
+    render(all_contacts, render_human_readable)
+
+
+@contacts.command("add", help=_help("contacts_add"))
+@with_light
+@click.option(
+    "--first", "-f", "first_name", required=True, help="Contact's first name."
+)
+@click.option(
+    "--last", "-l", "last_name", default=None, help="Contact's last name (optional)."
+)
+@click.option("--num", "-n", "number", required=True, help="Contact's phone number.")
+@mutative_options("Show the contact that would be added without adding it.")
+def contacts_add(
+    light: Light,
+    first_name: str,
+    last_name: str | None,
+    number: str,
+    yes,
+    dry_run,
+):
+    def render_preview():
+        console.print(f"  {first_name} {last_name or ''} — {number}")
+
+    proceed = resolve_mutative_action(
+        {"first_name": first_name, "last_name": last_name, "number": number},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will add the following contact:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    contact = light.contacts.add_contact(first_name, last_name, number)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Added:[/green] {contact.first_name} {contact.last_name} "
+            f"[dim]({contact.number})[/dim]"
+        )
+
+    render(contact, render_human_readable)
+
+
+@contacts.command("update", help=_help("contacts_update"))
+@with_light
+@click.argument("contact_id")
+@click.option("--first", "-f", "first_name", default=None, help="New first name.")
+@click.option("--last", "-l", "last_name", default=None, help="New last name.")
+@click.option("--num", "-n", "number", default=None, help="New phone number.")
+@mutative_options("Show the contact as it would be updated without updating it.")
+def contacts_update(
+    light: Light,
+    contact_id: str,
+    first_name: str | None,
+    last_name: str | None,
+    number: str | None,
+    yes,
+    dry_run,
+):
+    if first_name is None and last_name is None and number is None:
+        raise click.UsageError("Provide at least one of --first, --last, --num.")
+
+    all_contacts = light.contacts.get_contacts()
+    by_id = {c.id: c for c in all_contacts}
+    if contact_id not in by_id:
+        raise click.UsageError(f"No contact found with id: {contact_id}")
+    current = by_id[contact_id]
+
+    new_first = first_name if first_name is not None else current.first_name
+    new_last = last_name if last_name is not None else current.last_name
+    new_number = number if number is not None else current.number
+
+    def render_preview():
+        console.print(
+            f"  {current.first_name} {current.last_name} — {current.number} "
+            f"[dim]({current.id})[/dim]\n"
+            f"  -> {new_first} {new_last} — {new_number}"
+        )
+
+    proceed = resolve_mutative_action(
+        {
+            "id": contact_id,
+            "first_name": new_first,
+            "last_name": new_last,
+            "number": new_number,
+        },
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will update the following contact:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    contact = light.contacts.update_contact(contact_id, new_first, new_last, new_number)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Updated:[/green] {contact.first_name} {contact.last_name} "
+            f"[dim]({contact.number})[/dim]"
+        )
+
+    render(contact, render_human_readable)
+
+
+@contacts.command("export", help=_help("contacts_export"))
+@with_light
+@click.argument("path")
+def contacts_export(light: Light, path: str):
+    vcf = light.contacts.export_vcf()
+
+    with open(path, "w") as f:
+        f.write(vcf)
+
+    result = ContactsExportResult(
+        saved_to=path, contact_count=vcf.count("BEGIN:VCARD")
+    )
+
+    def render_human_readable():
+        console.print(
+            f"[green]Exported:[/green] {result.contact_count} contact(s) -> {result.saved_to}"
+        )
+
+    render(result, render_human_readable)
+
+
+@contacts.command("import", help=_help("contacts_import"))
+@with_light
+@click.argument("path", type=click.Path(exists=True))
+@mutative_options("Show what would be imported without importing it.")
+def contacts_import(light: Light, path: str, yes, dry_run):
+    with open(path) as f:
+        contact_count = f.read().count("BEGIN:VCARD")
+
+    def render_preview():
+        console.print(f"  {path} ({contact_count} contact(s))")
+
+    proceed = resolve_mutative_action(
+        {"path": path, "contact_count": contact_count},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will import the following file:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    light.contacts.import_vcf(path)
+    result = ContactsImportResult(path=path, contact_count=contact_count)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Imported:[/green] {result.contact_count} contact(s) from {result.path}"
+        )
+
+    render(result, render_human_readable)
+
+
+@contacts.command("delete", help=_help("contacts_delete"))
+@with_light
+@click.argument("contact_ids", nargs=-1, required=True)
+@mutative_options("Show which contact(s) would be deleted without deleting them.")
+def contacts_delete(light: Light, contact_ids, yes, dry_run):
+    all_contacts = light.contacts.get_contacts()
+    by_id = {c.id: c for c in all_contacts}
+    missing = [i for i in contact_ids if i not in by_id]
+    if missing:
+        raise click.UsageError(f"No contact(s) found with id: {', '.join(missing)}")
+    matches = [by_id[i] for i in contact_ids]
+
+    def render_human_readable():
+        for c in matches:
+            console.print(f"  {c.first_name} {c.last_name} [dim]({c.id})[/dim]")
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will delete the following contact(s):",
+        confirm_message="Delete?",
+    )
+    if not proceed:
+        return
+
+    for c in matches:
+        light.contacts.delete_contact(c.id)
+    render(matches, render_human_readable)
 
 
 # -- Schema ---------------------------------------------------------------------
