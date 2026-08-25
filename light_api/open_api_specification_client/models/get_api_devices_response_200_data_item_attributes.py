@@ -6,6 +6,8 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 T = TypeVar("T", bound="GetApiDevicesResponse200DataItemAttributes")
 
 
@@ -13,29 +15,25 @@ T = TypeVar("T", bound="GetApiDevicesResponse200DataItemAttributes")
 class GetApiDevicesResponse200DataItemAttributes:
     """
     Attributes:
-        admin (bool):
-        developer_mode (bool):
         device_type (str):
         imei (str):
         light_os_version_name (str):
         serial_number (str):
         sku (str):
+        admin (bool | Unset):
+        developer_mode (bool | Unset):
     """
 
-    admin: bool
-    developer_mode: bool
     device_type: str
     imei: str
     light_os_version_name: str
     serial_number: str
     sku: str
+    admin: bool | Unset = UNSET
+    developer_mode: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        admin = self.admin
-
-        developer_mode = self.developer_mode
-
         device_type = self.device_type
 
         imei = self.imei
@@ -46,12 +44,14 @@ class GetApiDevicesResponse200DataItemAttributes:
 
         sku = self.sku
 
+        admin = self.admin
+
+        developer_mode = self.developer_mode
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "admin": admin,
-                "developer_mode": developer_mode,
                 "device_type": device_type,
                 "imei": imei,
                 "light_os_version_name": light_os_version_name,
@@ -59,16 +59,16 @@ class GetApiDevicesResponse200DataItemAttributes:
                 "sku": sku,
             }
         )
+        if admin is not UNSET:
+            field_dict["admin"] = admin
+        if developer_mode is not UNSET:
+            field_dict["developer_mode"] = developer_mode
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        admin = d.pop("admin")
-
-        developer_mode = d.pop("developer_mode")
-
         device_type = d.pop("device_type")
 
         imei = d.pop("imei")
@@ -79,14 +79,18 @@ class GetApiDevicesResponse200DataItemAttributes:
 
         sku = d.pop("sku")
 
+        admin = d.pop("admin", UNSET)
+
+        developer_mode = d.pop("developer_mode", UNSET)
+
         get_api_devices_response_200_data_item_attributes = cls(
-            admin=admin,
-            developer_mode=developer_mode,
             device_type=device_type,
             imei=imei,
             light_os_version_name=light_os_version_name,
             serial_number=serial_number,
             sku=sku,
+            admin=admin,
+            developer_mode=developer_mode,
         )
 
         get_api_devices_response_200_data_item_attributes.additional_properties = d

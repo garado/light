@@ -300,8 +300,6 @@
                               }
                             },
                             "required": [
-                              "admin",
-                              "developer_mode",
                               "device_type",
                               "imei",
                               "light_os_version_name",
