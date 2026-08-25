@@ -13,12 +13,18 @@ T = TypeVar("T", bound="GetApiDevicesResponse200DataItemAttributes")
 class GetApiDevicesResponse200DataItemAttributes:
     """
     Attributes:
+        admin (bool):
+        developer_mode (bool):
+        device_type (str):
         imei (str):
         light_os_version_name (str):
         serial_number (str):
         sku (str):
     """
 
+    admin: bool
+    developer_mode: bool
+    device_type: str
     imei: str
     light_os_version_name: str
     serial_number: str
@@ -26,6 +32,12 @@ class GetApiDevicesResponse200DataItemAttributes:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        admin = self.admin
+
+        developer_mode = self.developer_mode
+
+        device_type = self.device_type
+
         imei = self.imei
 
         light_os_version_name = self.light_os_version_name
@@ -38,6 +50,9 @@ class GetApiDevicesResponse200DataItemAttributes:
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
+                "admin": admin,
+                "developer_mode": developer_mode,
+                "device_type": device_type,
                 "imei": imei,
                 "light_os_version_name": light_os_version_name,
                 "serial_number": serial_number,
@@ -50,6 +65,12 @@ class GetApiDevicesResponse200DataItemAttributes:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+        admin = d.pop("admin")
+
+        developer_mode = d.pop("developer_mode")
+
+        device_type = d.pop("device_type")
+
         imei = d.pop("imei")
 
         light_os_version_name = d.pop("light_os_version_name")
@@ -59,6 +80,9 @@ class GetApiDevicesResponse200DataItemAttributes:
         sku = d.pop("sku")
 
         get_api_devices_response_200_data_item_attributes = cls(
+            admin=admin,
+            developer_mode=developer_mode,
+            device_type=device_type,
             imei=imei,
             light_os_version_name=light_os_version_name,
             serial_number=serial_number,

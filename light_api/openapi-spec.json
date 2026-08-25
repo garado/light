@@ -277,6 +277,15 @@
                           "attributes": {
                             "type": "object",
                             "properties": {
+                              "admin": {
+                                "type": "boolean"
+                              },
+                              "developer_mode": {
+                                "type": "boolean"
+                              },
+                              "device_type": {
+                                "type": "string"
+                              },
                               "imei": {
                                 "type": "string"
                               },
@@ -291,6 +300,9 @@
                               }
                             },
                             "required": [
+                              "admin",
+                              "developer_mode",
+                              "device_type",
                               "imei",
                               "light_os_version_name",
                               "serial_number",
@@ -4864,6 +4876,119 @@
         "responses": {
           "204": {
             "description": "Contacts imported"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      }
+    },
+    "/api/devices/{device_id}/developer_mode": {
+      "patch": {
+        "summary": "Set developer mode on a device",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "device"
+                        ]
+                      },
+                      "attributes": {
+                        "type": "object",
+                        "properties": {
+                          "developer_mode": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "developer_mode"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "type",
+                      "attributes"
+                    ]
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Developer mode updated",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "developer_mode": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "developer_mode"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "attributes"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [

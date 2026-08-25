@@ -339,6 +339,23 @@ from .patch_api_contacts_v2_contact_id_response_200_data_relationships_device im
 from .patch_api_contacts_v2_contact_id_response_200_data_relationships_device_data import (
     PatchApiContactsV2ContactIdResponse200DataRelationshipsDeviceData,
 )
+from .patch_api_devices_device_id_developer_mode_body import PatchApiDevicesDeviceIdDeveloperModeBody
+from .patch_api_devices_device_id_developer_mode_body_data import PatchApiDevicesDeviceIdDeveloperModeBodyData
+from .patch_api_devices_device_id_developer_mode_body_data_attributes import (
+    PatchApiDevicesDeviceIdDeveloperModeBodyDataAttributes,
+)
+from .patch_api_devices_device_id_developer_mode_body_data_type import (
+    PatchApiDevicesDeviceIdDeveloperModeBodyDataType,
+)
+from .patch_api_devices_device_id_developer_mode_response_200 import (
+    PatchApiDevicesDeviceIdDeveloperModeResponse200,
+)
+from .patch_api_devices_device_id_developer_mode_response_200_data import (
+    PatchApiDevicesDeviceIdDeveloperModeResponse200Data,
+)
+from .patch_api_devices_device_id_developer_mode_response_200_data_attributes import (
+    PatchApiDevicesDeviceIdDeveloperModeResponse200DataAttributes,
+)
 from .patch_api_notes_note_id_body import PatchApiNotesNoteIdBody
 from .patch_api_notes_note_id_body_data import PatchApiNotesNoteIdBodyData
 from .patch_api_notes_note_id_body_data_attributes import PatchApiNotesNoteIdBodyDataAttributes
@@ -698,6 +715,13 @@ __all__ = (
     "PatchApiContactsV2ContactIdResponse200DataRelationships",
     "PatchApiContactsV2ContactIdResponse200DataRelationshipsDevice",
     "PatchApiContactsV2ContactIdResponse200DataRelationshipsDeviceData",
+    "PatchApiDevicesDeviceIdDeveloperModeBody",
+    "PatchApiDevicesDeviceIdDeveloperModeBodyData",
+    "PatchApiDevicesDeviceIdDeveloperModeBodyDataAttributes",
+    "PatchApiDevicesDeviceIdDeveloperModeBodyDataType",
+    "PatchApiDevicesDeviceIdDeveloperModeResponse200",
+    "PatchApiDevicesDeviceIdDeveloperModeResponse200Data",
+    "PatchApiDevicesDeviceIdDeveloperModeResponse200DataAttributes",
     "PatchApiNotesNoteIdBody",
     "PatchApiNotesNoteIdBodyData",
     "PatchApiNotesNoteIdBodyDataAttributes",
