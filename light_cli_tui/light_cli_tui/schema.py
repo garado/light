@@ -13,7 +13,7 @@ from light_api.music import AudioCapacity, LightTrack, UploadResult
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
 from light_api.podcast import LightPodcast, PodcastAddResult
 from light_api.settings import CacheStatus
-from light_api.tools import LightTool
+from light_api.tools import AvailableTool, LightTool
 
 # Map each `--json`-enabled command to its output dataclass.
 # NOTE: This isn't autoderived. Must be manually kept in sync w/ any added `render(...)` commands in cli.py.
@@ -32,6 +32,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "notes delete": list[LightNote],
     "notes download-all": list[NoteDownloadResult],
     "tools list": list[LightTool],
+    "tools catalog": list[AvailableTool],
     "tools add": LightTool,
     "tools remove": LightTool,
     "devices list": list[LightDevice],

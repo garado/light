@@ -16,9 +16,10 @@
 - (feat) settings: developer mode get/set
 - (fix) potential fix for endless hang
 - (fix) dependency mismatch between CLI/TUI and API
+- (fix) auto-discover available tools instead of hardcoding them
+- (feat) yes/dry-run/json to `tools`
 
 ## to do
-- I think device tool IDs are fixed. Can hardcode them instead of needing to parse them.
 - ahh fuck. there is no real support for multi-device accounts. this is a much larger lift
 - add playlist info into tracks to prep for upcoming music tool changes?
 - device id: add method to change the target device

@@ -1,5 +1,5 @@
 {
-  "$hash": "1746f5f4bac01fbdf6a48871e64f771c6944e16c6a2add32d7921b07eaba09ba",
+  "$hash": "2fb4663ecba6630f3e400242bb16d34e73c69420f2f0bcca661139b4bc0e0843",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -792,6 +792,49 @@
             "namespace",
             "component",
             "title"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "tools catalog": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title",
+            "namespace"
           ],
           "additionalProperties": false
         }

@@ -24,7 +24,6 @@ from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
-from light_api.tools import ToolName
 from light_api import with_light
 from light_cli_tui.interactive import (
     confirm_selection_with_repick,
@@ -1525,11 +1524,27 @@ def tools_list(light: Light):
     render(all_tools, render_human_readable)
 
 
+@tools.command("catalog", help=_help("tools_catalog"))
+@with_light
+def tools_catalog(light: Light):
+    all_tools = light.tools.get_available_tools()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("Title")
+        table.add_column("Namespace")
+
+        for t in all_tools:
+            table.add_row(t.title, t.namespace)
+
+        console.print(table)
+
+    render(all_tools, render_human_readable)
+
+
 @tools.command("add", help=_help("tools_add"))
 @with_light
-@click.argument(
-    "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
-)
+@click.argument("name")
 @mutative_options("Show the tool that would be installed without installing it.")
 def tools_add(light: Light, name: str, yes, dry_run):
     def render_preview():
@@ -1556,9 +1571,7 @@ def tools_add(light: Light, name: str, yes, dry_run):
 
 @tools.command("remove", help=_help("tools_remove"))
 @with_light
-@click.argument(
-    "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
-)
+@click.argument("name")
 @mutative_options("Show the tool that would be removed without removing it.")
 def tools_remove(light: Light, name: str, yes, dry_run):
     tool = light.tools.resolve_installed_tool(name)
