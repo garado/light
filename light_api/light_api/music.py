@@ -51,6 +51,7 @@ log = logging.getLogger(f"light.{__name__}")
 class LightTrack:
     """Metadata for a track."""
     playlist_item_id: str
+    playlist_id: str
     audio_id: str
     title: str
     artist: str
@@ -250,6 +251,7 @@ class LightMusic:
             tracks = [
                 LightTrack(
                     playlist_item_id=item.id,
+                    playlist_id=item.attributes.playlist_id,
                     audio_id=(audio_id := item.relationships.audio.data.id),
                     title=audio_info[audio_id]["attrs"].title or "",
                     artist=audio_info[audio_id]["attrs"].artist or "",

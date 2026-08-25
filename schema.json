@@ -1,5 +1,5 @@
 {
-  "$hash": "2fb4663ecba6630f3e400242bb16d34e73c69420f2f0bcca661139b4bc0e0843",
+  "$hash": "ad0b05beea14dc18467a4b5c28031dbcdcd362ab31e78b710bbe9e39a6d171da",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -232,6 +232,9 @@
             "playlist_item_id": {
               "type": "string"
             },
+            "playlist_id": {
+              "type": "string"
+            },
             "audio_id": {
               "type": "string"
             },
@@ -250,6 +253,7 @@
           },
           "required": [
             "playlist_item_id",
+            "playlist_id",
             "audio_id",
             "title",
             "artist",

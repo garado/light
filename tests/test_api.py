@@ -452,17 +452,17 @@ class TestDeleteTracksPredicateAndRegex:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="Riot!",
                 filename="",
             ),
             LightTrack(
-                playlist_item_id="2", audio_id="a2",
+                playlist_item_id="2", playlist_id="p1", audio_id="a2",
                 title="Playing God", artist="Polyphia", album="New Levels New Devils",
                 filename="",
             ),
             LightTrack(
-                playlist_item_id="3", audio_id="a3",
+                playlist_item_id="3", playlist_id="p1", audio_id="a3",
                 title="Live at Wembley", artist="Queen", album="Live Magic",
                 filename="",
             ),
@@ -532,7 +532,7 @@ class TestFindMatchingTrack:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="",
                 filename="",
             ),
@@ -547,7 +547,7 @@ class TestFindMatchingTrack:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="2", audio_id="a2",
+                playlist_item_id="2", playlist_id="p1", audio_id="a2",
                 title="Some Old Rip", artist="Unknown", album="",
                 filename="",
             ),
@@ -583,12 +583,12 @@ class TestFindUploadMatches:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="",
                 filename="",
             ),
             LightTrack(
-                playlist_item_id="2", audio_id="a2",
+                playlist_item_id="2", playlist_id="p1", audio_id="a2",
                 title="New Song", artist="New Artist", album="",
                 filename="",
             ),
@@ -616,7 +616,7 @@ class TestResolveUploadPlan:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Song", artist="Artist", album="",
                 filename="",
             ),
@@ -671,7 +671,7 @@ class TestUploadTracksExcludesMissingFiles:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Song", artist="Artist", album="",
                 filename="",
             ),

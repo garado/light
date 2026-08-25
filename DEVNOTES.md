@@ -18,8 +18,8 @@
 - (fix) dependency mismatch between CLI/TUI and API
 - (fix) auto-discover available tools instead of hardcoding them
 - (feat) yes/dry-run/json to `tools`
+- (feat) include playlist ID in LightTrack (there's only one playlist for now, but... future-proofing!)
 
 ## to do
 - ahh fuck. there is no real support for multi-device accounts. this is a much larger lift
-- add playlist info into tracks to prep for upcoming music tool changes?
 - device id: add method to change the target device
