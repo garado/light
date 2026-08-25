@@ -1,6 +1,6 @@
 [project]
 name = "light-phone-api"
-version = "0.4.0"
+version = "0.5.0"
 description = "Unofficial Python API for the Light Phone"
 authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
@@ -11,6 +11,8 @@ dependencies = [
     "python-dateutil>=2.8.0",
     "keyring",
     "mutagen",
+    "cryptography",
+    "platformdirs",
 ]
 
 [build-system]

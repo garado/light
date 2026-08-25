@@ -18,10 +18,12 @@ from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressC
 from rich.table import Table
 
 from light_api.client import Light
+from light_api.contacts import ContactsExportResult, ContactsImportResult
+from light_api.devices import DeveloperModeStatus
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
-from light_api.tools import ToolName
+from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
 from light_api import with_light
 from light_cli_tui.interactive import (
     confirm_selection_with_repick,
@@ -39,6 +41,47 @@ click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
 click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
+click.rich_click.OPTION_GROUPS = {
+    "light": [
+        {
+            "name": "Login",
+            "options": ["--email", "--email-file", "--password", "--password-file"],
+        },
+        {
+            "name": "Device Selection",
+            "options": [
+                "--phone-number",
+                "--phone-number-file",
+                "--device-id",
+                "--device-id-file",
+            ],
+        },
+        {
+            "name": "Output & Behavior",
+            "options": ["--log-level", "--json", "--cache"],
+        },
+    ]
+}
+click.rich_click.COMMAND_GROUPS = {
+    "light": [
+        {
+            "name": "Manage",
+            "commands": [
+                "music",
+                "podcasts",
+                "notes",
+                "contacts",
+                "devices",
+                "tools",
+                "settings",
+            ],
+        },
+        {
+            "name": "App",
+            "commands": ["tui", "cache", "schema", "logout"],
+        },
+    ]
+}
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
@@ -49,6 +92,37 @@ _HELP_DIR = Path(__file__).parent / "help"
 def _help(name: str) -> str:
     """Load a command's --help body from help/<name>.md."""
     return (_HELP_DIR / f"{name}.md").read_text()
+
+
+_TRUTHY = {"1", "true", "yes", "on"}
+_FALSY = {"0", "false", "no", "off"}
+
+
+def _resolve_cache_enabled(cache_override: bool | None) -> bool:
+    """Resolve whether local response caching is enabled for this invocation.
+
+    Precedence:
+        1. --cache/--no-cache (cache_override)
+        2. $LIGHT_CACHE
+        3. persistent 'light cache enable/disable' setting
+        4. default (off).
+    """
+    if cache_override is not None:
+        return cache_override
+
+    env = os.environ.get("LIGHT_CACHE")
+    if env is not None:
+        normalized = env.strip().lower()
+        if normalized in _TRUTHY:
+            return True
+        if normalized in _FALSY:
+            return False
+        raise click.UsageError(
+            f"Could not parse $LIGHT_CACHE value: {env!r} "
+            f"(expected one of {sorted(_TRUTHY | _FALSY)})"
+        )
+
+    return get_cache_enabled()
 
 
 def mutative_options(dry_run_help: str):
@@ -138,6 +212,13 @@ class JsonAwareGroup(click.RichGroup):
     default=False,
     help="Output machine-readable JSON instead of human-readable text.",
 )
+@click.option(
+    "--cache/--no-cache",
+    "cache_override",
+    default=None,
+    help="Override local response caching for this invocation only. Takes precedence "
+    "over $LIGHT_CACHE and the persistent 'light cache enable/disable' setting.",
+)
 @click.pass_context
 def cli(
     ctx,
@@ -151,6 +232,7 @@ def cli(
     device_id_file,
     log_level,
     json_output,
+    cache_override,
 ):
     if (phone_number or phone_number_file) and (device_id or device_id_file):
         raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
@@ -170,6 +252,7 @@ def cli(
             "device_id": device_id,
             "device_id_file": device_id_file,
             "json": json_output,
+            "cache_enabled": _resolve_cache_enabled(cache_override),
         }
     )
 
@@ -977,6 +1060,67 @@ def music_list(
     render(tracks, render_human_readable)
 
 
+def _human_size(num_bytes: int) -> str:
+    """Format a byte count as a human-readable size (e.g. 1.5 GB)."""
+    size = float(num_bytes)
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if size < 1000 or unit == "TB":
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} {unit}"
+        size /= 1000
+    return f"{size:.1f} TB"
+
+
+@music.command("capacity", help=_help("music_capacity"))
+@with_light
+def music_capacity(light: Light):
+    capacity = light.music.get_capacity()
+
+    def render_human_readable():
+        used_pct = (
+            (capacity.used_capacity / capacity.total_capacity * 100)
+            if capacity.total_capacity
+            else 0
+        )
+        console.print(
+            f"{_human_size(capacity.used_capacity)} / {_human_size(capacity.total_capacity)} "
+            f"used ({used_pct:.1f}%)"
+        )
+        console.print(f"[dim]Remaining:[/dim] {_human_size(capacity.remaining_capacity)}")
+        if capacity.processing_count:
+            console.print(f"[dim]Processing:[/dim] {capacity.processing_count}")
+        if capacity.failed_count:
+            console.print(f"[red]Failed:[/red] {capacity.failed_count}")
+
+    render(capacity, render_human_readable)
+
+
+@music.group("playlists", help=_help("music_playlists"))
+def music_playlists():
+    pass
+
+
+@music_playlists.command("list", help=_help("music_playlists_list"))
+@with_light
+def music_playlists_list(light: Light):
+    all_playlists = light.music.list_playlists()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("Name")
+        table.add_column("Sort Mode")
+        table.add_column("System")
+        table.add_column("ID")
+
+        for p in all_playlists:
+            table.add_row(
+                p.name, p.sort_mode, "yes" if p.is_system_playlist else "no", p.id
+            )
+
+        console.print(table)
+
+    render(all_playlists, render_human_readable)
+
+
 # -- Notes commands -------------------------------------------------------------
 
 
@@ -1448,26 +1592,84 @@ def tools_list(light: Light):
     render(all_tools, render_human_readable)
 
 
+@tools.command("catalog", help=_help("tools_catalog"))
+@with_light
+def tools_catalog(light: Light):
+    all_tools = light.tools.get_available_tools()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("Title")
+        table.add_column("Namespace")
+
+        for t in all_tools:
+            table.add_row(t.title, t.namespace)
+
+        console.print(table)
+
+    render(all_tools, render_human_readable)
+
+
 @tools.command("add", help=_help("tools_add"))
 @with_light
-@click.argument(
-    "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
-)
-def tools_add(light: Light, name: str):
-    tool = light.tools.add_tool(name)
-    console.print(f"[green]Installed:[/green] {tool.title}")
+@click.argument("name")
+@mutative_options("Show the tool that would be installed without installing it.")
+def tools_add(light: Light, name: str, yes, dry_run):
+    def render_preview():
+        console.print(f"  {name}")
+
+    proceed = resolve_mutative_action(
+        {"name": name},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will install the following tool:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    try:
+        tool = light.tools.add_tool(name)
+    except RuntimeError as e:
+        raise click.UsageError(str(e)) from e
+
+    def render_human_readable():
+        console.print(f"[green]Installed:[/green] {tool.title}")
+
+    render(tool, render_human_readable)
 
 
 @tools.command("remove", help=_help("tools_remove"))
 @with_light
-@click.argument(
-    "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
-)
-def tools_remove(light: Light, name: str):
-    if not click.confirm(f"Remove {name}?"):
+@click.argument("name")
+@mutative_options("Show the tool that would be removed without removing it.")
+def tools_remove(light: Light, name: str, yes, dry_run):
+    try:
+        tool = light.tools.resolve_installed_tool(name)
+    except RuntimeError as e:
+        raise click.UsageError(str(e)) from e
+
+    def render_preview():
+        console.print(f"  {tool.title}")
+
+    proceed = resolve_mutative_action(
+        tool,
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will remove the following tool:",
+        confirm_message="Remove?",
+    )
+    if not proceed:
         return
-    light.tools.remove_tool(name)
-    console.print("[green]Removed.[/green]")
+
+    light.tools.remove_tool_by_id(tool.device_tool_id)
+
+    def render_human_readable():
+        console.print(f"[green]Removed:[/green] {tool.title}")
+
+    render(tool, render_human_readable)
 
 
 # -- Device commands ------------------------------------------------------------
@@ -1495,6 +1697,295 @@ def devices_list(light: Light):
     render(all_devices, render_human_readable)
 
 
+# -- Settings commands -----------------------------------------------------------
+
+
+@cli.group("settings", help=_help("settings"))
+def settings_group():
+    pass
+
+
+@settings_group.command("developer-mode", help=_help("settings_developer_mode"))
+@with_light
+@click.argument("state", type=click.Choice(["on", "off"]), required=False)
+@mutative_options("Show what developer mode would change to without changing it.")
+def settings_developer_mode(light: Light, state: str | None, yes, dry_run):
+    device_id = light.current_device_id
+
+    if state is None:
+        device = next(
+            (d for d in light.devices.list_devices() if d.id == device_id), None
+        )
+        if device is None:
+            raise click.UsageError(f"Could not find device {device_id}")
+        result = DeveloperModeStatus(
+            device_id=device_id, developer_mode=device.developer_mode
+        )
+
+        def render_current():
+            status = (
+                "unknown"
+                if result.developer_mode is None
+                else ("on" if result.developer_mode else "off")
+            )
+            console.print(f"Developer mode: {status}")
+
+        render(result, render_current)
+        return
+
+    enabled = state == "on"
+
+    def render_preview():
+        console.print(f"  developer mode -> {state}")
+
+    proceed = resolve_mutative_action(
+        DeveloperModeStatus(device_id=device_id, developer_mode=enabled),
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will change developer mode:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    new_state = light.devices.set_developer_mode(device_id, enabled)
+    result = DeveloperModeStatus(device_id=device_id, developer_mode=new_state)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Developer mode:[/green] {'on' if new_state else 'off'}"
+        )
+
+    render(result, render_human_readable)
+
+
+# -- Contacts commands -------------------------------------------------------------
+
+
+@cli.group(help=_help("contacts"))
+def contacts():
+    pass
+
+
+@contacts.command("list", help=_help("contacts_list"))
+@with_light
+@click.option(
+    "--id", "show_id", is_flag=True, default=False, help="Show contact UUIDs."
+)
+def contacts_list(light: Light, show_id):
+    all_contacts = light.contacts.get_contacts()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("First Name")
+        table.add_column("Last Name")
+        table.add_column("Number")
+        if show_id:
+            table.add_column("UUID")
+
+        for c in all_contacts:
+            row = [c.first_name, c.last_name, c.number]
+            row += [c.id] if show_id else []
+            table.add_row(*row)
+
+        console.print(table)
+
+    render(all_contacts, render_human_readable)
+
+
+@contacts.command("add", help=_help("contacts_add"))
+@with_light
+@click.option(
+    "--first", "-f", "first_name", required=True, help="Contact's first name."
+)
+@click.option(
+    "--last", "-l", "last_name", default=None, help="Contact's last name (optional)."
+)
+@click.option("--num", "-n", "number", required=True, help="Contact's phone number.")
+@mutative_options("Show the contact that would be added without adding it.")
+def contacts_add(
+    light: Light,
+    first_name: str,
+    last_name: str | None,
+    number: str,
+    yes,
+    dry_run,
+):
+    def render_preview():
+        console.print(f"  {first_name} {last_name or ''} — {number}")
+
+    proceed = resolve_mutative_action(
+        {"first_name": first_name, "last_name": last_name, "number": number},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will add the following contact:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    contact = light.contacts.add_contact(first_name, last_name, number)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Added:[/green] {contact.first_name} {contact.last_name} "
+            f"[dim]({contact.number})[/dim]"
+        )
+
+    render(contact, render_human_readable)
+
+
+@contacts.command("update", help=_help("contacts_update"))
+@with_light
+@click.argument("contact_id")
+@click.option("--first", "-f", "first_name", default=None, help="New first name.")
+@click.option("--last", "-l", "last_name", default=None, help="New last name.")
+@click.option("--num", "-n", "number", default=None, help="New phone number.")
+@mutative_options("Show the contact as it would be updated without updating it.")
+def contacts_update(
+    light: Light,
+    contact_id: str,
+    first_name: str | None,
+    last_name: str | None,
+    number: str | None,
+    yes,
+    dry_run,
+):
+    if first_name is None and last_name is None and number is None:
+        raise click.UsageError("Provide at least one of --first, --last, --num.")
+
+    all_contacts = light.contacts.get_contacts()
+    by_id = {c.id: c for c in all_contacts}
+    if contact_id not in by_id:
+        raise click.UsageError(f"No contact found with id: {contact_id}")
+    current = by_id[contact_id]
+
+    new_first = first_name if first_name is not None else current.first_name
+    new_last = last_name if last_name is not None else current.last_name
+    new_number = number if number is not None else current.number
+
+    def render_preview():
+        console.print(
+            f"  {current.first_name} {current.last_name} — {current.number} "
+            f"[dim]({current.id})[/dim]\n"
+            f"  -> {new_first} {new_last} — {new_number}"
+        )
+
+    proceed = resolve_mutative_action(
+        {
+            "id": contact_id,
+            "first_name": new_first,
+            "last_name": new_last,
+            "number": new_number,
+        },
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will update the following contact:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    contact = light.contacts.update_contact(contact_id, new_first, new_last, new_number)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Updated:[/green] {contact.first_name} {contact.last_name} "
+            f"[dim]({contact.number})[/dim]"
+        )
+
+    render(contact, render_human_readable)
+
+
+@contacts.command("export", help=_help("contacts_export"))
+@with_light
+@click.argument("path")
+def contacts_export(light: Light, path: str):
+    vcf = light.contacts.export_vcf()
+
+    with open(path, "w") as f:
+        f.write(vcf)
+
+    result = ContactsExportResult(
+        saved_to=path, contact_count=vcf.count("BEGIN:VCARD")
+    )
+
+    def render_human_readable():
+        console.print(
+            f"[green]Exported:[/green] {result.contact_count} contact(s) -> {result.saved_to}"
+        )
+
+    render(result, render_human_readable)
+
+
+@contacts.command("import", help=_help("contacts_import"))
+@with_light
+@click.argument("path", type=click.Path(exists=True))
+@mutative_options("Show what would be imported without importing it.")
+def contacts_import(light: Light, path: str, yes, dry_run):
+    with open(path) as f:
+        contact_count = f.read().count("BEGIN:VCARD")
+
+    def render_preview():
+        console.print(f"  {path} ({contact_count} contact(s))")
+
+    proceed = resolve_mutative_action(
+        {"path": path, "contact_count": contact_count},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will import the following file:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    light.contacts.import_vcf(path)
+    result = ContactsImportResult(path=path, contact_count=contact_count)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Imported:[/green] {result.contact_count} contact(s) from {result.path}"
+        )
+
+    render(result, render_human_readable)
+
+
+@contacts.command("delete", help=_help("contacts_delete"))
+@with_light
+@click.argument("contact_ids", nargs=-1, required=True)
+@mutative_options("Show which contact(s) would be deleted without deleting them.")
+def contacts_delete(light: Light, contact_ids, yes, dry_run):
+    all_contacts = light.contacts.get_contacts()
+    by_id = {c.id: c for c in all_contacts}
+    missing = [i for i in contact_ids if i not in by_id]
+    if missing:
+        raise click.UsageError(f"No contact(s) found with id: {', '.join(missing)}")
+    matches = [by_id[i] for i in contact_ids]
+
+    def render_human_readable():
+        for c in matches:
+            console.print(f"  {c.first_name} {c.last_name} [dim]({c.id})[/dim]")
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will delete the following contact(s):",
+        confirm_message="Delete?",
+    )
+    if not proceed:
+        return
+
+    for c in matches:
+        light.contacts.delete_contact(c.id)
+    render(matches, render_human_readable)
+
+
 # -- Schema ---------------------------------------------------------------------
 
 
@@ -1517,6 +2008,42 @@ def schema(hash_only):
     render(doc, lambda: console.print_json(json.dumps(doc)))
 
 
+# -- Cache ----------------------------------------------------------------------
+
+
+@cli.group(help=_help("cache"))
+def cache():
+    pass
+
+
+@cache.command("enable", help=_help("cache_enable"))
+def cache_enable():
+    set_cache_enabled(True)
+    render(
+        CacheStatus(cache_enabled=True),
+        lambda: console.print("[green]Caching enabled.[/green]"),
+    )
+
+
+@cache.command("disable", help=_help("cache_disable"))
+def cache_disable():
+    set_cache_enabled(False)
+    render(
+        CacheStatus(cache_enabled=False),
+        lambda: console.print("[green]Caching disabled.[/green]"),
+    )
+
+
+@cache.command("status", help=_help("cache_status"))
+def cache_status():
+    enabled = get_cache_enabled()
+
+    def render_human_readable():
+        console.print(f"Caching is {'[green]enabled[/green]' if enabled else '[yellow]disabled[/yellow]'}.")
+
+    render(CacheStatus(cache_enabled=enabled), render_human_readable)
+
+
 # -- Auth -----------------------------------------------------------------------
 
 
@@ -1534,7 +2061,7 @@ def logout(ctx):
         device_id=obj.get("device_id"),
         device_id_file=obj.get("device_id_file"),
     )
-    light.clear_cache()
+    light.clear_auth_cache()
     console.print("[green]Logged out.[/green]")
 
 
@@ -1563,6 +2090,7 @@ def tui(ctx):
             phone_file=obj.get("phone_number_file"),
             device_id=obj.get("device_id"),
             device_id_file=obj.get("device_id_file"),
+            cache_enabled=obj.get("cache_enabled", False),
         )
     )
 

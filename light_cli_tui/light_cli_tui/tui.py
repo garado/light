@@ -9,6 +9,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import Any, Callable
 
+import pyperclip
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -19,30 +20,18 @@ from textual.theme import Theme
 from textual.widget import Widget
 from textual.widgets import Button, ContentSwitcher, DataTable, Input, Label, Static
 
-NORD = Theme(
-    name="nord",
-    dark=True,
-    background="#1e2127",
-    surface="#282c34",
-    panel="#2c313a",
-    primary="#61afef",
-    secondary="#56b6c2",
-    accent="#61afef",
-    foreground="#abb2bf",
-    error="#e06c75",
-    warning="#e5c07b",
-    success="#98c379",
-    variables={
-        "text-muted": "#5c6370",
-        "surface-lighten-1": "#2c313a",
-        "surface-lighten-2": "#3e4451",
-        "text-disabled": "#3e4451",
-    },
-)
-
 from light_api.client import Light
 from light_api.music import LightTrack, SortMode
 from light_api.notes import LightNote
+from open_api_specification_client.api.default import (
+    patch_api_playlist_items_playlist_item_id,
+)
+from open_api_specification_client.models import (
+    PatchApiPlaylistItemsPlaylistItemIdBody,
+    PatchApiPlaylistItemsPlaylistItemIdBodyData,
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
+)
 
 SORT_CYCLE: list[SortMode] = [
     SortMode.RANK,
@@ -77,6 +66,7 @@ class LightConfig:
     phone_file: str | None = None
     device_id: str | None = None
     device_id_file: str | None = None
+    cache_enabled: bool = False
 
 
 class LightThread:
@@ -108,6 +98,7 @@ class LightThread:
                 phone_file=self._config.phone_file,
                 device_id=self._config.device_id,
                 device_id_file=self._config.device_id_file,
+                cache_enabled=self._config.cache_enabled,
             ) as light:
                 self._ready.set()
                 while True:
@@ -628,13 +619,6 @@ class MusicPane(Widget):
         )
 
     def _do_move_block(self, block: list[LightTrack], new_lo: int, direction: int) -> None:
-        from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
-        from open_api_specification_client.models import (
-            PatchApiPlaylistItemsPlaylistItemIdBody,
-            PatchApiPlaylistItemsPlaylistItemIdBodyData,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
-        )
         assert self._pw is not None
         # Move from the outside in to avoid position conflicts:
         # moving down → patch last track first; moving up → patch first track first
@@ -658,13 +642,6 @@ class MusicPane(Widget):
             self._pw.submit(_patch)
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
-        from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
-        from open_api_specification_client.models import (
-            PatchApiPlaylistItemsPlaylistItemIdBody,
-            PatchApiPlaylistItemsPlaylistItemIdBodyData,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
-        )
         assert self._pw is not None
 
         def _move(light):
@@ -1228,7 +1205,6 @@ class NotesPane(Widget):
         self.set_timer(2, self.update_status)
 
     def _copy_to_clipboard(self) -> None:
-        import pyperclip
         note = self._current_note()
         if note is None or note.note_type == "audio":
             self._set_status("clipboard: no text content")
@@ -1409,8 +1385,7 @@ class LightApp(App):
         yield Static("connecting...", id="status")
 
     def on_mount(self) -> None:
-        self.register_theme(NORD)
-        self.theme = "nord"
+        self.theme = "ansi-dark"
         self.query_one(MusicPane).query_one(DataTable).focus()
         self.run_worker(self._init_light, exclusive=True, thread=True)
 

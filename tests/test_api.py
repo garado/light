@@ -92,7 +92,7 @@ class TestClearCache:
 
         light = make_light()
         with patch("light_api.client.keyring.delete_password") as mock_delete:
-            light.clear_cache()
+            light.clear_auth_cache()
         mock_delete.assert_called_once_with(KEYRING_SERVICE, KEYRING_USER)
 
     def test_resets_in_memory_state(self):
@@ -101,7 +101,7 @@ class TestClearCache:
         light._playlist_id = "some-playlist"
 
         with patch("light_api.client.keyring.delete_password"):
-            light.clear_cache()
+            light.clear_auth_cache()
 
         assert light._api_token is None
         assert light._device_tool_ids == {}
@@ -115,7 +115,7 @@ class TestClearCache:
             "light_api.client.keyring.delete_password",
             side_effect=keyring.errors.PasswordDeleteError,
         ):
-            light.clear_cache()  # should not raise
+            light.clear_auth_cache()  # should not raise
 
     def test_no_raise_on_keyring_error(self):
         import keyring.errors
@@ -125,7 +125,91 @@ class TestClearCache:
             "light_api.client.keyring.delete_password",
             side_effect=keyring.errors.NoKeyringError,
         ):
-            light.clear_cache()  # should not raise
+            light.clear_auth_cache()  # should not raise
+
+
+class TestKeyringTimeout:
+    """A stuck keyring backend must not hang the program forever, and should be treated
+    the same as a normal keyring error."""
+
+    def test_load_auth_cache_returns_false_on_hang(self, monkeypatch):
+        import time
+        import light_api.client as client_mod
+
+        monkeypatch.setattr(client_mod, "KEYRING_TIMEOUT_SECONDS", 0.2)
+
+        def hang(*args, **kwargs):
+            time.sleep(10)
+
+        light = make_light()
+        with patch("light_api.client.keyring.get_password", side_effect=hang):
+            start = time.monotonic()
+            result = light._load_auth_cache()
+            elapsed = time.monotonic() - start
+
+        assert result is False
+        assert elapsed < 1, "did not time out promptly"
+
+    def test_save_auth_cache_does_not_raise_on_hang(self, monkeypatch):
+        import time
+        import light_api.client as client_mod
+
+        monkeypatch.setattr(client_mod, "KEYRING_TIMEOUT_SECONDS", 0.2)
+
+        def hang(*args, **kwargs):
+            time.sleep(10)
+
+        light = make_light()
+        with patch("light_api.client.keyring.set_password", side_effect=hang):
+            start = time.monotonic()
+            light._save_auth_cache()  # should not raise or hang
+            elapsed = time.monotonic() - start
+
+        assert elapsed < 1, "did not time out promptly"
+
+    def test_clear_auth_cache_does_not_raise_on_hang(self, monkeypatch):
+        import time
+        import light_api.client as client_mod
+
+        monkeypatch.setattr(client_mod, "KEYRING_TIMEOUT_SECONDS", 0.2)
+
+        def hang(*args, **kwargs):
+            time.sleep(10)
+
+        light = make_light()
+        with patch("light_api.client.keyring.delete_password", side_effect=hang):
+            start = time.monotonic()
+            light.clear_auth_cache()  # should not raise or hang
+            elapsed = time.monotonic() - start
+
+        assert elapsed < 1, "did not time out promptly"
+
+    def test_stuck_thread_does_not_block_process_exit(self, monkeypatch):
+        """The worker thread must be daemonized so a call that never returns can't
+        keep the interpreter alive."""
+        import time
+        import light_api.client as client_mod
+
+        monkeypatch.setattr(client_mod, "KEYRING_TIMEOUT_SECONDS", 0.2)
+
+        def hang(*args, **kwargs):
+            time.sleep(10)
+
+        thread = None
+        orig_thread_cls = client_mod.threading.Thread
+
+        def capture_thread(*args, **kwargs):
+            nonlocal thread
+            thread = orig_thread_cls(*args, **kwargs)
+            return thread
+
+        monkeypatch.setattr(client_mod.threading, "Thread", capture_thread)
+
+        with pytest.raises(client_mod._KeyringTimeout):
+            client_mod._call_keyring(hang)
+
+        assert thread is not None
+        assert thread.daemon is True
 
 
 class TestFetchDeviceToolIds:
@@ -368,17 +452,17 @@ class TestDeleteTracksPredicateAndRegex:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="Riot!",
                 filename="",
             ),
             LightTrack(
-                playlist_item_id="2", audio_id="a2",
+                playlist_item_id="2", playlist_id="p1", audio_id="a2",
                 title="Playing God", artist="Polyphia", album="New Levels New Devils",
                 filename="",
             ),
             LightTrack(
-                playlist_item_id="3", audio_id="a3",
+                playlist_item_id="3", playlist_id="p1", audio_id="a3",
                 title="Live at Wembley", artist="Queen", album="Live Magic",
                 filename="",
             ),
@@ -448,7 +532,7 @@ class TestFindMatchingTrack:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="",
                 filename="",
             ),
@@ -463,7 +547,7 @@ class TestFindMatchingTrack:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="2", audio_id="a2",
+                playlist_item_id="2", playlist_id="p1", audio_id="a2",
                 title="Some Old Rip", artist="Unknown", album="",
                 filename="",
             ),
@@ -499,12 +583,12 @@ class TestFindUploadMatches:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Playing God", artist="Paramore", album="",
                 filename="",
             ),
             LightTrack(
-                playlist_item_id="2", audio_id="a2",
+                playlist_item_id="2", playlist_id="p1", audio_id="a2",
                 title="New Song", artist="New Artist", album="",
                 filename="",
             ),
@@ -532,7 +616,7 @@ class TestResolveUploadPlan:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Song", artist="Artist", album="",
                 filename="",
             ),
@@ -587,7 +671,7 @@ class TestUploadTracksExcludesMissingFiles:
         light = make_light()
         light.music._tracks = [
             LightTrack(
-                playlist_item_id="1", audio_id="a1",
+                playlist_item_id="1", playlist_id="p1", audio_id="a1",
                 title="Song", artist="Artist", album="",
                 filename="",
             ),

@@ -7,11 +7,13 @@ import types
 import typing
 from typing import Any
 
-from light_api.devices import LightDevice
-from light_api.music import LightTrack, UploadResult
+from light_api.contacts import ContactsExportResult, ContactsImportResult, LightContact
+from light_api.devices import DeveloperModeStatus, LightDevice
+from light_api.music import AudioCapacity, LightPlaylist, LightTrack, UploadResult
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
 from light_api.podcast import LightPodcast, PodcastAddResult
-from light_api.tools import LightTool
+from light_api.settings import CacheStatus
+from light_api.tools import AvailableTool, LightTool
 
 # Map each `--json`-enabled command to its output dataclass.
 # NOTE: This isn't autoderived. Must be manually kept in sync w/ any added `render(...)` commands in cli.py.
@@ -21,6 +23,8 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "podcasts delete": list[LightPodcast],
     "music list": list[LightTrack],
     "music upload": list[UploadResult],
+    "music capacity": AudioCapacity,
+    "music playlists list": list[LightPlaylist],
     "notes list": list[LightNote],
     "notes get": NoteContentResult,
     "notes add": LightNote,
@@ -29,7 +33,20 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "notes delete": list[LightNote],
     "notes download-all": list[NoteDownloadResult],
     "tools list": list[LightTool],
+    "tools catalog": list[AvailableTool],
+    "tools add": LightTool,
+    "tools remove": LightTool,
     "devices list": list[LightDevice],
+    "contacts list": list[LightContact],
+    "contacts add": LightContact,
+    "contacts update": LightContact,
+    "contacts export": ContactsExportResult,
+    "contacts import": ContactsImportResult,
+    "contacts delete": list[LightContact],
+    "cache enable": CacheStatus,
+    "cache disable": CacheStatus,
+    "cache status": CacheStatus,
+    "settings developer-mode": DeveloperModeStatus,
 }
 
 _PRIMITIVE_SCHEMAS: dict[type, dict[str, Any]] = {

@@ -1,5 +1,7 @@
 """Notes management for Light devices."""
 
+import base64
+import dataclasses
 import httpx
 import logging
 import os
@@ -7,11 +9,14 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, TYPE_CHECKING
 
+from light_api import cache
+
 from open_api_specification_client.api.default import (
     delete_api_notes_note_id,
     get_api_notes,
     get_api_notes_note_id,
     get_api_notes_note_id_generate_presigned_get_url,
+    get_api_notes_note_id_generate_presigned_put_url,
     patch_api_notes_note_id,
     post_api_notes,
 )
@@ -80,8 +85,15 @@ class LightNotes:
     def get_note_content(self, note: LightNote) -> bytes:
         """Fetch the content of a note as raw bytes.
 
-        Fetches a fresh presigned GET URL each time (they expire).
+        Fetches a fresh presigned GET URL each time (they expire fast), unless cached.
         """
+        if self._l._cache_enabled:
+            cached = cache.load(
+                cache.CacheModule.NOTES, self._l._api_token, key=note.id
+            )
+            if cached is not None:
+                return base64.b64decode(cached)
+
         resp = get_api_notes_note_id_generate_presigned_get_url.sync_detailed(
             note_id=note.id,
             client=self._l._api_client,
@@ -93,17 +105,41 @@ class LightNotes:
         content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
         if not content_resp.is_success:
             raise RuntimeError(f"Download note {note.id}: {content_resp.status_code}")
-        return content_resp.content
+        content = content_resp.content
+
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.NOTES,
+                self._l._api_token,
+                base64.b64encode(content).decode(),
+                key=note.id,
+            )
+
+        return content
 
     def get_notes(self) -> list["LightNote"]:
         """Fetch metadata for all notes."""
+        if self._l._cache_enabled:
+            cached = cache.load(cache.CacheModule.NOTES, self._l._api_token)
+            if cached is not None:
+                return [LightNote(**d) for d in cached]
+
         resp = get_api_notes.sync_detailed(
             client=self._l._api_client,
             device_tool_id=self._l._device_tool_ids["notes"],
         )
         body = self._l._ensure_ok(resp, "List notes", require_parsed=True)
 
-        return [_make_light_note(data) for data in body.data]
+        notes = [_make_light_note(data) for data in body.data]
+
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.NOTES,
+                self._l._api_token,
+                [dataclasses.asdict(n) for n in notes],
+            )
+
+        return notes
 
     def get_note_metadata(self, note_id: str) -> "LightNote":
         """Fetch metadata for a single note."""
@@ -221,14 +257,13 @@ class LightNotes:
 
         note = _make_light_note(parsed.data)
         log.info(f"Note {note.id} created")
+
+        cache.invalidate(cache.CacheModule.NOTES)
+
         return note
 
     def update_note_content(self, note: LightNote, content: bytes) -> None:
         """Overwrite the content of an existing text note via its presigned upload URL."""
-        from open_api_specification_client.api.default import (
-            get_api_notes_note_id_generate_presigned_put_url,
-        )
-
         resp = self._l.call_api(
             get_api_notes_note_id_generate_presigned_put_url.sync_detailed,
             client=self._l._api_client,
@@ -241,6 +276,10 @@ class LightNotes:
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
         log.info(f"Note {note.id} updated")
+
+        # invalidate the list too: `updated_at` (shown there) just changed
+        cache.invalidate(cache.CacheModule.NOTES)
+        cache.invalidate(cache.CacheModule.NOTES, key=note.id)
 
     def update_note_title(self, note: LightNote, title: str) -> None:
         """Update the title of an existing note."""
@@ -272,6 +311,8 @@ class LightNotes:
         note.title = title
         log.info(f"Note {note.id} title updated to {title!r}")
 
+        cache.invalidate(cache.CacheModule.NOTES)
+
     def delete_note(self, note_id: str) -> None:
         """Delete a note."""
         resp = self._l.call_api(
@@ -281,3 +322,6 @@ class LightNotes:
         )
         self._l._ensure_ok(resp, "Delete note", ok_codes=(200, 204))
         log.info(f"Note {note_id} deleted")
+
+        cache.invalidate(cache.CacheModule.NOTES)
+        cache.invalidate(cache.CacheModule.NOTES, key=note_id)

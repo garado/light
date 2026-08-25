@@ -1,5 +1,5 @@
 {
-  "$hash": "4512e80bcbf95b29c87c5650b3eb3ca8cd6a0a1b36b68e9e9105f9f3d5e1efe5",
+  "$hash": "6f23aaf44ca6f3c681355155bcc8667f1320d3dfb72fde11454246dcf1d26308",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -232,6 +232,9 @@
             "playlist_item_id": {
               "type": "string"
             },
+            "playlist_id": {
+              "type": "string"
+            },
             "audio_id": {
               "type": "string"
             },
@@ -250,6 +253,7 @@
           },
           "required": [
             "playlist_item_id",
+            "playlist_id",
             "audio_id",
             "title",
             "artist",
@@ -316,6 +320,101 @@
             "audio_id",
             "success",
             "error"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "music capacity": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "total_capacity": {
+            "type": "integer"
+          },
+          "remaining_capacity": {
+            "type": "integer"
+          },
+          "used_capacity": {
+            "type": "integer"
+          },
+          "processing_count": {
+            "type": "integer"
+          },
+          "failed_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_capacity",
+          "remaining_capacity",
+          "used_capacity",
+          "processing_count",
+          "failed_count"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "music playlists list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "sort_mode": {
+              "type": "string"
+            },
+            "is_system_playlist": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "sort_mode",
+            "is_system_playlist"
           ],
           "additionalProperties": false
         }
@@ -765,6 +864,145 @@
     ],
     "additionalProperties": false
   },
+  "tools catalog": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title",
+            "namespace"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "tools add": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "device_tool_id": {
+            "type": "string"
+          },
+          "global_tool_id": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_tool_id",
+          "global_tool_id",
+          "namespace",
+          "component",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "tools remove": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "device_tool_id": {
+            "type": "string"
+          },
+          "global_tool_id": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_tool_id",
+          "global_tool_id",
+          "namespace",
+          "component",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
   "devices list": {
     "type": "object",
     "properties": {
@@ -791,16 +1029,420 @@
             },
             "sku": {
               "type": "string"
+            },
+            "developer_mode": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
             "id",
             "phone_number",
             "serial_number",
-            "sku"
+            "sku",
+            "developer_mode"
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "first_name",
+            "last_name",
+            "number"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts add": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "number"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts update": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "number"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts export": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "saved_to": {
+            "type": "string"
+          },
+          "contact_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "saved_to",
+          "contact_count"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts import": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "contact_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "contact_count"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts delete": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "first_name",
+            "last_name",
+            "number"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "cache enable": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "cache_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cache_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "cache disable": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "cache_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cache_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "cache status": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "cache_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cache_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "settings developer-mode": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "device_id": {
+            "type": "string"
+          },
+          "developer_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "device_id",
+          "developer_mode"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [

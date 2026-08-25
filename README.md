@@ -1,9 +1,7 @@
 
 # Light API/CLI/TUI
 
-An unofficial, community-maintained API and CLI/TUI for managing music, notes, podcasts, and tools on Light devices.
-
-This was made by reverse-engineering the API endpoints from the official dashboard. (I have obtained Light's blessing for this.)
+A community-maintained API and CLI/TUI for managing your Light Phone.
 
 > [!CAUTION]
 > This is beta software and is **actively in development.** Bugs are expected, and bug reports are welcome!
@@ -44,6 +42,8 @@ light --email-file=... --password-file=... --phone-number-file=... <command>
 ```
 
 After the first login, your auth token will be cached. Tokens are good for 30 days. Log out with `light logout`.
+
+Local response caching is also available (off by default) to speed up repeated commands - see [Caching](#caching).
 
 ## Getting started: CLI/TUI
 
@@ -200,10 +200,36 @@ TUI-specific features:
 
 <img height="600" alt="image" src="https://github.com/user-attachments/assets/10612e61-1dc3-4e4f-95d3-302d95f15bad" />
 
-
 ## Getting started: API
 
 Minimal API usage examples are in [`examples/`](https://github.com/garado/light/tree/main/examples). Happy hacking!
+
+---
+
+# Technical notes
+
+## Caching
+
+Local response caching is **off by default**. When enabled, read commands (`podcasts list`, `notes list`, `music list`, `devices list`, `tools list`, and note content fetched via `notes get`) may return a cached response instead of always hitting the API to improve performance. Mutating commands always invalidate the cache for whatever they change.
+
+Cached data is **encrypted at rest** with a key derived from your session token, and expires after 15 minutes regardless.
+
+Turn it on persistently:
+
+```sh
+light cache enable  # persists until you disable it
+light cache disable
+light cache status
+```
+
+Override the persistent setting for a single invocation with a flag, or for a shell session with an environment variable. Both take precedence over the persistent setting:
+
+```sh
+light --cache podcasts list     # force on for this call
+light --no-cache podcasts list  # force off for this call
+
+LIGHT_CACHE=1 light podcasts list  # 1/0, true/false, yes/no, on/off all accepted
+```
 
 ## Tests
 

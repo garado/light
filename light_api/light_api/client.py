@@ -5,14 +5,31 @@ import json
 import keyring
 import logging
 import os
+import threading
+import time
 
-from typing import TYPE_CHECKING, Any, Callable, Container, Iterable, Iterator, NewType, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Container,
+    Iterable,
+    Iterator,
+    NewType,
+    final,
+)
 
-from open_api_specification_client.api.default import get_api_playlists
+from open_api_specification_client.api.default import (
+    get_api_devices,
+    get_api_playlists,
+    get_api_tools,
+    get_api_users_current,
+)
 from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.types import Unset
 
 if TYPE_CHECKING:
+    from light_api.contacts import LightContacts
     from light_api.devices import LightDevices
     from light_api.music import LightMusic
     from light_api.podcast import LightPodcasts
@@ -30,10 +47,48 @@ KEYRING_USER = "session"
 API_BASE = "https://production.lightphonecloud.com"
 API_HEADERS = {"Accept": "application/vnd.api+json"}
 
+# How long a validated session is trusted before re-checking with the API.
+# Tokens are good for ~30 days server-side; this is mainly to improve perf by
+# avoid an extra auth check on every single invocation
+AUTH_VALIDATION_TTL_SECONDS = 15 * 60
+
 DeviceId = NewType("DeviceId", str)
 PhoneNumber = NewType("PhoneNumber", str)
 
 log = logging.getLogger(f"light.{__name__}")
+
+# some keyring backends (e.g. SecretStorage/D-Bus on Linux without a running keyring
+# daemon) can hang indefinitely instead of raising, so a plain try/except around a
+# keyring call isn't enough to prevent the whole program from hanging forever
+KEYRING_TIMEOUT_SECONDS = 5
+
+
+class _KeyringTimeout(Exception):
+    pass
+
+
+def _call_keyring(func: Callable[..., Any], *args: Any) -> Any:
+    """Run a keyring call with a hard timeout."""
+    result: list[Any] = []
+    error: list[BaseException] = []
+
+    def run() -> None:
+        try:
+            result.append(func(*args))
+        except BaseException as e:
+            error.append(e)
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    thread.join(timeout=KEYRING_TIMEOUT_SECONDS)
+
+    if thread.is_alive():
+        raise _KeyringTimeout(
+            f"keyring call timed out after {KEYRING_TIMEOUT_SECONDS}s"
+        )
+    if error:
+        raise error[0]
+    return result[0] if result else None
 
 
 @final
@@ -50,6 +105,7 @@ class Light:
         phone_file: str | None = None,
         device_id: str | None = None,
         device_id_file: str | None = None,
+        cache_enabled: bool = False,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
@@ -71,12 +127,16 @@ class Light:
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
         self._playlist_id: str | None = None
+        self._validated_at: float | None = None
+        self._cache_enabled: bool = cache_enabled
+        self._current_device_id: DeviceId | None = None
 
         self.music: LightMusic
         self.podcast: LightPodcasts
         self.notes: LightNotes
         self.tools: LightTools
         self.devices: LightDevices
+        self.contacts: LightContacts
 
     def login(self) -> None:
         """Authenticate via the authorizations API and store the bearer token."""
@@ -109,7 +169,7 @@ class Light:
         log.info("Re-authenticating")
         self._api_token = None
         self.login()
-        self._save_cache()
+        self._save_auth_cache()
         self._api_client = AuthenticatedClient(
             base_url=API_BASE,
             token=self._api_token,
@@ -156,11 +216,17 @@ class Light:
         """Sets up API session."""
         log.info("Authenticating")
 
-        if self._load_cache() and self._validate_cache():
+        cache_loaded = self._load_auth_cache()
+        if cache_loaded and self._validated_recently():
+            log.info("Using cached session (recently validated)")
+        elif cache_loaded and self._validate_auth_cache():
             log.info("Using cached session")
+            self._validated_at = time.time()
+            self._save_auth_cache()
         else:
             self.login()
-            self._save_cache()
+            self._validated_at = time.time()
+            self._save_auth_cache()
 
         self._api_client = AuthenticatedClient(
             base_url=API_BASE,
@@ -173,8 +239,9 @@ class Light:
         if not expected.issubset(self._device_tool_ids) or not self._playlist_id:
             self._fetch_device_tool_ids()
             self._fetch_playlist_id()
-            self._save_cache()
+            self._save_auth_cache()
 
+        from light_api.contacts import LightContacts
         from light_api.devices import LightDevices
         from light_api.music import LightMusic
         from light_api.podcast import LightPodcasts
@@ -186,6 +253,7 @@ class Light:
         self.notes = LightNotes(self)
         self.tools = LightTools(self)
         self.devices = LightDevices(self)
+        self.contacts = LightContacts(self)
 
         log.info("Authentication complete")
         return self
@@ -193,16 +261,17 @@ class Light:
     def __exit__(self, *_: object) -> None:
         pass
 
-    def _load_cache(self) -> bool:
+    def _load_auth_cache(self) -> bool:
         """Load cached data from keyring."""
         log.debug("Loading cache")
 
         try:
-            raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
+            raw = _call_keyring(keyring.get_password, KEYRING_SERVICE, KEYRING_USER)
         except (
             keyring.errors.NoKeyringError,
             keyring.errors.KeyringLocked,
             keyring.errors.InitError,
+            _KeyringTimeout,
         ) as e:
             log.debug(f"Keyring error: {e}")
             return False
@@ -216,16 +285,18 @@ class Light:
             self._api_token = data["api_token"]
             self._device_tool_ids = data["device_tool_ids"]
             self._playlist_id = data["playlist_id"]
+            self._validated_at = data.get("validated_at")
             log.debug("Cache loaded successfully")
             return True
         except (KeyError, json.JSONDecodeError) as e:
             log.debug(f"Error: {e}")
             return False
 
-    def _save_cache(self) -> None:
+    def _save_auth_cache(self) -> None:
         """Cache data to keyring."""
         try:
-            keyring.set_password(
+            _call_keyring(
+                keyring.set_password,
                 KEYRING_SERVICE,
                 KEYRING_USER,
                 json.dumps(
@@ -233,6 +304,7 @@ class Light:
                         "api_token": self._api_token,
                         "device_tool_ids": self._device_tool_ids,
                         "playlist_id": self._playlist_id,
+                        "validated_at": self._validated_at,
                     }
                 ),
             )
@@ -240,41 +312,48 @@ class Light:
             keyring.errors.NoKeyringError,
             keyring.errors.KeyringLocked,
             keyring.errors.InitError,
+            _KeyringTimeout,
         ) as e:
             log.warning(f"Keyring error: {e}")
 
-    def clear_cache(self) -> None:
+    def clear_auth_cache(self) -> None:
         """Clear the cached session.
 
         Forces a fresh login and device lookup on the next `with Light(...)`.
         """
         try:
-            keyring.delete_password(KEYRING_SERVICE, KEYRING_USER)
+            _call_keyring(keyring.delete_password, KEYRING_SERVICE, KEYRING_USER)
         except keyring.errors.PasswordDeleteError:
             log.debug("No cached session to clear")
         except (
             keyring.errors.NoKeyringError,
             keyring.errors.KeyringLocked,
             keyring.errors.InitError,
+            _KeyringTimeout,
         ) as e:
             log.warning(f"Keyring error: {e}")
 
         self._api_token = None
         self._device_tool_ids = {}
         self._playlist_id = None
+        self._validated_at = None
 
-    def _validate_cache(self) -> bool:
-        """Check if cached auth token is valid."""
+    def _validated_recently(self) -> bool:
+        """Whether the session was validated within AUTH_VALIDATION_TTL_SECONDS."""
+        return (
+            self._validated_at is not None
+            and time.time() - self._validated_at < AUTH_VALIDATION_TTL_SECONDS
+        )
+
+    def _validate_auth_cache(self) -> bool:
+        """Check if cached auth token is valid with a cheap API call."""
         client = AuthenticatedClient(
             base_url=API_BASE,
             token=self._api_token,
             headers=API_HEADERS,
             timeout=30,
         )
-        resp = get_api_playlists.sync_detailed(
-            client=client,
-            device_tool_id=self._device_tool_ids.get("music"),
-        )
+        resp = get_api_users_current.sync_detailed(client=client)
         return resp.status_code == 200
 
     def _fetch_playlist_id(self) -> None:
@@ -303,19 +382,19 @@ class Light:
         from /api/tools, then walk the /api/devices included items, look up each item's global tool ID in
         that map, and classify it as "music", "notes", or "podcast" based on the namespace string.
         """
-        from open_api_specification_client.api.default import (
-            get_api_devices,
-            get_api_tools,
-        )
-
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
-        devices = self._ensure_ok(devices_resp, "Could not fetch devices", require_data=True)
+        devices = self._ensure_ok(
+            devices_resp, "Could not fetch devices", require_data=True
+        )
         device_id = self._select_device_id(devices)
+        self._current_device_id = device_id
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
         )
-        tools = self._ensure_ok(tools_resp, "Could not fetch tools", require_parsed=True)
+        tools = self._ensure_ok(
+            tools_resp, "Could not fetch tools", require_parsed=True
+        )
 
         tool_ns: dict[str, str] = {
             t.id: t.attributes.namespace.lower() for t in tools.data
@@ -355,6 +434,17 @@ class Light:
             yield DeviceId(item.relationships.device.data.id), PhoneNumber(
                 item.attributes.phone_number
             )
+
+    @property
+    def current_device_id(self) -> DeviceId:
+        """The device ID to use for API calls."""
+        if self._current_device_id is None:
+            resp = self.call_api(get_api_devices.sync_detailed, client=self._api_client)
+            devices = self._ensure_ok(
+                resp, "Could not fetch devices", require_data=True
+            )
+            self._current_device_id = self._select_device_id(devices)
+        return self._current_device_id
 
     def _select_device_id(self, devices: GetApiDevicesResponse200) -> DeviceId:
         """Select the correct device id out of /api/devices data.

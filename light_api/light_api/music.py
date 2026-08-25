@@ -1,20 +1,23 @@
 """Music management for Light devices."""
 
+import dataclasses
 import httpx
 import logging
 import mimetypes
 import os
 import re
+import subprocess
 import tempfile
 from enum import StrEnum
-from typing import Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 from dataclasses import dataclass
 from mutagen._file import File
 
-from light_api.client import Light
+from light_api import cache
 from open_api_specification_client.api.default import (
     delete_api_audios_audio_id,
+    get_api_audio_capacity,
     get_api_playlist_items,
     get_api_playlists,
     patch_api_audios_audio_id,
@@ -40,13 +43,19 @@ from open_api_specification_client.models import (
     PostApiPlaylistsSortModeBody,
     PostApiPlaylistsSortModeBodySortMode,
 )
+from open_api_specification_client.types import UNSET
+
+if TYPE_CHECKING:
+    from light_api.client import Light
 
 log = logging.getLogger(f"light.{__name__}")
 
 
 @dataclass
 class LightTrack:
+    """Metadata for a track."""
     playlist_item_id: str
+    playlist_id: str
     audio_id: str
     title: str
     artist: str
@@ -55,15 +64,37 @@ class LightTrack:
 
 
 @dataclass
+class LightPlaylist:
+    """Metadata for a playlist."""
+    id: str
+    name: str
+    sort_mode: str
+    is_system_playlist: bool
+
+
+@dataclass
 class UploadResult:
+    """Result returned after attempting to uploading a track."""
     file: str
     audio_id: str | None
     success: bool
     error: str | None
 
 
+@dataclass
+class AudioCapacity:
+    """Device audio capacity information."""
+    total_capacity: int
+    remaining_capacity: int
+    used_capacity: int  # computed: total_capacity - remaining_capacity
+    processing_count: int
+    failed_count: int
+
+
 class SortMode(StrEnum):
-    # native API sort modes
+    """Sort modes available from the unofficial API."""
+
+    # native cloud API sort modes
     RANK = "rank"
     ARTIST_ASC = "artists_asc"
     ARTIST_DESC = "artists_desc"
@@ -77,7 +108,6 @@ class SortMode(StrEnum):
 
 def _flac_to_mp3(flac_path: str) -> str:
     """Convert a FLAC file to MP3 in a tempfile, preserving metadata. Returns the temp path."""
-    import subprocess
     tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     tmp.close()
     result = subprocess.run(
@@ -92,13 +122,49 @@ def _flac_to_mp3(flac_path: str) -> str:
 
 
 class LightMusic:
-    def __init__(self, light: Light) -> None:
-        self._l: Light = light
+    def __init__(self, light: "Light") -> None:
+        self._l: "Light" = light
         self._tracks: list[LightTrack]  # lazily initialized
 
     def _init_tracks(self):
         if not hasattr(self, "_tracks"):
             self._tracks = self.get_tracks()
+
+    def get_capacity(self) -> AudioCapacity:
+        """Fetch audio storage capacity/usage for this device."""
+        resp = self._l.call_api(
+            get_api_audio_capacity.sync_detailed,
+            client=self._l._api_client,
+            device_tool_id=self._l._device_tool_ids["music"],
+        )
+        parsed = self._l._ensure_ok(resp, "Get audio capacity", require_parsed=True)
+
+        return AudioCapacity(
+            total_capacity=parsed.total_capacity,
+            remaining_capacity=parsed.remaining_capacity,
+            used_capacity=parsed.total_capacity - parsed.remaining_capacity,
+            processing_count=parsed.processing_count,
+            failed_count=parsed.failed_count,
+        )
+
+    def list_playlists(self) -> list[LightPlaylist]:
+        """Return every playlist on this device's music tool."""
+        resp = self._l.call_api(
+            get_api_playlists.sync_detailed,
+            client=self._l._api_client,
+            device_tool_id=self._l._device_tool_ids["music"],
+        )
+        parsed = self._l._ensure_ok(resp, "Get playlists", require_parsed=True)
+
+        return [
+            LightPlaylist(
+                id=p.id,
+                name=p.attributes.name,
+                sort_mode=p.attributes.sort_mode,
+                is_system_playlist=p.attributes.is_system_playlist,
+            )
+            for p in parsed.data
+        ]
 
     def get_sort_mode(self) -> SortMode:
         """Get the current sort mode.
@@ -118,12 +184,16 @@ class LightMusic:
 
         playlist = parsed.data[0]
         return SortMode(playlist.attributes.sort_mode)
-
-    def set_sort_mode(self, sort_mode: SortMode):
+    
+    def _set_sort_mode(self, sort_mode: SortMode, invalidate_cache: bool = True):
         """Set sort mode.
+
+        This private method offers the the ability to control cache invalidation.
+        The public method is `set_sort_mode`, which always invalidates cache.
 
         Args:
             sort_mode: The new sort mode to set.
+            invalidate_cache: Whether the cache should be invalidated.
         """
         if sort_mode in (SortMode.ARTIST_ASC, SortMode.ARTIST_DESC, SortMode.RANK):
             if sort_mode is not SortMode.RANK:
@@ -153,12 +223,28 @@ class LightMusic:
         elif sort_mode in (SortMode.ARTIST_ALBUM_ASC, SortMode.ARTIST_ALBUM_DESC):
             self._sort_by_artist_album(sort_mode == SortMode.ARTIST_ALBUM_DESC)
 
+        if invalidate_cache:
+            cache.invalidate(cache.CacheModule.MUSIC)
+
+    def set_sort_mode(self, sort_mode: SortMode):
+        """Set sort mode.
+
+        Args:
+            sort_mode: The new sort mode to set.
+        """
+        self._set_sort_mode(sort_mode, invalidate_cache=True)
+    
     def get_tracks(self) -> list[LightTrack]:
         """Fetch list of all tracks on the device.
 
         Returns:
             List of LightTracks in the current playlist order.
         """
+        if self._l._cache_enabled:
+            cached = cache.load(cache.CacheModule.MUSIC, self._l._api_token)
+            if cached is not None:
+                return [LightTrack(**d) for d in cached]
+
         resp = self._l.call_api(
             get_api_playlist_items.sync_detailed,
             client=self._l._api_client,
@@ -167,36 +253,55 @@ class LightMusic:
         )
         body = self._l._ensure_ok(resp, "Get tracks", require_parsed=True)
 
+        # Light returns 2 separate collections:
+        # - body.data[] - a track's position + a reference to its associated body.included member
+        # - body.included - full track metadata + file storage info ("attributes")
+        # we need to reassemble the info in these into 1 list[LightTracks]
+
         if not body.data:
-            return []
-
-        file_attrs = {
-            item.id: item.attributes for item in body.included if item.type_ == "files"
-        }
-        audio_info = {
-            item.id: {
-                "attrs": item.attributes,
-                "file_id": item.relationships.processed_file.data.id,
+            tracks = []
+        else:
+            # build dict to look up attributes from file id
+            file_attrs = {
+                item.id: item.attributes for item in body.included if item.type_ == "files"
             }
-            for item in body.included
-            if item.type_ == "audios"
-        }
 
-        items = sorted(body.data, key=lambda x: x.attributes.position)
+            # build dict to look up attrs, file id from audio id
+            audio_info = {
+                item.id: {
+                    "attrs": item.attributes,
+                    "file_id": item.relationships.processed_file.data.id,
+                }
+                for item in body.included
+                if item.type_ == "audios"
+            }
 
-        return [
-            LightTrack(
-                playlist_item_id=item.id,
-                audio_id=(audio_id := item.relationships.audio.data.id),
-                title=audio_info[audio_id]["attrs"].title or "",
-                artist=audio_info[audio_id]["attrs"].artist or "",
-                album=audio_info[audio_id]["attrs"].album or "",
-                filename=os.path.basename(
-                    file_attrs[audio_info[audio_id]["file_id"]].key or ""
-                ),
+            # order tracks
+            items = sorted(body.data, key=lambda x: x.attributes.position)
+
+            tracks = [
+                LightTrack(
+                    playlist_item_id=item.id,
+                    playlist_id=item.attributes.playlist_id,
+                    audio_id=(audio_id := item.relationships.audio.data.id),
+                    title=audio_info[audio_id]["attrs"].title or "",
+                    artist=audio_info[audio_id]["attrs"].artist or "",
+                    album=audio_info[audio_id]["attrs"].album or "",
+                    filename=os.path.basename(
+                        file_attrs[audio_info[audio_id]["file_id"]].key or ""
+                    ),
+                )
+                for item in items
+            ]
+
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.MUSIC,
+                self._l._api_token,
+                [dataclasses.asdict(t) for t in tracks],
             )
-            for item in items
-        ]
+
+        return tracks
 
     def delete_all_tracks(self) -> None:
         """Delete all tracks from the device.
@@ -213,6 +318,8 @@ class LightMusic:
         )
         self._l._ensure_ok(resp, "Failed to delete all tracks", ok_codes=range(200, 300))
         log.info("All tracks deleted")
+
+        cache.invalidate(cache.CacheModule.MUSIC)
 
     def delete_tracks_predicate(self, predicate: Callable[[LightTrack], bool]) -> None:
         """Delete tracks from device, using a predicate to match targets for deletion.
@@ -243,6 +350,9 @@ class LightMusic:
                 tracks_deleted += 1
 
         log.info(f"Deleted {tracks_deleted}/{len(to_delete)} tracks")
+
+        if tracks_deleted > 0:
+            cache.invalidate(cache.CacheModule.MUSIC)
 
     def delete_tracks_by_title(self, titles: list[str]) -> None:
         """Delete tracks by title.
@@ -522,6 +632,10 @@ class LightMusic:
                     os.unlink(tmp_path)
 
         log.info("All uploads complete")
+
+        if any(r.success for r in results):
+            cache.invalidate(cache.CacheModule.MUSIC)
+
         return results
 
     def update_track_metadata(
@@ -539,8 +653,6 @@ class LightMusic:
             artist: The new artist, or None for no changes.
             album: The new album, or None for no changes.
         """
-        from open_api_specification_client.types import UNSET
-
         attrs = PatchApiAudiosAudioIdBodyDataAttributes(
             title=title if title is not None else UNSET,
             artist=artist if artist is not None else UNSET,
@@ -564,6 +676,8 @@ class LightMusic:
 
         log.info("Metadata updated")
 
+        cache.invalidate(cache.CacheModule.MUSIC)
+
     def reorder_subset(self, ordered_item_ids: list[str]) -> None:
         """Reorder a subset of tracks among the position slots they currently occupy.
 
@@ -574,6 +688,9 @@ class LightMusic:
                 Any matched tracks not present in ordered_item_ids are appended
                 at the end of the subset.
         """
+        # always work off fresh data when doing position-dependent work
+        cache.invalidate(cache.CacheModule.MUSIC)
+
         tracks = self.get_tracks()
         id_to_track = {t.playlist_item_id: t for t in tracks}
 
@@ -594,54 +711,89 @@ class LightMusic:
         for slot, item_id in zip(slots, full_order):
             final_order[slot] = item_id
 
-        self.set_sort_mode(SortMode.RANK)
+        self._set_sort_mode(SortMode.RANK, invalidate_cache=False)
 
         original_positions = {t.playlist_item_id: i for i, t in enumerate(tracks)}
 
-        for new_position, item_id in enumerate(final_order):
-            if original_positions[item_id] == new_position:
-                continue
-            track = id_to_track[item_id]
-            resp = self._l.call_api(
-                patch_api_playlist_items_playlist_item_id.sync_detailed,
-                playlist_item_id=track.playlist_item_id,
-                client=self._l._api_client,
-                body=PatchApiPlaylistItemsPlaylistItemIdBody(
-                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
-                        id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
-                            position=new_position,
-                        ),
-                    )
-                ),
-            )
-            self._l._ensure_ok(
-                resp, f"reorder_subset position {new_position}", ok_codes=range(200, 300)
+        try:
+            for new_position, item_id in enumerate(final_order):
+                if original_positions[item_id] == new_position:
+                    continue
+
+                track = id_to_track[item_id]
+                resp = self._l.call_api(
+                    patch_api_playlist_items_playlist_item_id.sync_detailed,
+                    playlist_item_id=track.playlist_item_id,
+                    client=self._l._api_client,
+                    body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                        data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                            id=track.playlist_item_id,
+                            type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                            attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                                position=new_position,
+                            ),
+                        )
+                    ),
+                )
+                self._l._ensure_ok(
+                    resp, f"reorder_subset position {new_position}", ok_codes=range(200, 300)
+                )
+        except Exception:
+            cache.invalidate(cache.CacheModule.MUSIC)
+            raise
+
+        # If this is reached, every PATCH above succeeded, so the new track ordering is known.
+        # Update the cache in-place to avoid a needless refetch.
+        if self._l._cache_enabled:
+            reordered = [id_to_track[iid] for iid in final_order]
+            cache.save(
+                cache.CacheModule.MUSIC,
+                self._l._api_token,
+                [dataclasses.asdict(t) for t in reordered],
             )
 
-    def _apply_sort_positions(self, sorted_tracks: list[LightTrack], original_tracks: list[LightTrack]) -> None:
-        """PATCH playlist item positions to match the given sort order."""
-        original_positions = {t.audio_id: i for i, t in enumerate(original_tracks)}
-        for new_position, track in enumerate(sorted_tracks):
-            if original_positions[track.audio_id] == new_position:
-                continue
-            resp = self._l.call_api(
-                patch_api_playlist_items_playlist_item_id.sync_detailed,
-                playlist_item_id=track.playlist_item_id,
-                client=self._l._api_client,
-                body=PatchApiPlaylistItemsPlaylistItemIdBody(
-                    data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
-                        id=track.playlist_item_id,
-                        type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
-                        attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
-                            position=new_position,
-                        ),
-                    )
-                ),
-            )
-            self._l._ensure_ok(
-                resp, f"Apply sort position {new_position}", ok_codes=range(200, 300)
+    def _apply_sort_positions(self, sort_key: Callable[[LightTrack], Any], reverse: bool) -> None:
+        """Fetch fresh tracks, set RANK (manual) mode, and PATCH positions to match `sort_key`."""
+        # always work off fresh data when doing position-dependent work
+        cache.invalidate(cache.CacheModule.MUSIC)
+
+        tracks = self.get_tracks()
+        self._set_sort_mode(SortMode.RANK, invalidate_cache=False)
+        sorted_tracks = sorted(tracks, key=sort_key, reverse=reverse)
+
+        original_positions = {t.audio_id: i for i, t in enumerate(tracks)}
+        try:
+            for new_position, track in enumerate(sorted_tracks):
+                if original_positions[track.audio_id] == new_position:
+                    continue
+                resp = self._l.call_api(
+                    patch_api_playlist_items_playlist_item_id.sync_detailed,
+                    playlist_item_id=track.playlist_item_id,
+                    client=self._l._api_client,
+                    body=PatchApiPlaylistItemsPlaylistItemIdBody(
+                        data=PatchApiPlaylistItemsPlaylistItemIdBodyData(
+                            id=track.playlist_item_id,
+                            type_=PatchApiPlaylistItemsPlaylistItemIdBodyDataType.PLAYLIST_ITEMS,
+                            attributes=PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes(
+                                position=new_position,
+                            ),
+                        )
+                    ),
+                )
+                self._l._ensure_ok(
+                    resp, f"Apply sort position {new_position}", ok_codes=range(200, 300)
+                )
+        except Exception:
+            cache.invalidate(cache.CacheModule.MUSIC)
+            raise
+
+        # If this is reached, every PATCH above succeeded, so the new track ordering is known.
+        # Update the cache in-place to avoid a needless refetch.
+        if self._l._cache_enabled:
+            cache.save(
+                cache.CacheModule.MUSIC,
+                self._l._api_token,
+                [dataclasses.asdict(t) for t in sorted_tracks],
             )
 
     def _sort_by_title(self, descending: bool = False) -> None:
@@ -656,12 +808,7 @@ class LightMusic:
         Note:
             @light - i am begging you... please allow sorting by title. crying emoji
         """
-        tracks = self.get_tracks()
-        self.set_sort_mode(SortMode.RANK)
-        self._apply_sort_positions(
-            sorted(tracks, key=lambda t: t.title.casefold(), reverse=descending),
-            tracks,
-        )
+        self._apply_sort_positions(lambda t: t.title.casefold(), descending)
 
     def _sort_by_artist_album(self, descending: bool = False) -> None:
         """Sort tracks on device by artist, then by album.
@@ -672,9 +819,6 @@ class LightMusic:
         Args:
             descending: True to sort descending; False for ascending.
         """
-        tracks = self.get_tracks()
-        self.set_sort_mode(SortMode.RANK)
         self._apply_sort_positions(
-            sorted(tracks, key=lambda t: (t.artist.casefold(), t.album.casefold()), reverse=descending),
-            tracks,
+            lambda t: (t.artist.casefold(), t.album.casefold()), descending
         )
