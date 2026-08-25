@@ -5,6 +5,7 @@ import json
 import keyring
 import logging
 import os
+import threading
 import time
 
 from typing import (
@@ -55,6 +56,39 @@ DeviceId = NewType("DeviceId", str)
 PhoneNumber = NewType("PhoneNumber", str)
 
 log = logging.getLogger(f"light.{__name__}")
+
+# some keyring backends (e.g. SecretStorage/D-Bus on Linux without a running keyring
+# daemon) can hang indefinitely instead of raising, so a plain try/except around a
+# keyring call isn't enough to prevent the whole program from hanging forever
+KEYRING_TIMEOUT_SECONDS = 5
+
+
+class _KeyringTimeout(Exception):
+    pass
+
+
+def _call_keyring(func: Callable[..., Any], *args: Any) -> Any:
+    """Run a keyring call with a hard timeout."""
+    result: list[Any] = []
+    error: list[BaseException] = []
+
+    def run() -> None:
+        try:
+            result.append(func(*args))
+        except BaseException as e:
+            error.append(e)
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    thread.join(timeout=KEYRING_TIMEOUT_SECONDS)
+
+    if thread.is_alive():
+        raise _KeyringTimeout(
+            f"keyring call timed out after {KEYRING_TIMEOUT_SECONDS}s"
+        )
+    if error:
+        raise error[0]
+    return result[0] if result else None
 
 
 @final
@@ -232,11 +266,12 @@ class Light:
         log.debug("Loading cache")
 
         try:
-            raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
+            raw = _call_keyring(keyring.get_password, KEYRING_SERVICE, KEYRING_USER)
         except (
             keyring.errors.NoKeyringError,
             keyring.errors.KeyringLocked,
             keyring.errors.InitError,
+            _KeyringTimeout,
         ) as e:
             log.debug(f"Keyring error: {e}")
             return False
@@ -260,7 +295,8 @@ class Light:
     def _save_auth_cache(self) -> None:
         """Cache data to keyring."""
         try:
-            keyring.set_password(
+            _call_keyring(
+                keyring.set_password,
                 KEYRING_SERVICE,
                 KEYRING_USER,
                 json.dumps(
@@ -276,6 +312,7 @@ class Light:
             keyring.errors.NoKeyringError,
             keyring.errors.KeyringLocked,
             keyring.errors.InitError,
+            _KeyringTimeout,
         ) as e:
             log.warning(f"Keyring error: {e}")
 
@@ -285,13 +322,14 @@ class Light:
         Forces a fresh login and device lookup on the next `with Light(...)`.
         """
         try:
-            keyring.delete_password(KEYRING_SERVICE, KEYRING_USER)
+            _call_keyring(keyring.delete_password, KEYRING_SERVICE, KEYRING_USER)
         except keyring.errors.PasswordDeleteError:
             log.debug("No cached session to clear")
         except (
             keyring.errors.NoKeyringError,
             keyring.errors.KeyringLocked,
             keyring.errors.InitError,
+            _KeyringTimeout,
         ) as e:
             log.warning(f"Keyring error: {e}")
 

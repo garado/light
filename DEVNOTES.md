@@ -14,6 +14,7 @@
 - (feat) expose `music capacity` api/cli methods
 - (feat) contacts: list all, add one, edit one, delete one, export
 - (feat) settings: developer mode get/set
+- (fix) potential fix for endless hang
 
 ## to do
 - I think device tool IDs are fixed. Can hardcode them instead of needing to parse them.
