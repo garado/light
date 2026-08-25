@@ -1,5 +1,5 @@
 {
-  "$hash": "82a7725060a5540481a91aecd99cc0c92227a641100bb19f588ef8dcc02b2119",
+  "$hash": "63535e8f21f7ee1aee881beadf50458186b9ff3866e49943552f23eb92be9990",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -1020,6 +1020,53 @@
           "contact_count"
         ],
         "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts delete": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "first_name",
+            "last_name",
+            "number"
+          ],
+          "additionalProperties": false
+        }
       },
       "error": {
         "anyOf": [

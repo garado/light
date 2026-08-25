@@ -37,6 +37,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "contacts add": LightContact,
     "contacts update": LightContact,
     "contacts export": ContactsExportResult,
+    "contacts delete": list[LightContact],
     "cache enable": CacheStatus,
     "cache disable": CacheStatus,
     "cache status": CacheStatus,

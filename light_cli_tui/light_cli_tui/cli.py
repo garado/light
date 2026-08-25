@@ -1732,6 +1732,38 @@ def contacts_export(light: Light, path: str):
     render(result, render_human_readable)
 
 
+@contacts.command("delete", help=_help("contacts_delete"))
+@with_light
+@click.argument("contact_ids", nargs=-1, required=True)
+@mutative_options("Show which contact(s) would be deleted without deleting them.")
+def contacts_delete(light: Light, contact_ids, yes, dry_run):
+    all_contacts = light.contacts.get_contacts()
+    by_id = {c.id: c for c in all_contacts}
+    missing = [i for i in contact_ids if i not in by_id]
+    if missing:
+        raise click.UsageError(f"No contact(s) found with id: {', '.join(missing)}")
+    matches = [by_id[i] for i in contact_ids]
+
+    def render_human_readable():
+        for c in matches:
+            console.print(f"  {c.first_name} {c.last_name} [dim]({c.id})[/dim]")
+
+    proceed = resolve_mutative_action(
+        matches,
+        render_human_readable,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will delete the following contact(s):",
+        confirm_message="Delete?",
+    )
+    if not proceed:
+        return
+
+    for c in matches:
+        light.contacts.delete_contact(c.id)
+    render(matches, render_human_readable)
+
+
 # -- Schema ---------------------------------------------------------------------
 
 

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from open_api_specification_client.api.default import (
+    delete_api_contacts_v2_contact_id,
     get_api_contacts_v2,
     get_api_contacts_v2_export_vcf,
     patch_api_contacts_v2_contact_id,
@@ -161,6 +162,18 @@ class LightContacts:
             last_name=parsed.data.attributes.last_name,
             number=parsed.data.attributes.number,
         )
+
+    def delete_contact(self, contact_id: str) -> None:
+        """Delete a contact from this device."""
+        device_id = self._l.current_device_id
+
+        resp = self._l.call_api(
+            delete_api_contacts_v2_contact_id.sync_detailed,
+            contact_id=contact_id,
+            client=self._l._api_client,
+            device_id=device_id,
+        )
+        self._l._ensure_ok(resp, "Could not delete contact")
 
     def export_vcf(self) -> str:
         """Export every contact on this device as a single vCard-format string."""
