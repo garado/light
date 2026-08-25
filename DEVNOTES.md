@@ -12,6 +12,7 @@
         - all music position-patching operations force a fresh data fetch to avoid working off stale info
         - delete/rename lookups can still theoretically act on a stale data within the TTL window, but lower risk since it fails loudly. so whatever
 - (feat) expose `music capacity` api/cli methods
+- (feat) contacts: list all, add one, edit one, delete one, export
 
 ## to do
 - I think device tool IDs are fixed. Can hardcode them instead of needing to parse them.
@@ -19,3 +20,5 @@
 - theres some new stuff in dashboard settings (developer tools) that I could support
 - ahh fuck. there is no real support for multi-device accounts. this is a much larger lift
 - add playlist info into tracks to prep for upcoming music tool changes?
+- device id: add method to change the target device
+- improve auth
