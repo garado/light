@@ -1,5 +1,6 @@
 """Contacts management for Light devices."""
 
+import os
 import uuid
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -10,6 +11,7 @@ from open_api_specification_client.api.default import (
     get_api_contacts_v2_export_vcf,
     patch_api_contacts_v2_contact_id,
     post_api_contacts_v2,
+    post_api_contacts_v2_import_file,
 )
 from open_api_specification_client.models import (
     PatchApiContactsV2ContactIdBody,
@@ -28,7 +30,9 @@ from open_api_specification_client.models import (
     PostApiContactsV2BodyDataRelationshipsDeviceData,
     PostApiContactsV2BodyDataRelationshipsDeviceDataType,
     PostApiContactsV2BodyDataType,
+    PostApiContactsV2ImportFileBody,
 )
+from open_api_specification_client.types import File
 
 if TYPE_CHECKING:
     from light_api.client import Light
@@ -45,6 +49,12 @@ class LightContact:
 @dataclass
 class ContactsExportResult:
     saved_to: str
+    contact_count: int
+
+
+@dataclass
+class ContactsImportResult:
+    path: str
     contact_count: int
 
 
@@ -175,8 +185,29 @@ class LightContacts:
         )
         self._l._ensure_ok(resp, "Could not delete contact", ok_codes=(200, 204))
 
+    def import_vcf(self, path: str) -> None:
+        """Import contacts from a vCard (.vcf) file onto the device."""
+        device_id = self._l.current_device_id
+
+        with open(path, "rb") as f:
+            resp = self._l.call_api(
+                post_api_contacts_v2_import_file.sync_detailed,
+                client=self._l._api_client,
+                body=PostApiContactsV2ImportFileBody(
+                    device_id=device_id,
+                    content_type="text/vcard",
+                    file=File(
+                        payload=f,
+                        file_name=os.path.basename(path),
+                        mime_type="text/vcard",
+                    ),
+                ),
+            )
+
+        self._l._ensure_ok(resp, "Could not import contacts", ok_codes=(200, 204))
+
     def export_vcf(self) -> str:
-        """Export every contact on this device as a single vCard-format string."""
+        """Export every contact on the device as a single vCard-format string."""
         device_id = self._l.current_device_id
 
         resp = self._l.call_api(

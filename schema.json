@@ -1,5 +1,5 @@
 {
-  "$hash": "63535e8f21f7ee1aee881beadf50458186b9ff3866e49943552f23eb92be9990",
+  "$hash": "c76d20e793e4bb57b85c0eba4cf4bc291debc34cdd626cbfac7aa979c2761a85",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -1017,6 +1017,42 @@
         },
         "required": [
           "saved_to",
+          "contact_count"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts import": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "contact_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
           "contact_count"
         ],
         "additionalProperties": false

@@ -7,7 +7,7 @@ import types
 import typing
 from typing import Any
 
-from light_api.contacts import ContactsExportResult, LightContact
+from light_api.contacts import ContactsExportResult, ContactsImportResult, LightContact
 from light_api.devices import LightDevice
 from light_api.music import AudioCapacity, LightTrack, UploadResult
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
@@ -37,6 +37,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "contacts add": LightContact,
     "contacts update": LightContact,
     "contacts export": ContactsExportResult,
+    "contacts import": ContactsImportResult,
     "contacts delete": list[LightContact],
     "cache enable": CacheStatus,
     "cache disable": CacheStatus,

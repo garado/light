@@ -18,7 +18,7 @@ from rich.progress import Progress, TaskID, TextColumn, BarColumn, TaskProgressC
 from rich.table import Table
 
 from light_api.client import Light
-from light_api.contacts import ContactsExportResult
+from light_api.contacts import ContactsExportResult, ContactsImportResult
 from light_api.music import SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
@@ -1727,6 +1727,39 @@ def contacts_export(light: Light, path: str):
     def render_human_readable():
         console.print(
             f"[green]Exported:[/green] {result.contact_count} contact(s) -> {result.saved_to}"
+        )
+
+    render(result, render_human_readable)
+
+
+@contacts.command("import", help=_help("contacts_import"))
+@with_light
+@click.argument("path", type=click.Path(exists=True))
+@mutative_options("Show what would be imported without importing it.")
+def contacts_import(light: Light, path: str, yes, dry_run):
+    with open(path) as f:
+        contact_count = f.read().count("BEGIN:VCARD")
+
+    def render_preview():
+        console.print(f"  {path} ({contact_count} contact(s))")
+
+    proceed = resolve_mutative_action(
+        {"path": path, "contact_count": contact_count},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will import the following file:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    light.contacts.import_vcf(path)
+    result = ContactsImportResult(path=path, contact_count=contact_count)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Imported:[/green] {result.contact_count} contact(s) from {result.path}"
         )
 
     render(result, render_human_readable)
