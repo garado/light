@@ -19,7 +19,9 @@ from typing import (
 )
 
 from open_api_specification_client.api.default import (
+    get_api_devices,
     get_api_playlists,
+    get_api_tools,
     get_api_users_current,
 )
 from open_api_specification_client.client import AuthenticatedClient
@@ -92,7 +94,7 @@ class Light:
         self._playlist_id: str | None = None
         self._validated_at: float | None = None
         self._cache_enabled: bool = cache_enabled
-        self._resolved_device_id: str | None = None
+        self._current_device_id: DeviceId | None = None
 
         self.music: LightMusic
         self.podcast: LightPodcasts
@@ -338,17 +340,12 @@ class Light:
         from /api/tools, then walk the /api/devices included items, look up each item's global tool ID in
         that map, and classify it as "music", "notes", or "podcast" based on the namespace string.
         """
-        from open_api_specification_client.api.default import (
-            get_api_devices,
-            get_api_tools,
-        )
-
         devices_resp = get_api_devices.sync_detailed(client=self._api_client)
         devices = self._ensure_ok(
             devices_resp, "Could not fetch devices", require_data=True
         )
         device_id = self._select_device_id(devices)
-        self._resolved_device_id = device_id
+        self._current_device_id = device_id
 
         tools_resp = get_api_tools.sync_detailed(
             client=self._api_client, device_id=device_id
@@ -395,6 +392,15 @@ class Light:
             yield DeviceId(item.relationships.device.data.id), PhoneNumber(
                 item.attributes.phone_number
             )
+
+    @property
+    def current_device_id(self) -> DeviceId:
+        """The device ID to use for API calls."""
+        if self._current_device_id is None:
+            resp = self.call_api(get_api_devices.sync_detailed, client=self._api_client)
+            devices = self._ensure_ok(resp, "Could not fetch devices", require_data=True)
+            self._current_device_id = self._select_device_id(devices)
+        return self._current_device_id
 
     def _select_device_id(self, devices: GetApiDevicesResponse200) -> DeviceId:
         """Select the correct device id out of /api/devices data.
