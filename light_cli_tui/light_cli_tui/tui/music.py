@@ -2,7 +2,8 @@ from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.widget import Widget
-from textual.widgets import DataTable
+
+from .widgets import VimDataTable
 
 if TYPE_CHECKING:
     from .worker import LightThread
@@ -17,7 +18,7 @@ class MusicPane(Widget):
         height: 1fr;
         padding: 0 1;
     }
-    MusicPane DataTable {
+    MusicPane VimDataTable {
         height: 1fr;
         overflow-x: hidden;
         scrollbar-size-vertical: 1;
@@ -29,14 +30,14 @@ class MusicPane(Widget):
     _ALBUM_WIDTH = 25
 
     def compose(self) -> ComposeResult:
-        yield DataTable()
+        yield VimDataTable()
 
     def on_mount(self) -> None:
         self._pw: "LightThread | None" = None
         self._loaded = False
         self.border_title = "Tracks"
         self.border_subtitle = "connecting..."
-        table = self.query_one(DataTable)
+        table = self.query_one(VimDataTable)
         table.add_column("Title", width=self._TITLE_WIDTH)
         table.add_column("Artist", width=self._ARTIST_WIDTH)
         table.add_column("Album", width=self._ALBUM_WIDTH)
@@ -60,7 +61,7 @@ class MusicPane(Widget):
         self.app.call_from_thread(self._populate, tracks)
 
     def _populate(self, tracks) -> None:
-        table = self.query_one(DataTable)
+        table = self.query_one(VimDataTable)
         table.clear()
         for t in tracks:
             table.add_row(
