@@ -14,6 +14,7 @@ from open_api_specification_client.models import (
     PatchApiDevicesDeviceIdDeveloperModeBodyDataAttributes,
     PatchApiDevicesDeviceIdDeveloperModeBodyDataType,
 )
+from open_api_specification_client.types import Unset
 
 from light_api import cache
 
@@ -27,7 +28,7 @@ class LightDevice:
     phone_number: str | None
     serial_number: str
     sku: str
-    developer_mode: bool
+    developer_mode: bool | None
 
 
 class LightDevices:
@@ -54,7 +55,11 @@ class LightDevices:
                 phone_number=phone_by_device.get(d.id),
                 serial_number=d.attributes.serial_number,
                 sku=d.attributes.sku,
-                developer_mode=d.attributes.developer_mode,
+                developer_mode=(
+                    None
+                    if isinstance(d.attributes.developer_mode, Unset)
+                    else d.attributes.developer_mode
+                ),
             )
             for d in devices.data
         ]
