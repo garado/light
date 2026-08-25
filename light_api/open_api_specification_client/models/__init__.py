@@ -52,6 +52,7 @@ from .delete_api_followed_podcasts_followed_podcast_id_response_200_jsonapi impo
     DeleteApiFollowedPodcastsFollowedPodcastIdResponse200Jsonapi,
 )
 from .get_api_audio_capacity_response_200 import GetApiAudioCapacityResponse200
+from .get_api_contacts_v2_export_vcf_response_200 import GetApiContactsV2ExportVcfResponse200
 from .get_api_contacts_v2_response_200 import GetApiContactsV2Response200
 from .get_api_contacts_v2_response_200_data_item import GetApiContactsV2Response200DataItem
 from .get_api_contacts_v2_response_200_data_item_attributes import (
@@ -551,6 +552,7 @@ __all__ = (
     "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200IncludedItemRelationshipsToolData",
     "DeleteApiFollowedPodcastsFollowedPodcastIdResponse200Jsonapi",
     "GetApiAudioCapacityResponse200",
+    "GetApiContactsV2ExportVcfResponse200",
     "GetApiContactsV2Response200",
     "GetApiContactsV2Response200DataItem",
     "GetApiContactsV2Response200DataItemAttributes",
