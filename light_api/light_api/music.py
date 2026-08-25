@@ -60,6 +60,15 @@ class LightTrack:
 
 
 @dataclass
+class LightPlaylist:
+    """Metadata for a playlist."""
+    id: str
+    name: str
+    sort_mode: str
+    is_system_playlist: bool
+
+
+@dataclass
 class UploadResult:
     """Result returned after attempting to uploading a track."""
     file: str
@@ -134,6 +143,25 @@ class LightMusic:
             processing_count=parsed.processing_count,
             failed_count=parsed.failed_count,
         )
+
+    def list_playlists(self) -> list[LightPlaylist]:
+        """Return every playlist on this device's music tool."""
+        resp = self._l.call_api(
+            get_api_playlists.sync_detailed,
+            client=self._l._api_client,
+            device_tool_id=self._l._device_tool_ids["music"],
+        )
+        parsed = self._l._ensure_ok(resp, "Get playlists", require_parsed=True)
+
+        return [
+            LightPlaylist(
+                id=p.id,
+                name=p.attributes.name,
+                sort_mode=p.attributes.sort_mode,
+                is_system_playlist=p.attributes.is_system_playlist,
+            )
+            for p in parsed.data
+        ]
 
     def get_sort_mode(self) -> SortMode:
         """Get the current sort mode.

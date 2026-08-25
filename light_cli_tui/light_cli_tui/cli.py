@@ -1053,6 +1053,33 @@ def music_capacity(light: Light):
     render(capacity, render_human_readable)
 
 
+@music.group("playlists", help=_help("music_playlists"))
+def music_playlists():
+    pass
+
+
+@music_playlists.command("list", help=_help("music_playlists_list"))
+@with_light
+def music_playlists_list(light: Light):
+    all_playlists = light.music.list_playlists()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("Name")
+        table.add_column("Sort Mode")
+        table.add_column("System")
+        table.add_column("ID")
+
+        for p in all_playlists:
+            table.add_row(
+                p.name, p.sort_mode, "yes" if p.is_system_playlist else "no", p.id
+            )
+
+        console.print(table)
+
+    render(all_playlists, render_human_readable)
+
+
 # -- Notes commands -------------------------------------------------------------
 
 

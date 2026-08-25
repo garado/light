@@ -1,5 +1,5 @@
 {
-  "$hash": "ad0b05beea14dc18467a4b5c28031dbcdcd362ab31e78b710bbe9e39a6d171da",
+  "$hash": "6f23aaf44ca6f3c681355155bcc8667f1320d3dfb72fde11454246dcf1d26308",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -371,6 +371,53 @@
           "failed_count"
         ],
         "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "music playlists list": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "sort_mode": {
+              "type": "string"
+            },
+            "is_system_playlist": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "sort_mode",
+            "is_system_playlist"
+          ],
+          "additionalProperties": false
+        }
       },
       "error": {
         "anyOf": [
