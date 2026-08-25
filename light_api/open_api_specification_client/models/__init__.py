@@ -308,6 +308,36 @@ from .patch_api_audios_audio_id_response_200_included_item_attributes import (
     PatchApiAudiosAudioIdResponse200IncludedItemAttributes,
 )
 from .patch_api_audios_audio_id_response_200_jsonapi import PatchApiAudiosAudioIdResponse200Jsonapi
+from .patch_api_contacts_v2_contact_id_body import PatchApiContactsV2ContactIdBody
+from .patch_api_contacts_v2_contact_id_body_data import PatchApiContactsV2ContactIdBodyData
+from .patch_api_contacts_v2_contact_id_body_data_attributes import PatchApiContactsV2ContactIdBodyDataAttributes
+from .patch_api_contacts_v2_contact_id_body_data_relationships import (
+    PatchApiContactsV2ContactIdBodyDataRelationships,
+)
+from .patch_api_contacts_v2_contact_id_body_data_relationships_device import (
+    PatchApiContactsV2ContactIdBodyDataRelationshipsDevice,
+)
+from .patch_api_contacts_v2_contact_id_body_data_relationships_device_data import (
+    PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceData,
+)
+from .patch_api_contacts_v2_contact_id_body_data_relationships_device_data_type import (
+    PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceDataType,
+)
+from .patch_api_contacts_v2_contact_id_body_data_type import PatchApiContactsV2ContactIdBodyDataType
+from .patch_api_contacts_v2_contact_id_response_200 import PatchApiContactsV2ContactIdResponse200
+from .patch_api_contacts_v2_contact_id_response_200_data import PatchApiContactsV2ContactIdResponse200Data
+from .patch_api_contacts_v2_contact_id_response_200_data_attributes import (
+    PatchApiContactsV2ContactIdResponse200DataAttributes,
+)
+from .patch_api_contacts_v2_contact_id_response_200_data_relationships import (
+    PatchApiContactsV2ContactIdResponse200DataRelationships,
+)
+from .patch_api_contacts_v2_contact_id_response_200_data_relationships_device import (
+    PatchApiContactsV2ContactIdResponse200DataRelationshipsDevice,
+)
+from .patch_api_contacts_v2_contact_id_response_200_data_relationships_device_data import (
+    PatchApiContactsV2ContactIdResponse200DataRelationshipsDeviceData,
+)
 from .patch_api_notes_note_id_body import PatchApiNotesNoteIdBody
 from .patch_api_notes_note_id_body_data import PatchApiNotesNoteIdBodyData
 from .patch_api_notes_note_id_body_data_attributes import PatchApiNotesNoteIdBodyDataAttributes
@@ -651,6 +681,20 @@ __all__ = (
     "PatchApiAudiosAudioIdResponse200IncludedItem",
     "PatchApiAudiosAudioIdResponse200IncludedItemAttributes",
     "PatchApiAudiosAudioIdResponse200Jsonapi",
+    "PatchApiContactsV2ContactIdBody",
+    "PatchApiContactsV2ContactIdBodyData",
+    "PatchApiContactsV2ContactIdBodyDataAttributes",
+    "PatchApiContactsV2ContactIdBodyDataRelationships",
+    "PatchApiContactsV2ContactIdBodyDataRelationshipsDevice",
+    "PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceData",
+    "PatchApiContactsV2ContactIdBodyDataRelationshipsDeviceDataType",
+    "PatchApiContactsV2ContactIdBodyDataType",
+    "PatchApiContactsV2ContactIdResponse200",
+    "PatchApiContactsV2ContactIdResponse200Data",
+    "PatchApiContactsV2ContactIdResponse200DataAttributes",
+    "PatchApiContactsV2ContactIdResponse200DataRelationships",
+    "PatchApiContactsV2ContactIdResponse200DataRelationshipsDevice",
+    "PatchApiContactsV2ContactIdResponse200DataRelationshipsDeviceData",
     "PatchApiNotesNoteIdBody",
     "PatchApiNotesNoteIdBodyData",
     "PatchApiNotesNoteIdBodyDataAttributes",
