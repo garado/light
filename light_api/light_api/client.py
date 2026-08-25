@@ -28,6 +28,7 @@ from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.types import Unset
 
 if TYPE_CHECKING:
+    from light_api.contacts import LightContacts
     from light_api.devices import LightDevices
     from light_api.music import LightMusic
     from light_api.podcast import LightPodcasts
@@ -91,6 +92,7 @@ class Light:
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
+        self._device_id: str | None = None
         self._playlist_id: str | None = None
         self._validated_at: float | None = None
         self._cache_enabled: bool = cache_enabled
@@ -101,6 +103,7 @@ class Light:
         self.notes: LightNotes
         self.tools: LightTools
         self.devices: LightDevices
+        self.contacts: LightContacts
 
     def login(self) -> None:
         """Authenticate via the authorizations API and store the bearer token."""
@@ -205,6 +208,7 @@ class Light:
             self._fetch_playlist_id()
             self._save_auth_cache()
 
+        from light_api.contacts import LightContacts
         from light_api.devices import LightDevices
         from light_api.music import LightMusic
         from light_api.podcast import LightPodcasts
@@ -216,6 +220,7 @@ class Light:
         self.notes = LightNotes(self)
         self.tools = LightTools(self)
         self.devices = LightDevices(self)
+        self.contacts = LightContacts(self)
 
         log.info("Authentication complete")
         return self

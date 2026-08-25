@@ -1570,6 +1570,33 @@ def devices_list(light: Light):
     render(all_devices, render_human_readable)
 
 
+# -- Contact commands -------------------------------------------------------------
+
+
+@cli.group(help=_help("contacts"))
+def contacts():
+    pass
+
+
+@contacts.command("list", help=_help("contacts_list"))
+@with_light
+def contacts_list(light: Light):
+    all_contacts = light.contacts.get_contacts()
+
+    def render_human_readable():
+        table = Table(show_header=True)
+        table.add_column("First Name")
+        table.add_column("Last Name")
+        table.add_column("Number")
+
+        for c in all_contacts:
+            table.add_row(c.first_name, c.last_name, c.number)
+
+        console.print(table)
+
+    render(all_contacts, render_human_readable)
+
+
 # -- Schema ---------------------------------------------------------------------
 
 
