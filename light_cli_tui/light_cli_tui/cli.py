@@ -25,6 +25,7 @@ from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
 from light_api import with_light
+from light_cli_tui.format import human_size
 from light_cli_tui.interactive import (
     confirm_selection_with_repick,
     fuzzy_pick_best,
@@ -1019,16 +1020,6 @@ def music_list(
     render(tracks, render_human_readable)
 
 
-def _human_size(num_bytes: int) -> str:
-    """Format a byte count as a human-readable size (e.g. 1.5 GB)."""
-    size = float(num_bytes)
-    for unit in ("B", "KB", "MB", "GB", "TB"):
-        if size < 1000 or unit == "TB":
-            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} {unit}"
-        size /= 1000
-    return f"{size:.1f} TB"
-
-
 @music.command("capacity", help=_help("music_capacity"))
 @with_light
 def music_capacity(light: Light):
@@ -1041,10 +1032,10 @@ def music_capacity(light: Light):
             else 0
         )
         console.print(
-            f"{_human_size(capacity.used_capacity)} / {_human_size(capacity.total_capacity)} "
+            f"{human_size(capacity.used_capacity)} / {human_size(capacity.total_capacity)} "
             f"used ({used_pct:.1f}%)"
         )
-        console.print(f"[dim]Remaining:[/dim] {_human_size(capacity.remaining_capacity)}")
+        console.print(f"[dim]Remaining:[/dim] {human_size(capacity.remaining_capacity)}")
         if capacity.processing_count:
             console.print(f"[dim]Processing:[/dim] {capacity.processing_count}")
         if capacity.failed_count:

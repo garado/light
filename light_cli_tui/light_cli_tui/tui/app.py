@@ -5,7 +5,7 @@ from importlib.metadata import version
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.widgets import ContentSwitcher, Static
+from textual.widgets import ContentSwitcher, Footer, Static
 
 from .music import MusicPane
 from .worker import LightConfig, LightThread
@@ -20,6 +20,8 @@ PANE_TITLES = {
 
 
 class LightApp(App):
+    ENABLE_COMMAND_PALETTE = False
+
     CSS = """
     Screen { background: $background; }
     LightApp { layout: vertical; background: $background; }
@@ -33,6 +35,22 @@ class LightApp(App):
     #nav-version { width: auto; color: $text-muted; }
 
     ContentSwitcher { height: 1fr; }
+
+    Footer {
+        background: $surface;
+    }
+    FooterKey {
+        background: $surface;
+    }
+    FooterKey .footer-key--key {
+        color: $accent;
+        background: $surface;
+        text-style: bold;
+    }
+    FooterKey .footer-key--description {
+        color: $text-muted;
+        background: $surface;
+    }
     """
 
     BINDINGS = [
@@ -58,6 +76,7 @@ class LightApp(App):
             yield MusicPane(id="music")
             for pane in PANES[1:]:
                 yield Static(id=pane)
+        yield Footer()
 
     def on_mount(self) -> None:
         self.theme = "ansi-dark"
