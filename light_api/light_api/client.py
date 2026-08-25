@@ -92,7 +92,6 @@ class Light:
         self._api_token: str | None = None
         self._api_client: AuthenticatedClient | None = None
         self._device_tool_ids: dict[str, str] = {}
-        self._device_id: str | None = None
         self._playlist_id: str | None = None
         self._validated_at: float | None = None
         self._cache_enabled: bool = cache_enabled
@@ -403,7 +402,9 @@ class Light:
         """The device ID to use for API calls."""
         if self._current_device_id is None:
             resp = self.call_api(get_api_devices.sync_detailed, client=self._api_client)
-            devices = self._ensure_ok(resp, "Could not fetch devices", require_data=True)
+            devices = self._ensure_ok(
+                resp, "Could not fetch devices", require_data=True
+            )
             self._current_device_id = self._select_device_id(devices)
         return self._current_device_id
 
