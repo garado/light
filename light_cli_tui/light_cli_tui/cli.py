@@ -1580,7 +1580,10 @@ def contacts():
 
 @contacts.command("list", help=_help("contacts_list"))
 @with_light
-def contacts_list(light: Light):
+@click.option(
+    "--id", "show_id", is_flag=True, default=False, help="Show contact UUIDs."
+)
+def contacts_list(light: Light, show_id):
     all_contacts = light.contacts.get_contacts()
 
     def render_human_readable():
@@ -1588,9 +1591,13 @@ def contacts_list(light: Light):
         table.add_column("First Name")
         table.add_column("Last Name")
         table.add_column("Number")
+        if show_id:
+            table.add_column("UUID")
 
         for c in all_contacts:
-            table.add_row(c.first_name, c.last_name, c.number)
+            row = [c.first_name, c.last_name, c.number]
+            row += [c.id] if show_id else []
+            table.add_row(*row)
 
         console.print(table)
 
