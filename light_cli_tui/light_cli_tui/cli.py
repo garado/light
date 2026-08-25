@@ -41,6 +41,47 @@ click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
 click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 3)
+click.rich_click.OPTION_GROUPS = {
+    "light": [
+        {
+            "name": "Login",
+            "options": ["--email", "--email-file", "--password", "--password-file"],
+        },
+        {
+            "name": "Device Selection",
+            "options": [
+                "--phone-number",
+                "--phone-number-file",
+                "--device-id",
+                "--device-id-file",
+            ],
+        },
+        {
+            "name": "Output & Behavior",
+            "options": ["--log-level", "--json", "--cache"],
+        },
+    ]
+}
+click.rich_click.COMMAND_GROUPS = {
+    "light": [
+        {
+            "name": "Manage",
+            "commands": [
+                "music",
+                "podcasts",
+                "notes",
+                "contacts",
+                "devices",
+                "tools",
+                "settings",
+            ],
+        },
+        {
+            "name": "App",
+            "commands": ["tui", "cache", "schema", "logout"],
+        },
+    ]
+}
 
 console = Console()
 log = logging.getLogger(f"light.{__name__}")
