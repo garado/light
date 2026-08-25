@@ -1647,6 +1647,64 @@ def contacts_add(
     render(contact, render_human_readable)
 
 
+@contacts.command("update", help=_help("contacts_update"))
+@with_light
+@click.argument("contact_id")
+@click.option("--first", "-f", "first_name", default=None, help="New first name.")
+@click.option("--last", "-l", "last_name", default=None, help="New last name.")
+@click.option("--num", "-n", "number", default=None, help="New phone number.")
+@mutative_options("Show the contact as it would be updated without updating it.")
+def contacts_update(
+    light: Light,
+    contact_id: str,
+    first_name: str | None,
+    last_name: str | None,
+    number: str | None,
+    yes,
+    dry_run,
+):
+    if first_name is None and last_name is None and number is None:
+        raise click.UsageError("Provide at least one of --first, --last, --num.")
+
+    all_contacts = light.contacts.get_contacts()
+    by_id = {c.id: c for c in all_contacts}
+    if contact_id not in by_id:
+        raise click.UsageError(f"No contact found with id: {contact_id}")
+    current = by_id[contact_id]
+
+    new_first = first_name if first_name is not None else current.first_name
+    new_last = last_name if last_name is not None else current.last_name
+    new_number = number if number is not None else current.number
+
+    def render_preview():
+        console.print(
+            f"  {current.first_name} {current.last_name} — {current.number} "
+            f"[dim]({current.id})[/dim]\n"
+            f"  -> {new_first} {new_last} — {new_number}"
+        )
+
+    proceed = resolve_mutative_action(
+        {"first_name": new_first, "last_name": new_last, "number": new_number},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will update the following contact:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    contact = light.contacts.update_contact(contact_id, new_first, new_last, new_number)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Updated:[/green] {contact.first_name} {contact.last_name} "
+            f"[dim]({contact.number})[/dim]"
+        )
+
+    render(contact, render_human_readable)
+
+
 # -- Schema ---------------------------------------------------------------------
 
 

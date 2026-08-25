@@ -35,6 +35,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "devices list": list[LightDevice],
     "contacts list": list[LightContact],
     "contacts add": LightContact,
+    "contacts update": LightContact,
     "cache enable": CacheStatus,
     "cache disable": CacheStatus,
     "cache status": CacheStatus,
