@@ -32,6 +32,8 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "notes delete": list[LightNote],
     "notes download-all": list[NoteDownloadResult],
     "tools list": list[LightTool],
+    "tools add": LightTool,
+    "tools remove": LightTool,
     "devices list": list[LightDevice],
     "contacts list": list[LightContact],
     "contacts add": LightContact,

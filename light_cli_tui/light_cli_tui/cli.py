@@ -1530,9 +1530,28 @@ def tools_list(light: Light):
 @click.argument(
     "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
 )
-def tools_add(light: Light, name: str):
+@mutative_options("Show the tool that would be installed without installing it.")
+def tools_add(light: Light, name: str, yes, dry_run):
+    def render_preview():
+        console.print(f"  {name}")
+
+    proceed = resolve_mutative_action(
+        {"name": name},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will install the following tool:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
     tool = light.tools.add_tool(name)
-    console.print(f"[green]Installed:[/green] {tool.title}")
+
+    def render_human_readable():
+        console.print(f"[green]Installed:[/green] {tool.title}")
+
+    render(tool, render_human_readable)
 
 
 @tools.command("remove", help=_help("tools_remove"))
@@ -1540,11 +1559,30 @@ def tools_add(light: Light, name: str):
 @click.argument(
     "name", type=click.Choice([t.value for t in ToolName], case_sensitive=False)
 )
-def tools_remove(light: Light, name: str):
-    if not click.confirm(f"Remove {name}?"):
+@mutative_options("Show the tool that would be removed without removing it.")
+def tools_remove(light: Light, name: str, yes, dry_run):
+    tool = light.tools.resolve_installed_tool(name)
+
+    def render_preview():
+        console.print(f"  {tool.title}")
+
+    proceed = resolve_mutative_action(
+        tool,
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will remove the following tool:",
+        confirm_message="Remove?",
+    )
+    if not proceed:
         return
-    light.tools.remove_tool(name)
-    console.print("[green]Removed.[/green]")
+
+    light.tools.remove_tool_by_id(tool.device_tool_id)
+
+    def render_human_readable():
+        console.print(f"[green]Removed:[/green] {tool.title}")
+
+    render(tool, render_human_readable)
 
 
 # -- Device commands ------------------------------------------------------------

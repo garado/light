@@ -161,8 +161,8 @@ class LightTools:
             title=title,
         )
 
-    def remove_tool(self, name: ToolName | str) -> None:
-        """Uninstall a tool from the device by name (e.g. 'calendar')."""
+    def resolve_installed_tool(self, name: ToolName | str) -> LightTool:
+        """Find the single installed tool matching name (case-insensitive substring)."""
         needle = name.lower()
         installed = self.get_tools()
         matches = [
@@ -175,12 +175,22 @@ class LightTools:
         if len(matches) > 1:
             names = ", ".join(t.title for t in matches)
             raise RuntimeError(f"Ambiguous tool name {name!r} — matches: {names}")
+        return matches[0]
 
+    def remove_tool_by_id(self, device_tool_id: str) -> None:
+        """Uninstall a tool from the device by its device_tool_id."""
         resp = self._l.call_api(
             delete_api_device_tools_device_tool_id.sync_detailed,
             client=self._l._api_client,
-            device_tool_id=matches[0].device_tool_id,
+            device_tool_id=device_tool_id,
         )
         self._l._ensure_ok(resp, "Remove tool", ok_codes=range(200, 300))
+
+        cache.invalidate(cache.CacheModule.TOOLS)
+
+    def remove_tool(self, name: ToolName | str) -> None:
+        """Uninstall a tool from the device by name (e.g. 'calendar')."""
+        tool = self.resolve_installed_tool(name)
+        self.remove_tool_by_id(tool.device_tool_id)
 
         cache.invalidate(cache.CacheModule.TOOLS)

@@ -1,5 +1,5 @@
 {
-  "$hash": "e39abc0500159f0815a69b725d583b827645150abbd67b84ff1b2232bf98dbc3",
+  "$hash": "1746f5f4bac01fbdf6a48871e64f771c6944e16c6a2add32d7921b07eaba09ba",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -795,6 +795,102 @@
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "tools add": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "device_tool_id": {
+            "type": "string"
+          },
+          "global_tool_id": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_tool_id",
+          "global_tool_id",
+          "namespace",
+          "component",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "tools remove": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "device_tool_id": {
+            "type": "string"
+          },
+          "global_tool_id": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_tool_id",
+          "global_tool_id",
+          "namespace",
+          "component",
+          "title"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [
