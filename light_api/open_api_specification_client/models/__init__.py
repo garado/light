@@ -368,6 +368,28 @@ from .post_api_authorizations_response_200_included_item import PostApiAuthoriza
 from .post_api_authorizations_response_200_included_item_attributes import (
     PostApiAuthorizationsResponse200IncludedItemAttributes,
 )
+from .post_api_contacts_v2_body import PostApiContactsV2Body
+from .post_api_contacts_v2_body_data import PostApiContactsV2BodyData
+from .post_api_contacts_v2_body_data_attributes import PostApiContactsV2BodyDataAttributes
+from .post_api_contacts_v2_body_data_relationships import PostApiContactsV2BodyDataRelationships
+from .post_api_contacts_v2_body_data_relationships_device import PostApiContactsV2BodyDataRelationshipsDevice
+from .post_api_contacts_v2_body_data_relationships_device_data import (
+    PostApiContactsV2BodyDataRelationshipsDeviceData,
+)
+from .post_api_contacts_v2_body_data_relationships_device_data_type import (
+    PostApiContactsV2BodyDataRelationshipsDeviceDataType,
+)
+from .post_api_contacts_v2_body_data_type import PostApiContactsV2BodyDataType
+from .post_api_contacts_v2_response_201 import PostApiContactsV2Response201
+from .post_api_contacts_v2_response_201_data import PostApiContactsV2Response201Data
+from .post_api_contacts_v2_response_201_data_attributes import PostApiContactsV2Response201DataAttributes
+from .post_api_contacts_v2_response_201_data_relationships import PostApiContactsV2Response201DataRelationships
+from .post_api_contacts_v2_response_201_data_relationships_device import (
+    PostApiContactsV2Response201DataRelationshipsDevice,
+)
+from .post_api_contacts_v2_response_201_data_relationships_device_data import (
+    PostApiContactsV2Response201DataRelationshipsDeviceData,
+)
 from .post_api_device_tools_body import PostApiDeviceToolsBody
 from .post_api_device_tools_body_data import PostApiDeviceToolsBodyData
 from .post_api_device_tools_body_data_attributes import PostApiDeviceToolsBodyDataAttributes
@@ -669,6 +691,20 @@ __all__ = (
     "PostApiAuthorizationsResponse200DataAttributes",
     "PostApiAuthorizationsResponse200IncludedItem",
     "PostApiAuthorizationsResponse200IncludedItemAttributes",
+    "PostApiContactsV2Body",
+    "PostApiContactsV2BodyData",
+    "PostApiContactsV2BodyDataAttributes",
+    "PostApiContactsV2BodyDataRelationships",
+    "PostApiContactsV2BodyDataRelationshipsDevice",
+    "PostApiContactsV2BodyDataRelationshipsDeviceData",
+    "PostApiContactsV2BodyDataRelationshipsDeviceDataType",
+    "PostApiContactsV2BodyDataType",
+    "PostApiContactsV2Response201",
+    "PostApiContactsV2Response201Data",
+    "PostApiContactsV2Response201DataAttributes",
+    "PostApiContactsV2Response201DataRelationships",
+    "PostApiContactsV2Response201DataRelationshipsDevice",
+    "PostApiContactsV2Response201DataRelationshipsDeviceData",
     "PostApiDeviceToolsBody",
     "PostApiDeviceToolsBodyData",
     "PostApiDeviceToolsBodyDataAttributes",
