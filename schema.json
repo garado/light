@@ -1,5 +1,5 @@
 {
-  "$hash": "2b5aa2863efd7330d4230d16089439f95fc114f06902d953f82f09386c7ebedd",
+  "$hash": "e39abc0500159f0815a69b725d583b827645150abbd67b84ff1b2232bf98dbc3",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -1208,6 +1208,49 @@
         },
         "required": [
           "cache_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "settings developer-mode": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "device_id": {
+            "type": "string"
+          },
+          "developer_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "device_id",
+          "developer_mode"
         ],
         "additionalProperties": false
       },

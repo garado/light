@@ -42,6 +42,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "cache enable": CacheStatus,
     "cache disable": CacheStatus,
     "cache status": CacheStatus,
+    "settings developer-mode": DeveloperModeStatus,
 }
 
 _PRIMITIVE_SCHEMAS: dict[type, dict[str, Any]] = {
