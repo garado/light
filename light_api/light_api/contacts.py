@@ -173,7 +173,7 @@ class LightContacts:
             client=self._l._api_client,
             device_id=device_id,
         )
-        self._l._ensure_ok(resp, "Could not delete contact")
+        self._l._ensure_ok(resp, "Could not delete contact", ok_codes=(200, 204))
 
     def export_vcf(self) -> str:
         """Export every contact on this device as a single vCard-format string."""
