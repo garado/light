@@ -7,7 +7,8 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import ContentSwitcher, Static
 
-from .worker import LightConfig
+from .music import MusicPane
+from .worker import LightConfig, LightThread
 
 PANES = ["music", "notes", "contacts", "tools"]
 PANE_TITLES = {
@@ -47,17 +48,41 @@ class LightApp(App):
         super().__init__()
         self._config = config
         self._active_pane = "music"
+        self._pw: LightThread | None = None
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="nav-header"):
             yield Static(PANE_TITLES[self._active_pane], id="nav-title")
             yield Static(f"light tui v{version('light-phone-cli-tui')}", id="nav-version")
         with ContentSwitcher(initial="music"):
-            for pane in PANES:
+            yield MusicPane(id="music")
+            for pane in PANES[1:]:
                 yield Static(id=pane)
 
     def on_mount(self) -> None:
         self.theme = "ansi-dark"
+        self.run_worker(self._init_light, exclusive=True, thread=True)
+
+    def _init_light(self) -> None:
+        pw = LightThread(self._config)
+        pw.start()
+        self._pw = pw
+        self.call_from_thread(self._on_light_ready)
+
+    def _on_light_ready(self) -> None:
+        self._load_active_pane()
+
+    def _load_active_pane(self) -> None:
+        """Lazily load the currently active pane's data, if it hasn't been already."""
+        if self._pw is None:
+            return
+        pane = self.query_one(f"#{self._active_pane}")
+        if hasattr(pane, "ensure_loaded"):
+            pane.ensure_loaded(self._pw)
+
+    def on_unmount(self) -> None:
+        if self._pw is not None:
+            self.run_worker(self._pw.shutdown, thread=True)
 
     def action_switch_pane(self, pane: str) -> None:
         if pane == self._active_pane:
@@ -65,6 +90,7 @@ class LightApp(App):
         self._active_pane = pane
         self.query_one("#nav-title", Static).update(PANE_TITLES[pane])
         self.query_one(ContentSwitcher).current = pane
+        self._load_active_pane()
 
 
 def run_tui(config: LightConfig) -> None:
