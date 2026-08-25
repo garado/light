@@ -4556,6 +4556,41 @@
       }
     },
     "/api/contacts_v2/{contact_id}": {
+      "delete": {
+        "summary": "Delete a contact",
+        "description": "**Host**: http://production.lightphonecloud.com",
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "apikey_header_authorization": []
+          }
+        ]
+      },
       "patch": {
         "summary": "Update a contact",
         "description": "**Host**: http://production.lightphonecloud.com",
