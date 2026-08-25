@@ -37,6 +37,9 @@ class MusicPane(Widget):
     def compose(self) -> ComposeResult:
         yield VimDataTable()
 
+    def focus_default(self) -> None:
+        self.query_one(VimDataTable).focus()
+
     def on_mount(self) -> None:
         self._pw: "LightThread | None" = None
         self._loaded = False

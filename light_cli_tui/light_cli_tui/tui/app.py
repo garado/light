@@ -8,6 +8,7 @@ from textual.containers import Horizontal
 from textual.widgets import ContentSwitcher, Footer, Static
 
 from .music import MusicPane
+from .notes import NotesPane
 from .worker import LightConfig, LightThread
 
 PANES = ["music", "notes", "contacts", "tools"]
@@ -74,12 +75,14 @@ class LightApp(App):
             yield Static(f"light tui v{version('light-phone-cli-tui')}", id="nav-version")
         with ContentSwitcher(initial="music"):
             yield MusicPane(id="music")
-            for pane in PANES[1:]:
+            yield NotesPane(id="notes")
+            for pane in PANES[2:]:
                 yield Static(id=pane)
         yield Footer()
 
     def on_mount(self) -> None:
         self.theme = "ansi-dark"
+        self._focus_active_pane()
         self.run_worker(self._init_light, exclusive=True, thread=True)
 
     def _init_light(self) -> None:
@@ -99,6 +102,11 @@ class LightApp(App):
         if hasattr(pane, "ensure_loaded"):
             pane.ensure_loaded(self._pw)
 
+    def _focus_active_pane(self) -> None:
+        pane = self.query_one(f"#{self._active_pane}")
+        if hasattr(pane, "focus_default"):
+            pane.focus_default()
+
     def on_unmount(self) -> None:
         if self._pw is not None:
             self.run_worker(self._pw.shutdown, thread=True)
@@ -109,6 +117,7 @@ class LightApp(App):
         self._active_pane = pane
         self.query_one("#nav-title", Static).update(PANE_TITLES[pane])
         self.query_one(ContentSwitcher).current = pane
+        self._focus_active_pane()
         self._load_active_pane()
 
 
