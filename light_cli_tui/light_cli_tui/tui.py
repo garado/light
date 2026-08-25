@@ -9,6 +9,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import Any, Callable
 
+import pyperclip
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -22,6 +23,15 @@ from textual.widgets import Button, ContentSwitcher, DataTable, Input, Label, St
 from light_api.client import Light
 from light_api.music import LightTrack, SortMode
 from light_api.notes import LightNote
+from open_api_specification_client.api.default import (
+    patch_api_playlist_items_playlist_item_id,
+)
+from open_api_specification_client.models import (
+    PatchApiPlaylistItemsPlaylistItemIdBody,
+    PatchApiPlaylistItemsPlaylistItemIdBodyData,
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
+    PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
+)
 
 SORT_CYCLE: list[SortMode] = [
     SortMode.RANK,
@@ -609,13 +619,6 @@ class MusicPane(Widget):
         )
 
     def _do_move_block(self, block: list[LightTrack], new_lo: int, direction: int) -> None:
-        from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
-        from open_api_specification_client.models import (
-            PatchApiPlaylistItemsPlaylistItemIdBody,
-            PatchApiPlaylistItemsPlaylistItemIdBodyData,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
-        )
         assert self._pw is not None
         # Move from the outside in to avoid position conflicts:
         # moving down → patch last track first; moving up → patch first track first
@@ -639,13 +642,6 @@ class MusicPane(Widget):
             self._pw.submit(_patch)
 
     def _do_move(self, track: LightTrack, new_position: int) -> None:
-        from open_api_specification_client.api.default import patch_api_playlist_items_playlist_item_id
-        from open_api_specification_client.models import (
-            PatchApiPlaylistItemsPlaylistItemIdBody,
-            PatchApiPlaylistItemsPlaylistItemIdBodyData,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataAttributes,
-            PatchApiPlaylistItemsPlaylistItemIdBodyDataType,
-        )
         assert self._pw is not None
 
         def _move(light):
@@ -1209,7 +1205,6 @@ class NotesPane(Widget):
         self.set_timer(2, self.update_status)
 
     def _copy_to_clipboard(self) -> None:
-        import pyperclip
         note = self._current_note()
         if note is None or note.note_type == "audio":
             self._set_status("clipboard: no text content")

@@ -16,6 +16,7 @@ from open_api_specification_client.api.default import (
     get_api_notes,
     get_api_notes_note_id,
     get_api_notes_note_id_generate_presigned_get_url,
+    get_api_notes_note_id_generate_presigned_put_url,
     patch_api_notes_note_id,
     post_api_notes,
 )
@@ -263,10 +264,6 @@ class LightNotes:
 
     def update_note_content(self, note: LightNote, content: bytes) -> None:
         """Overwrite the content of an existing text note via its presigned upload URL."""
-        from open_api_specification_client.api.default import (
-            get_api_notes_note_id_generate_presigned_put_url,
-        )
-
         resp = self._l.call_api(
             get_api_notes_note_id_generate_presigned_put_url.sync_detailed,
             client=self._l._api_client,

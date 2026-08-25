@@ -20,7 +20,9 @@
 - (feat) yes/dry-run/json to `tools`
 - (feat) include playlist ID in LightTrack (there's only one playlist for now, but... future-proofing!)
 - (feat) `music playlists list` command (there is only ONE playlist but... also future-proofing !)
+- (refactor) clean up inconsistent import locations
 
 ## to do
 - ahh fuck. there is no real support for multi-device accounts. this is a much larger lift
 - device id: add method to change the target device
+- ffmpeg is an implicit dependency

@@ -6,15 +6,15 @@ import logging
 import mimetypes
 import os
 import re
+import subprocess
 import tempfile
 from enum import StrEnum
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 from dataclasses import dataclass
 from mutagen._file import File
 
 from light_api import cache
-from light_api.client import Light
 from open_api_specification_client.api.default import (
     delete_api_audios_audio_id,
     get_api_audio_capacity,
@@ -43,6 +43,10 @@ from open_api_specification_client.models import (
     PostApiPlaylistsSortModeBody,
     PostApiPlaylistsSortModeBodySortMode,
 )
+from open_api_specification_client.types import UNSET
+
+if TYPE_CHECKING:
+    from light_api.client import Light
 
 log = logging.getLogger(f"light.{__name__}")
 
@@ -104,7 +108,6 @@ class SortMode(StrEnum):
 
 def _flac_to_mp3(flac_path: str) -> str:
     """Convert a FLAC file to MP3 in a tempfile, preserving metadata. Returns the temp path."""
-    import subprocess
     tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     tmp.close()
     result = subprocess.run(
@@ -119,8 +122,8 @@ def _flac_to_mp3(flac_path: str) -> str:
 
 
 class LightMusic:
-    def __init__(self, light: Light) -> None:
-        self._l: Light = light
+    def __init__(self, light: "Light") -> None:
+        self._l: "Light" = light
         self._tracks: list[LightTrack]  # lazily initialized
 
     def _init_tracks(self):
@@ -650,8 +653,6 @@ class LightMusic:
             artist: The new artist, or None for no changes.
             album: The new album, or None for no changes.
         """
-        from open_api_specification_client.types import UNSET
-
         attrs = PatchApiAudiosAudioIdBodyDataAttributes(
             title=title if title is not None else UNSET,
             artist=artist if artist is not None else UNSET,
