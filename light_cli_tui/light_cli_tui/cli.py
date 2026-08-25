@@ -1570,7 +1570,7 @@ def devices_list(light: Light):
     render(all_devices, render_human_readable)
 
 
-# -- Contact commands -------------------------------------------------------------
+# -- Contacts commands -------------------------------------------------------------
 
 
 @cli.group(help=_help("contacts"))
@@ -1595,6 +1595,49 @@ def contacts_list(light: Light):
         console.print(table)
 
     render(all_contacts, render_human_readable)
+
+
+@contacts.command("add", help=_help("contacts_add"))
+@with_light
+@click.option(
+    "--first", "-f", "first_name", required=True, help="Contact's first name."
+)
+@click.option(
+    "--last", "-l", "last_name", default=None, help="Contact's last name (optional)."
+)
+@click.option("--num", "-n", "number", required=True, help="Contact's phone number.")
+@mutative_options("Show the contact that would be added without adding it.")
+def contacts_add(
+    light: Light,
+    first_name: str,
+    last_name: str | None,
+    number: str,
+    yes,
+    dry_run,
+):
+    def render_preview():
+        console.print(f"  {first_name} {last_name or ''} — {number}")
+
+    proceed = resolve_mutative_action(
+        {"first_name": first_name, "last_name": last_name, "number": number},
+        render_preview,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="This will add the following contact:",
+        confirm_message="Continue?",
+    )
+    if not proceed:
+        return
+
+    contact = light.contacts.add_contact(first_name, last_name, number)
+
+    def render_human_readable():
+        console.print(
+            f"[green]Added:[/green] {contact.first_name} {contact.last_name} "
+            f"[dim]({contact.number})[/dim]"
+        )
+
+    render(contact, render_human_readable)
 
 
 # -- Schema ---------------------------------------------------------------------

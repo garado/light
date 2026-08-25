@@ -1,5 +1,5 @@
 {
-  "$hash": "463c767401ed437e447f32332ba1c73643047c82f237313a04e2baf107941474",
+  "$hash": "8973493b5706fc99b312e1be730bf4951ba99a230aba4834f37e53a005c58407",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -896,6 +896,50 @@
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "contacts add": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "number"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [
