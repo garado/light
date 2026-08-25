@@ -1684,7 +1684,12 @@ def contacts_update(
         )
 
     proceed = resolve_mutative_action(
-        {"first_name": new_first, "last_name": new_last, "number": new_number},
+        {
+            "id": contact_id,
+            "first_name": new_first,
+            "last_name": new_last,
+            "number": new_number,
+        },
         render_preview,
         yes=yes,
         dry_run=dry_run,
