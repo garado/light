@@ -1,6 +1,6 @@
 [project]
 name = "light-phone-cli-tui"
-version = "0.5.0"
+version = "0.6.0"
 description = "Unofficial CLI/TUI for the Light Phone"
 authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
@@ -9,7 +9,7 @@ dependencies = [
     "click",
     "rich_click",
     "rich",
-    "light-phone-api==0.5.0",
+    "light-phone-api==0.6.0",
     "rapidfuzz>=3.14.5",
     "inquirerpy>=0.3.4",
 ]
