@@ -182,7 +182,7 @@ class JsonAwareGroup(click.RichGroup):
     help=_help("cli"),
 )
 @click.version_option(
-    None, "-v", "--version", package_name="light-phone-cli-tui", prog_name="light"
+    None, "--version", package_name="light-phone-cli-tui", prog_name="light"
 )
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
