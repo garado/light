@@ -107,6 +107,11 @@ class SortMode(StrEnum):
     ARTIST_ALBUM_DESC = "aa_desc"
 
 
+@dataclass
+class SortModeStatus:
+    sort_mode: str
+
+
 def _flac_to_mp3(flac_path: str) -> str:
     """Convert a FLAC file to MP3 in a tempfile, preserving metadata. Returns the temp path."""
     tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)

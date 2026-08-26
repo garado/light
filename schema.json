@@ -1,5 +1,5 @@
 {
-  "$hash": "6f23aaf44ca6f3c681355155bcc8667f1320d3dfb72fde11454246dcf1d26308",
+  "$hash": "4ec910db29050b9cf81ea2c7faa627508f87ef546c6f0eaa02ad5374cd8ad022",
   "podcasts add": {
     "type": "object",
     "properties": {
@@ -418,6 +418,38 @@
           ],
           "additionalProperties": false
         }
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "data",
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "music sort": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "sort_mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sort_mode"
+        ],
+        "additionalProperties": false
       },
       "error": {
         "anyOf": [

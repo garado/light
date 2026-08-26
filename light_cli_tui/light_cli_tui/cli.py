@@ -21,7 +21,7 @@ from rich.table import Table
 from light_api.client import Light
 from light_api.contacts import ContactsExportResult, ContactsImportResult
 from light_api.devices import DeveloperModeStatus
-from light_api.music import LightMusic, SortMode
+from light_api.music import LightMusic, SortMode, SortModeStatus
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
@@ -772,7 +772,12 @@ def music_delete(
 
 @music.command("sort", help=_help("music_sort"))
 @with_light
-@click.argument("field", type=click.Choice(["artist", "title", "artist-album", "none"]))
+@click.argument(
+    "field",
+    type=click.Choice(["artist", "title", "artist-album", "none"]),
+    required=False,
+    default=None,
+)
 @click.option(
     "--asc",
     "order",
@@ -782,6 +787,22 @@ def music_delete(
 )
 @click.option("--desc", "order", flag_value="descending", help="Sort descending.")
 def music_sort(light: Light, field, order):
+    if field is None:
+        mode = light.music.get_sort_mode()
+        status = SortModeStatus(sort_mode=mode.value)
+
+        def render_human_readable():
+            console.print(f"Sort mode: {mode.value}")
+            if mode == SortMode.RANK:
+                console.print(
+                    "[dim]Note: 'rank' also covers title/artist-album sorts, which are "
+                    "applied locally and can't be distinguished from an unsorted "
+                    "playlist by this check.[/dim]"
+                )
+
+        render(status, render_human_readable)
+        return
+
     descending = order == "descending"
 
     if field == "artist":
