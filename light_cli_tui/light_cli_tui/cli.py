@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import sys
+import threading
 from pathlib import Path
 
 import rich_click as click
@@ -20,7 +21,7 @@ from rich.table import Table
 from light_api.client import Light
 from light_api.contacts import ContactsExportResult, ContactsImportResult
 from light_api.devices import DeveloperModeStatus
-from light_api.music import SortMode
+from light_api.music import LightMusic, SortMode
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
@@ -544,6 +545,14 @@ def _render_file_list(files: list[str], verbose: bool) -> None:
     default=False,
     help="When SONGS includes a directory, also walk its subdirectories for audio files.",
 )
+@click.option(
+    "--parallel",
+    "-p",
+    type=click.IntRange(min=1),
+    default=LightMusic.DEFAULT_MAX_CONCURRENT_UPLOADS,
+    show_default=True,
+    help="Max number of files to upload at the same time.",
+)
 @mutative_options("Show what would be uploaded without uploading anything.")
 def music_upload(
     light: Light,
@@ -553,6 +562,7 @@ def music_upload(
     no_convert,
     verbose,
     recursive,
+    parallel,
     yes,
     dry_run,
 ):
@@ -606,33 +616,36 @@ def music_upload(
         TaskProgressColumn(),
         console=console,
     ) as progress:
-        task_id: TaskID | None = None
-        current_file: str | None = None
-        batch_position = ""
+        # track one progress bar task per filepath and guard shared dict w/ a lock
+        lock = threading.Lock()
+        task_ids: dict[str, TaskID] = {}
+        batch_positions: dict[str, str] = {}
 
         def on_file_start(index: int, total: int, file_path: str) -> None:
-            nonlocal batch_position
-            batch_position = f"[{index}/{total}] "
+            with lock:
+                batch_positions[file_path] = f"[{index}/{total}] "
 
-        def on_progress(filename: str, sent: int, total: int) -> None:
-            nonlocal task_id, current_file
-            if filename != current_file:
-                if task_id is not None:
-                    progress.remove_task(task_id)
-                current_file = filename
-                task_id = progress.add_task(f"{batch_position}uploading {filename}", total=100)
+        def on_progress(file_path: str, filename: str, sent: int, total: int) -> None:
+            with lock:
+                task_id = task_ids.get(file_path)
+                if task_id is None:
+                    prefix = batch_positions.get(file_path, "")
+                    task_id = progress.add_task(f"{prefix}uploading {filename}", total=100)
+                    task_ids[file_path] = task_id
             progress.update(task_id, completed=int(sent / total * 100))
 
         def on_convert(file_path: str) -> None:
+            prefix = batch_positions.get(file_path, "")
             filename = os.path.basename(file_path)
             mp3_name = os.path.splitext(filename)[0] + ".mp3"
-            console.print(f"[dim]{batch_position}Converting {filename} -> {mp3_name}[/dim]")
+            console.print(f"[dim]{prefix}Converting {filename} -> {mp3_name}[/dim]")
 
         results = light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
             overwrite=overwrite,
             convert_flac=not no_convert,
+            max_concurrent=parallel,
             on_progress=on_progress,
             on_convert=on_convert,
             on_file_start=on_file_start,
