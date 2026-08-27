@@ -112,12 +112,25 @@ class SortModeStatus:
     sort_mode: str
 
 
+# Transcode every uploaded track such that it doesn't get re-transcoded
+# on Light's servers
+_LIGHT_MP3_PROFILE = [
+    "-c:a", "libmp3lame",
+    "-b:a", "128k",
+    "-ar", "44100",
+    "-ac", "2",
+    "-id3v2_version", "3",
+    "-vn",
+]
+
+
 def _flac_to_mp3(flac_path: str) -> str:
-    """Convert a FLAC file to MP3 in a tempfile, preserving metadata. Returns the temp path."""
+    """Convert a FLAC file to MP3 in a tempfile, matching Light's server-side
+    transcode profile so it is not re-encoded on upload. Returns the temp path."""
     tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     tmp.close()
     result = subprocess.run(
-        ["ffmpeg", "-y", "-i", flac_path, "-map_metadata", "0", "-ab", "320k", tmp.name],
+        ["ffmpeg", "-y", "-i", flac_path, "-map_metadata", "0", *_LIGHT_MP3_PROFILE, tmp.name],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
