@@ -244,3 +244,18 @@ python scripts/capture_fixture.py
 # Run tests
 uv run pytest
 ```
+
+### Live contract test
+
+`tests/test_live_contract.py` tests if the cloud API's response format changes. It validates each GET response against `light_api/openapi-spec.json`, failing if anything is missing from the expected response (and with `--strict-extra`, it fails if anything is added in the expected response). 
+It needs real credentials and a registered device, so it is skipped unless you pass `--live` (or set `LIGHT_LIVE_CONTRACT=1`). It currently never runs in CI.
+
+```sh
+nix develop
+LIGHT_EMAIL=you@example.com LIGHT_PASSWORD=... \
+    uv run pytest tests/test_live_contract.py --live -v
+
+# multi-device account: also set LIGHT_PHONE_NUMBER or LIGHT_DEVICE_ID
+```
+
+A failure means the API drifted from the spec.
