@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package light_daemon.v1;
+
+message Track {
+  string audio_id = 1;
+  string title = 2;
+  string artist = 3;
+  string album = 4;
+  string filename = 5;
+}
+
+message ListTracksRequest {}
+
+message ListTracksResponse {
+  repeated Track tracks = 1;
+}
+
+service MusicService {
+  // Return every track currently on the device.
+  rpc ListTracks(ListTracksRequest) returns (ListTracksResponse);
+}
