@@ -8,6 +8,7 @@ from rich.console import Console
 from typing import Callable, Hashable, Iterable, TypeVar
 
 from light_cli_tui.fuzzy import fuzzy_filter
+from light_cli_tui.output import is_json_mode
 
 T = TypeVar("T")
 
@@ -176,7 +177,8 @@ def fuzzy_pick_best(
     for query in queries:
         scored = fuzzy_filter(query, items, key=fields)
         if not scored:
-            console.print(f"[yellow]No matches for {query!r}.[/yellow]")
+            if not is_json_mode():
+                console.print(f"[yellow]No matches for {query!r}.[/yellow]")
             continue
         top_score = scored[0][0]
         for score, t in scored:
