@@ -33,7 +33,7 @@ def build_server(pw: Any, port: int = 0) -> tuple[grpc.Server, int]:
     return server, bound_port
 
 
-def server(pw: Any, port: int = 0) -> None:
+def serve(pw: Any, port: int = 0) -> None:
     """Build, start, and block on a server until interrupted.
 
     Args:
@@ -41,7 +41,7 @@ def server(pw: Any, port: int = 0) -> None:
         port: Port to assign. '0' allows OS to autoassign it.
     """
     host = "127.0.0.1"
-    server, bound_port = build_server(pw, host, port)
+    server, bound_port = build_server(pw, port)
     server.start()
     print(f"light-daemon listening on {host}:{bound_port}", flush=True)
 
