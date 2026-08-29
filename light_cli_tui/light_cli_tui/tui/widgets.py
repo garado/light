@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Label
 
@@ -22,6 +23,43 @@ class VimDataTable(DataTable):
         Binding("ctrl+d", "page_down", show=False),
         Binding("ctrl+u", "page_up", show=False),
     ]
+
+
+class SearchBar(Input):
+    """A `/`-style incremental search field docked at the bottom of a pane.
+
+    Emits `Input.Changed` (as you type) and `Input.Submitted` (Enter).
+    Escape emits `SearchBar.Cancelled` so the pane can drop the filter.
+    Hidden until a pane shows it with `.display = True` and focuses it.
+    """
+
+    DEFAULT_CSS = """
+    SearchBar {
+        dock: bottom;
+        height: 1;
+        border: none;
+        padding: 0;
+        background: $surface;
+        color: $text;
+    }
+    SearchBar:focus { border: none; background: $surface; }
+    """
+
+    BINDINGS = [Binding("escape", "cancel", show=False)]
+
+    class Cancelled(Message):
+        """Posted when the user presses Escape in the search bar."""
+
+        def __init__(self, search_bar: "SearchBar") -> None:
+            self.search_bar = search_bar
+            super().__init__()
+
+        @property
+        def control(self) -> "SearchBar":
+            return self.search_bar
+
+    def action_cancel(self) -> None:
+        self.post_message(self.Cancelled(self))
 
 
 @dataclass
