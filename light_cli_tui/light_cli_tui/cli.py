@@ -666,14 +666,54 @@ def music_upload(
 
 @music.command("delete-all", help=_help("music_delete_all"))
 @with_light
-def music_delete_all(light: Light):
-    if not click.confirm("This will delete ALL tracks on the device. Proceed?"):
+@mutative_options("Show how many tracks would be deleted without deleting anything.")
+def music_delete_all(light: Light, yes: bool, dry_run: bool):
+    if yes and dry_run:
+        raise click.UsageError("--yes and --dry-run are mutually exclusive.")
+
+    tracks = light.music.get_tracks()
+    plan = {
+        "track_count": len(tracks),
+        "tracks": [
+            {
+                "audio_id": t.audio_id,
+                "artist": t.artist,
+                "album": t.album,
+                "title": t.title,
+            }
+            for t in tracks
+        ],
+    }
+
+    if not tracks:
+        render(plan, lambda: console.print("[yellow]No tracks on the device.[/yellow]"))
         return
 
-    if input('Type "yes i am sure" to confirm: ') != "yes i am sure":
+    if dry_run:
+        render(
+            plan,
+            lambda: console.print(
+                f"This will delete ALL {len(tracks)} track(s) on the device."
+            ),
+        )
         return
+
+    if is_json_mode() and not yes:
+        raise click.UsageError(
+            "--json requires --yes or --dry-run for mutative commands."
+        )
+
+    if not yes:
+        if not click.confirm(
+            f"This will delete ALL {len(tracks)} tracks on the device. Proceed?"
+        ):
+            return
+        if input('Type "yes i am sure" to confirm: ') != "yes i am sure":
+            console.print("[yellow]Aborted.[/yellow]")
+            return
 
     light.music.delete_all_tracks()
+    render(plan, lambda: console.print(f"[green]Deleted {len(tracks)} track(s).[/green]"))
 
 
 @music.command("delete", help=_help("music_delete"))
