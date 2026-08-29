@@ -806,19 +806,18 @@ def music_sort(light: Light, field, order):
     descending = order == "descending"
 
     if field == "artist":
-        light.music.set_sort_mode(
-            SortMode.ARTIST_DESC if descending else SortMode.ARTIST_ASC
-        )
+        mode = SortMode.ARTIST_DESC if descending else SortMode.ARTIST_ASC
     elif field == "title":
-        light.music.set_sort_mode(
-            SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
-        )
+        mode = SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
     elif field == "artist-album":
-        light.music.set_sort_mode(
-            SortMode.ARTIST_ALBUM_DESC if descending else SortMode.ARTIST_ALBUM_ASC
-        )
-    elif field == "none":
-        light.music.set_sort_mode(SortMode.RANK)
+        mode = SortMode.ARTIST_ALBUM_DESC if descending else SortMode.ARTIST_ALBUM_ASC
+    else:  # field == "none"
+        mode = SortMode.RANK
+
+    light.music.set_sort_mode(mode)
+
+    status = SortModeStatus(sort_mode=mode.value)
+    render(status, lambda: console.print(f"Sort mode: {mode.value}"))
 
 
 @music.command("update", help=_help("music_update"))
