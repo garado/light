@@ -25,6 +25,7 @@ from light_api.music import LightMusic, SortMode, SortModeStatus
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
+from light_api import cache as api_cache
 from light_api import with_light
 from light_cli_tui.interactive import (
     confirm_selection_with_repick,
@@ -2253,6 +2254,15 @@ def cache_status():
         console.print(f"Caching is {'[green]enabled[/green]' if enabled else '[yellow]disabled[/yellow]'}.")
 
     render(CacheStatus(cache_enabled=enabled), render_human_readable)
+
+
+@cache.command("clear", help=_help("cache_clear"))
+def cache_clear():
+    removed = api_cache.clear()
+    render(
+        {"files_removed": removed},
+        lambda: console.print(f"[green]Cleared {removed} cache file(s).[/green]"),
+    )
 
 
 # -- Auth -----------------------------------------------------------------------

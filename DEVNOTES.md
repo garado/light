@@ -5,15 +5,14 @@
 - remove -v for --version, and keep -v for --verbose
 - (test) live contract test: `pytest tests/test_live_contract.py --live` validates
   real API GET responses against openapi-spec.json. Desktop-only, never in CI.
-- (feat) update music management commands to support external cli usage (json/yes/dryrun)
+- (feat) update music management commands to fully support external cli usage (json/yes/dryrun)
+- (feat) add cli cache clear command
 - security
     - BREAKING (fix) password can no longer be passed directly to cli; the user is instead prompted (with --ask)
     - (fix) derive cache key with scrypt + per-file salt
 
-
 ## to do
 - no real support for multi-device accounts. this is a much larger lift
-- (feat) add cli cache clear command
 - device id: add method to change the target device
 - ffmpeg is an implicit dependency
 - make sorting more efficient

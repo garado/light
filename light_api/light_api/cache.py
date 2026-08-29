@@ -22,6 +22,7 @@ import hashlib
 import json
 import logging
 import os
+import shutil
 import tempfile
 import time
 from dataclasses import dataclass
@@ -179,3 +180,14 @@ def invalidate(module: CacheModule, key: str | None = None) -> None:
         pass
     except OSError as e:
         log.warning(f"Cache for {_label(module, key)} could not be invalidated: {e}")
+
+
+def clear() -> int:
+    """Delete the entire local response cache. Returns the number of files removed."""
+    root = _cache_dir()
+    if not os.path.isdir(root):
+        return 0
+    removed = sum(len(files) for _, _, files in os.walk(root))
+    shutil.rmtree(root, ignore_errors=True)
+    log.debug(f"Cleared {removed} cache file(s) from {root}")
+    return removed
