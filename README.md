@@ -207,7 +207,7 @@ Minimal API usage examples are in [`examples/`](https://github.com/garado/light/
 
 Local response caching is **off by default**. When enabled, read commands (`podcasts list`, `notes list`, `music list`, `devices list`, `tools list`, and note content fetched via `notes get`) may return a cached response instead of always hitting the API to improve performance. Mutating commands always invalidate the cache for whatever they change.
 
-Cached data is **encrypted at rest** with a key derived from your session token, and expires after 15 minutes regardless.
+Cached data expires after 15 minutes regardless. Each cache file is encrypted with a key derived (scrypt + per-file salt) from your current session token. This protects cache copies that get separated from your OS keyring - backups, synced folders - and means a cache written by an old session becomes unreadable once the token rotates. It is **not** a defense against a process running as your user, which can read the session token directly.
 
 Turn it on persistently:
 
