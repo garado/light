@@ -6,6 +6,8 @@
 - (test) live contract test: `pytest tests/test_live_contract.py --live` validates
   real API GET responses against openapi-spec.json. Desktop-only, never in CI.
 - (feat) update music management commands to support external cli usage (json/yes/dryrun)
+- security
+    - BREAKING (fix) password can no longer be passed directly to cli; the user is instead prompted (with --ask)
 
 ## to do
 - no real support for multi-device accounts. this is a much larger lift

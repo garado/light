@@ -186,8 +186,15 @@ class JsonAwareGroup(click.RichGroup):
 )
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
-@click.option("--password", default=None, help="Light account password.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
+@click.option(
+    "--ask",
+    "ask_password",
+    is_flag=True,
+    default=False,
+    help="Prompt for the Light account password interactively."
+    "Ignored if --password-file or $LIGHT_PASSWORD is set.",
+)
 @click.option("--phone-number", default=None, help="Phone number.")
 @click.option(
     "--phone-number-file", default=None, help="Path to file containing phone number."
@@ -225,8 +232,8 @@ def cli(
     ctx,
     email,
     email_file,
-    password,
     password_file,
+    ask_password,
     phone_number,
     phone_number_file,
     device_id,
@@ -246,8 +253,8 @@ def cli(
         {
             "email": email,
             "email_file": email_file,
-            "password": password,
             "password_file": password_file,
+            "ask_password": ask_password,
             "phone_number": phone_number,
             "phone_number_file": phone_number_file,
             "device_id": device_id,
@@ -2252,7 +2259,6 @@ def logout(ctx):
     light = Light(
         email=obj.get("email"),
         email_file=obj.get("email_file"),
-        password=obj.get("password"),
         password_file=obj.get("password_file"),
         phone=obj.get("phone_number"),
         phone_file=obj.get("phone_number_file"),
@@ -2282,7 +2288,6 @@ def tui(ctx):
         LightConfig(
             email=obj.get("email"),
             email_file=obj.get("email_file"),
-            password=obj.get("password"),
             password_file=obj.get("password_file"),
             phone=obj.get("phone_number"),
             phone_file=obj.get("phone_number_file"),

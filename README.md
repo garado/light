@@ -22,23 +22,18 @@ pip install light-phone-cli-tui
 
 ## Authentication
 
-This needs your Light email and password to authenticate into the Light dashboard. If your account has more than one device registered, you'll also need to specify which one to operate on via phone number or device ID (mutually exclusive).
-
-Please enter your phone number **without** the country code.
-
-Three options:
+This needs your Light email and password to authenticate into the Light dashboard. If your account has more than one device registered, you'll also need to specify which one to operate on via phone number or device ID (mutually exclusive). Please enter your phone number **without** the country code.
 
 ```sh
-# 1. Environment variable
-# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_PHONE_NUMBER (or LIGHT_DEVICE_ID) are set (see .env.example)
+# 1. Pass credentials from file
+light --email-file=... --password-file=... --phone-number-file=... <command>
+
+# 2. Pass credentials through environment variables
+# Assumes LIGHT_EMAIL and LIGHT_PASSWORD are set, plus LIGHT_PHONE_NUMBER/LIGHT_DEVICE_ID if necessary. (See .env.example)
 light <command>
 
-# 2. Command line
-light --email=... --password=... --phone-number=... <command>
-light --email=... --password=... --device-id=... <command>
-
-# 3. File
-light --email-file=... --password-file=... --phone-number-file=... <command>
+# 3. Pass credentials through user prompt
+light --email=... --phone-number=... --ask <command>
 ```
 
 After the first login, your auth token will be cached. Tokens are good for 30 days. Log out with `light logout`.

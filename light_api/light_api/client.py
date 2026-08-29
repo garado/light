@@ -106,11 +106,16 @@ class Light:
         device_id: str | None = None,
         device_id_file: str | None = None,
         cache_enabled: bool = False,
+        password_prompt: Callable[[], str] | None = None,
     ) -> None:
         self.email: str | None = email or self._resolve(email_file, "LIGHT_EMAIL")
         self.password: str | None = password or self._resolve(
             password_file, "LIGHT_PASSWORD"
         )
+
+        # Called lazily by login() to obtain a password only when one is actually needed
+        self._password_prompt: Callable[[], str] | None = password_prompt
+
         self.phone: str | None = phone or self._resolve(
             phone_file, "LIGHT_PHONE_NUMBER"
         )
@@ -143,8 +148,14 @@ class Light:
         if self._api_token is not None:
             return
 
+        if not self.password and self._password_prompt is not None:
+            self.password = self._password_prompt()
+
         if not self.email or not self.password:
-            raise RuntimeError("No cached login found. Provide an email and password.")
+            raise RuntimeError(
+                "No cached session and no credentials available.\n\n"
+                "Please provide your email and password. Run `light --help` to see login options."
+            )
 
         resp = httpx.post(
             f"{API_BASE}/api/authorizations",

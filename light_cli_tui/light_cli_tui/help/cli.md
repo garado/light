@@ -1,16 +1,15 @@
 **Unofficial CLI for the Light Phone.**
 
-Manage music, podcasts, notes, contacts, tools, and device settings on your
-Light device from the terminal.
+Manage music, podcasts, notes, contacts, tools, and more on your Light device from the terminal.
 
 **Login:** Provide your email and password to get started.
 
-1. From file:
+1. Prompt for the password interactively:
+    - `light --email <EMAIL> --ask <command>`
+2. From file:
     - `light --email-file <FILE> --password-file <FILE>`
-2. Using environment variables:
+3. Using environment variables:
     - `LIGHT_EMAIL` and `LIGHT_PASSWORD`
-3. From CLI options (this is **not recommended**, as it is not as secure as the other options):
-    - `light --email <EMAIL> --password <PASSWORD>`
 
 **Multiple devices?** To target a specific device, specify one of either a phone number or a device ID.
 
