@@ -689,34 +689,61 @@ def music_delete_all(light: Light):
     "--album", "-b", "album_regex", help="Delete tracks whose album matches this regex pattern."
 )
 @click.option(
+    "--id",
+    "ids",
+    default=None,
+    help="Delete track(s) by exact audio ID (comma-separated for bulk deletes).",
+)
+@click.option(
     "--interactive",
     "-i",
     is_flag=True,
     default=False,
-    help="Immediately open interactive deletion menu."
+    help="Hand-pick which matched tracks to delete via a checkbox menu. Works with "
+    "fuzzy search and with --title/--artist/--album regex selection.",
 )
+@mutative_options("Show which tracks would be deleted without deleting anything.")
 def music_delete(
     light: Light,
     songs: tuple[str, ...],
     title_regex: str | None,
     artist_regex: str | None,
     album_regex: str | None,
+    ids: str | None,
     interactive: bool,
+    yes: bool,
+    dry_run: bool,
 ):
     songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
 
-    if songs and regex_given:
+    if ids:
+        id_list = [i.strip() for i in ids.split(",")]
+        if any(not i for i in id_list):
+            raise click.UsageError(f"Could not parse --id value: {ids!r}")
+        ids = tuple(id_list)
+    else:
+        ids = ()
+
+    modes_given = sum([bool(songs), bool(regex_given), bool(ids)])
+    if modes_given > 1:
         raise click.UsageError(
-            "Provide either song titles or --title/--artist/--album, not both."
+            "Provide song titles, --title/--artist/--album, or --id — not more than one."
+        )
+    if modes_given == 0:
+        raise click.UsageError(
+            "Provide song titles, --id, or one of --title/--artist/--album."
         )
 
-    if not songs and not regex_given:
-        raise click.UsageError("Provide song titles, or one of --title/--artist/--album.")
+    automated = yes or dry_run or is_json_mode()
+    if interactive and automated:
+        raise click.UsageError(
+            "--interactive cannot be combined with --yes, --dry-run, or --json."
+        )
 
     tracks = light.music.get_tracks()
 
-    def repick():
+    def fuzzy_repick():
         return fuzzy_pick_interactive(
             songs,
             tracks,
@@ -726,9 +753,46 @@ def music_delete(
             console=console,
         )
 
-    if regex_given:
-        to_delete = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+    # repick: hand-pick callback offered as [p] at the confirm prompt
+    repick = None
+
+    if ids:
+        by_id = {t.audio_id: t for t in tracks}
+        missing = [i for i in ids if i not in by_id]
+        if missing:
+            raise click.UsageError(f"No track(s) found with id: {', '.join(missing)}")
+        to_delete = [by_id[i] for i in ids]
+    elif regex_given:
+        candidates = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+
+        def repick():
+            return pick_interactive(
+                candidates,
+                label=lambda t: f"{t.artist} — {t.album} — {t.title}",
+                id_key=lambda t: t.audio_id,
+                console=console,
+                message="Select tracks to delete:",
+            )
+
+        if candidates and interactive and not automated:
+            selected = repick()
+            if selected is None:
+                console.print("[yellow]Aborted.[/yellow]")
+                return
+            to_delete = list(selected.values())
+        else:
+            to_delete = candidates
+    elif automated:
+        selected = fuzzy_pick_best(
+            songs,
+            tracks,
+            fields=lambda t: (t.title, t.artist, t.album),
+            id_key=lambda t: t.audio_id,
+            console=console,
+        )
+        to_delete = list(selected.values()) if selected else []
     else:
+        repick = fuzzy_repick
         if interactive:
             selected = repick()
         else:
@@ -745,14 +809,23 @@ def music_delete(
         to_delete = list(selected.values())
 
     if not to_delete:
-        console.print("[yellow]No matching tracks.[/yellow]")
+        render([], lambda: console.print("[yellow]No matching tracks.[/yellow]"))
         return
 
-    if regex_given:
-        console.print(f"Tracks to delete ({len(to_delete)}):")
+    def render_preview():
         for t in to_delete:
-            console.print(f"  {t.artist} — {t.title}")
-        if not click.confirm("Proceed?"):
+            console.print(f"  {t.artist} — {t.album} — {t.title}")
+
+    if automated or repick is None:
+        proceed = resolve_mutative_action(
+            to_delete,
+            render_preview,
+            yes=yes,
+            dry_run=dry_run,
+            preview_header=f"Tracks to delete ({len(to_delete)}):",
+            confirm_message="Proceed?",
+        )
+        if not proceed:
             return
     else:
         result = confirm_selection_with_repick(
@@ -768,6 +841,10 @@ def music_delete(
 
     audio_ids = {t.audio_id for t in to_delete}
     light.music.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
+    render(
+        to_delete,
+        lambda: console.print(f"[green]Deleted {len(to_delete)} track(s).[/green]"),
+    )
 
 
 @music.command("sort", help=_help("music_sort"))
