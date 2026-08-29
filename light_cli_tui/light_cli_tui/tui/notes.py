@@ -6,14 +6,14 @@ import tempfile
 from typing import TYPE_CHECKING
 
 from mutagen._file import File as MutagenFile
-from textual import work
+from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widget import Widget
-from textual.widgets import DataTable, Static
+from textual.widgets import DataTable, Input, Static
 
-from .widgets import EditField, EditModal, VimDataTable
+from .widgets import EditField, EditModal, SearchBar, VimDataTable
 
 if TYPE_CHECKING:
     from .worker import LightThread
@@ -51,6 +51,7 @@ class NotesPane(Widget):
     """
 
     BINDINGS = [
+        Binding("/", "search", "search"),
         Binding("ctrl+e", "edit_note", "edit"),
         Binding("ctrl+p", "toggle_audio", "play"),
         Binding("ctrl+r", "rename_note", "rename"),
@@ -61,6 +62,7 @@ class NotesPane(Widget):
     def compose(self) -> ComposeResult:
         with Widget(id="notes-list-pane"):
             yield VimDataTable(id="notes-list")
+            yield SearchBar(placeholder="search titles")
         with VerticalScroll(id="notes-content-pane"):
             yield Static("", id="notes-content")
 
@@ -71,6 +73,8 @@ class NotesPane(Widget):
         self._pw: "LightThread | None" = None
         self._loaded = False
         self._notes: list = []
+        self._visible: list = []
+        self._query = ""
         self._content_cache: dict[str, bytes] = {}
         self._audio_proc: subprocess.Popen | None = None
         self._audio_tempfile: str | None = None
@@ -87,6 +91,7 @@ class NotesPane(Widget):
         table.add_column("Title", width=self._TITLE_WIDTH, key="title")
         table.show_header = False
         table.cursor_type = "row"
+        self.query_one(SearchBar).display = False
 
     @staticmethod
     def _truncate(text: str, width: int) -> str:
@@ -108,18 +113,71 @@ class NotesPane(Widget):
     def _populate(self, notes) -> None:
         self._notes = notes
         self._content_cache.clear()
+        self._apply_filter()
+        if self._visible:
+            self._show_note(self._visible[0])
+
+    # -- search ------------------------------------------------------------
+
+    def action_search(self) -> None:
+        search = self.query_one(SearchBar)
+        search.display = True
+        search.value = self._query
+        search.focus()
+
+    @on(Input.Changed, "SearchBar")
+    def _on_query_changed(self, event: Input.Changed) -> None:
+        self._query = event.value
+        self._apply_filter()
+
+    @on(Input.Submitted, "SearchBar")
+    def _on_query_submitted(self, event: Input.Submitted) -> None:
+        # keep the filter, hand focus back to the list
+        self.query_one(SearchBar).display = False
+        self.query_one("#notes-list", VimDataTable).focus()
+
+    @on(SearchBar.Cancelled)
+    def _on_query_cancelled(self, event: SearchBar.Cancelled) -> None:
+        self._query = ""
+        event.control.value = ""
+        event.control.display = False
+        self._apply_filter()
+        self.query_one("#notes-list", VimDataTable).focus()
+
+    def _apply_filter(self) -> None:
+        q = self._query.strip().lower()
+        if q:
+            self._visible = [n for n in self._notes if q in (n.title or "").lower()]
+        else:
+            self._visible = list(self._notes)
+        self._render_rows()
+        self._update_list_meta()
+
+    def _render_rows(self) -> None:
         table = self.query_one("#notes-list", VimDataTable)
         table.clear()
-        for n in notes:
+        for n in self._visible:
             prefix = "♪" if n.note_type == "audio" else "✎"
             table.add_row(
                 f"{prefix} {self._truncate(n.title or '(untitled)', self._TITLE_WIDTH - 2)}",
                 key=n.id,
             )
-        count = f"{len(notes)} note{'s' if len(notes) != 1 else ''}"
-        self.query_one("#notes-list-pane").border_subtitle = count
-        if notes:
-            self._show_note(notes[0])
+        if not self._visible:
+            self.query_one("#notes-content", Static).update("no matches")
+
+    def _update_list_meta(self) -> None:
+        pane = self.query_one("#notes-list-pane")
+        total = len(self._notes)
+        shown = len(self._visible)
+        if self._query.strip():
+            pane.border_title = (
+                f'List · Showing {shown} result{"" if shown == 1 else "s"}'
+                f' for "{self._query.strip()}"'
+            )
+            pane.border_subtitle = f"{shown}/{total} match{'' if shown == 1 else 'es'}"
+        else:
+            pane.border_title = "List"
+            pane.border_subtitle = f"{total} note{'' if total == 1 else 's'}"
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key is None:
