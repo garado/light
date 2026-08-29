@@ -9,7 +9,13 @@ from typing import Any
 
 from light_api.contacts import ContactsExportResult, ContactsImportResult, LightContact
 from light_api.devices import DeveloperModeStatus, LightDevice
-from light_api.music import AudioCapacity, LightPlaylist, LightTrack, UploadResult
+from light_api.music import (
+    AudioCapacity,
+    LightPlaylist,
+    LightTrack,
+    SortModeStatus,
+    UploadResult,
+)
 from light_api.notes import LightNote, NoteContentResult, NoteDownloadResult
 from light_api.podcast import LightPodcast, PodcastAddResult
 from light_api.settings import CacheStatus
@@ -25,6 +31,7 @@ COMMAND_OUTPUT_SHAPES: dict[str, Any] = {
     "music upload": list[UploadResult],
     "music capacity": AudioCapacity,
     "music playlists list": list[LightPlaylist],
+    "music sort": SortModeStatus,
     "notes list": list[LightNote],
     "notes get": NoteContentResult,
     "notes add": LightNote,

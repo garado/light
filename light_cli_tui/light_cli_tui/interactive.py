@@ -1,5 +1,8 @@
 """Interactive fuzzy-pick and confirm helpers."""
 
+import contextlib
+import sys
+
 import click
 
 from InquirerPy import inquirer
@@ -8,10 +11,49 @@ from rich.console import Console
 from typing import Callable, Hashable, Iterable, TypeVar
 
 from light_cli_tui.fuzzy import fuzzy_filter
+from light_cli_tui.output import is_json_mode
+
+try:
+    import termios
+except ImportError:  # non-POSIX
+    termios = None
 
 T = TypeVar("T")
 
 MAX_FUZZY_CANDIDATES = 30
+
+
+@contextlib.contextmanager
+def _terminal_guard():
+    """Restore the tty's original mode on exit.
+
+    InquirerPy/prompt_toolkit put the terminal in raw mode and normally restore
+    it themselves, but a Ctrl+C at the wrong time (i.e. teardown) could cause
+    restoration to skip.
+
+    This saves tty attributes before launching those and ensures those settings
+    are always restored.
+    """
+    if termios is None or not sys.stdin.isatty():
+        yield
+        return
+    fd = sys.stdin.fileno()
+    try:
+        saved = termios.tcgetattr(fd)
+    except termios.error:
+        yield
+        return
+    try:
+        yield
+    finally:
+        with contextlib.suppress(termios.error, OSError):
+            termios.tcsetattr(fd, termios.TCSADRAIN, saved)
+
+
+def _execute(prompt):
+    """Run an InquirerPy prompt behind the terminal-mode safety net."""
+    with _terminal_guard():
+        return prompt.execute()
 
 
 def fuzzy_pick_interactive(
@@ -47,13 +89,15 @@ def fuzzy_pick_interactive(
 
         lookup = {id_key(t): t for _, t in candidates}
 
-        picked_ids = inquirer.checkbox(
-            message=f"Select items matching {query!r}:",
-            choices=[Choice(value=id_key(t), name=label(t)) for _, t in candidates],
-            raise_keyboard_interrupt=False,
-            mandatory=False,
-            long_instruction="(space to select, enter to confirm, ctrl-c to cancel)",
-        ).execute()
+        picked_ids = _execute(
+            inquirer.checkbox(
+                message=f"Select items matching {query!r}:",
+                choices=[Choice(value=id_key(t), name=label(t)) for _, t in candidates],
+                raise_keyboard_interrupt=False,
+                mandatory=False,
+                long_instruction="(space to select, enter to confirm, ctrl-c to cancel)",
+            )
+        )
 
         if picked_ids is None:
             return None
@@ -87,13 +131,17 @@ def pick_interactive(
 
     lookup = {id_key(t): t for t in candidates}
 
-    picked_ids = inquirer.checkbox(
-        message=message,
-        choices=[Choice(value=id_key(t), name=label(t), enabled=True) for t in candidates],
-        raise_keyboard_interrupt=False,
-        mandatory=False,
-        long_instruction="(space to toggle, enter to confirm, ctrl-c to cancel)",
-    ).execute()
+    picked_ids = _execute(
+        inquirer.checkbox(
+            message=message,
+            choices=[
+                Choice(value=id_key(t), name=label(t), enabled=True) for t in candidates
+            ],
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+            long_instruction="(space to toggle, enter to confirm, ctrl-c to cancel)",
+        )
+    )
 
     if picked_ids is None:
         return None
@@ -101,7 +149,9 @@ def pick_interactive(
     return {pid: lookup[pid] for pid in picked_ids}
 
 
-def prompt_track_edit(label: str, title: str, artist: str, album: str) -> tuple[str, str, str] | None:
+def prompt_track_edit(
+    label: str, title: str, artist: str, album: str
+) -> tuple[str, str, str] | None:
     """Prompt for a track's new title/artist/album, prefilled with its current values.
 
     Returns:
@@ -109,21 +159,36 @@ def prompt_track_edit(label: str, title: str, artist: str, album: str) -> tuple[
     """
     click.echo(f"Editing: {label}")
 
-    new_title = inquirer.text(
-        message="Title:", default=title, raise_keyboard_interrupt=False, mandatory=False
-    ).execute()
+    new_title = _execute(
+        inquirer.text(
+            message="Title:",
+            default=title,
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+        )
+    )
     if new_title is None:
         return None
 
-    new_artist = inquirer.text(
-        message="Artist:", default=artist, raise_keyboard_interrupt=False, mandatory=False
-    ).execute()
+    new_artist = _execute(
+        inquirer.text(
+            message="Artist:",
+            default=artist,
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+        )
+    )
     if new_artist is None:
         return None
 
-    new_album = inquirer.text(
-        message="Album:", default=album, raise_keyboard_interrupt=False, mandatory=False
-    ).execute()
+    new_album = _execute(
+        inquirer.text(
+            message="Album:",
+            default=album,
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+        )
+    )
     if new_album is None:
         return None
 
@@ -141,21 +206,36 @@ def prompt_batch_edit() -> tuple[str | None, str | None, str | None] | None:
     """
     click.echo("Batch editing: leave a field blank to leave it unchanged.")
 
-    new_title = inquirer.text(
-        message="Title:", default="", raise_keyboard_interrupt=False, mandatory=False
-    ).execute()
+    new_title = _execute(
+        inquirer.text(
+            message="Title:",
+            default="",
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+        )
+    )
     if new_title is None:
         return None
 
-    new_artist = inquirer.text(
-        message="Artist:", default="", raise_keyboard_interrupt=False, mandatory=False
-    ).execute()
+    new_artist = _execute(
+        inquirer.text(
+            message="Artist:",
+            default="",
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+        )
+    )
     if new_artist is None:
         return None
 
-    new_album = inquirer.text(
-        message="Album:", default="", raise_keyboard_interrupt=False, mandatory=False
-    ).execute()
+    new_album = _execute(
+        inquirer.text(
+            message="Album:",
+            default="",
+            raise_keyboard_interrupt=False,
+            mandatory=False,
+        )
+    )
     if new_album is None:
         return None
 
@@ -176,7 +256,8 @@ def fuzzy_pick_best(
     for query in queries:
         scored = fuzzy_filter(query, items, key=fields)
         if not scored:
-            console.print(f"[yellow]No matches for {query!r}.[/yellow]")
+            if not is_json_mode():
+                console.print(f"[yellow]No matches for {query!r}.[/yellow]")
             continue
         top_score = scored[0][0]
         for score, t in scored:

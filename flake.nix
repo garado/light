@@ -8,6 +8,19 @@
     pkgs = nixpkgs.legacyPackages.${system};
     python = pkgs.python312;
 
+    # light_cli_tui requires 3.14.5; nixpkgs' version lags behind. override it here
+    rapidfuzz = python.pkgs.rapidfuzz.overridePythonAttrs (old: rec {
+      version = "3.14.5";
+      src = pkgs.fetchFromGitHub {
+        owner = "maxbachmann";
+        repo = "RapidFuzz";
+        tag = "v${version}";
+        hash = "sha256-wF7eeSD6GQfN0EOwDvrgjMqN5u2wxXFlktQS7nIKgkU=";
+      };
+      patches = [ ];
+      postPatch = "";
+    });
+
     light-phone-api = python.pkgs.buildPythonPackage {
       pname = "light-phone-api";
       version = "0.5.0";
