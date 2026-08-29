@@ -245,6 +245,12 @@ def cli(
     if (phone_number or phone_number_file) and (device_id or device_id_file):
         raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
 
+    if json_output and ask_password:
+        raise click.UsageError(
+            "--ask is interactive and cannot be used with --json. "
+            "Provide the password via --password-file or $LIGHT_PASSWORD."
+        )
+
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
 
