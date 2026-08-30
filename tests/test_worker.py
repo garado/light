@@ -68,11 +68,11 @@ def test_submit_after_shutdown_raises(monkeypatch):
 
 def test_queued_calls_are_failed_when_the_worker_stops(monkeypatch):
     monkeypatch.setattr("light_api.worker.Light", _FakeLightCM)
+    # never started: nothing consumes the queue, so _fail_pending() is deterministic
     t = LightThread(LightConfig())
-    t.start()
 
     pending: Future = Future()
-    t._queue.put((lambda _l: 1, pending))  # simulate an in-flight enqueue
+    t._queue.put((lambda _l: 1, pending))  # a call that was queued but never run
     t._fail_pending()  # worker exit path
 
     with pytest.raises(RuntimeError, match="stopped"):

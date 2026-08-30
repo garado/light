@@ -38,6 +38,9 @@ def _list_tracks_with(raises):
         (RuntimeError("Get tracks: 429"), grpc.StatusCode.UNAVAILABLE),
         (RuntimeError("Update metadata: 404"), grpc.StatusCode.NOT_FOUND),
         (RuntimeError("Delete track: 401"), grpc.StatusCode.UNAUTHENTICATED),
+        # explicit status wins over the auth keyword
+        (RuntimeError("Login failed: 500"), grpc.StatusCode.UNAVAILABLE),
+        (RuntimeError("Login failed: 401"), grpc.StatusCode.UNAUTHENTICATED),
         (RuntimeError("Patch item: 403"), grpc.StatusCode.PERMISSION_DENIED),
         (RuntimeError("Post audio: 400"), grpc.StatusCode.INVALID_ARGUMENT),
         (RuntimeError("Weird one: 418"), grpc.StatusCode.FAILED_PRECONDITION),

@@ -123,7 +123,7 @@ class LightThread:
         """
         future: Future[Any] = Future()
         with self._lock:
-            if self._stopped:
+            if self._stopped or not self._thread.is_alive():
                 raise RuntimeError("LightThread worker is not running")
             self._queue.put((func, future))
         return future.result(timeout)

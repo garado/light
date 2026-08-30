@@ -5,8 +5,8 @@ The API only raises bare RuntimeErrors and httpx errors.
 httpx errors -> DEADLINE_EXCEEDED / UNAVAILABLE.
 
 For RuntimeErrors: disambiguate based on the error message.
-1. auth keywords detected   -> UNAUTHENTICATED
-2. trailing HTTP status     -> follow _STATUS_MAP (5xx: UNAVAILABLE, 404: NOT_FOUND, ...)
+1. trailing HTTP status     -> follow _STATUS_MAP (5xx: UNAVAILABLE, 404: NOT_FOUND, ...)
+2. auth keywords detected   -> UNAUTHENTICATED   (only when there's no status)
 3. "no <x> found" keyword   -> NOT_FOUND
 4. else                     -> FAILED_PRECONDITION
 
@@ -58,11 +58,11 @@ def _code_from_http_status(message: str) -> grpc.StatusCode | None:
 
 
 def _runtime_error_code(message: str) -> grpc.StatusCode:
-    if _looks_like_auth(message):
-        return grpc.StatusCode.UNAUTHENTICATED
     mapped = _code_from_http_status(message)
     if mapped is not None:
         return mapped
+    if _looks_like_auth(message):
+        return grpc.StatusCode.UNAUTHENTICATED
     if any(hint in message.lower() for hint in _NOT_FOUND_HINTS):
         return grpc.StatusCode.NOT_FOUND
     return grpc.StatusCode.FAILED_PRECONDITION
