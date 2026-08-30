@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from light_daemon.errors import grpc_errors
 from light_daemon.mapping import track_to_proto
 from light_daemon.v1 import music_pb2, music_pb2_grpc
 
@@ -19,5 +20,8 @@ class MusicServicer(music_pb2_grpc.MusicServiceServicer):
     def ListTracks(
         self, request: music_pb2.ListTracksRequest, context: Any
     ) -> music_pb2.ListTracksResponse:
-        tracks = self._pw.submit(lambda light: light.music.get_tracks())
-        return music_pb2.ListTracksResponse(tracks=[track_to_proto(t) for t in tracks])
+        with grpc_errors(context):
+            tracks = self._pw.submit(lambda light: light.music.get_tracks())
+            return music_pb2.ListTracksResponse(
+                tracks=[track_to_proto(t) for t in tracks]
+            )

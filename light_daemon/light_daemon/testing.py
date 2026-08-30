@@ -44,18 +44,32 @@ _SAMPLE_TRACKS = [
 
 
 class _FakeMusic:
-    def __init__(self, tracks: list[LightTrack]) -> None:
+    def __init__(
+        self, tracks: list[LightTrack], raises: BaseException | None = None
+    ) -> None:
         self._tracks = tracks
+        self._raises = raises
 
     def get_tracks(self) -> list[LightTrack]:
+        if self._raises is not None:
+            raise self._raises
         return list(self._tracks)
 
 
 class FakeLight:
-    """Stand-in for `light_api.client.Light`."""
+    """Stand-in for `light_api.client.Light`.
 
-    def __init__(self, tracks: list[LightTrack] | None = None) -> None:
-        self.music = _FakeMusic(_SAMPLE_TRACKS if tracks is None else tracks)
+    Pass `raises=` to make `music.get_tracks()` fail, for error-mapping tests.
+    """
+
+    def __init__(
+        self,
+        tracks: list[LightTrack] | None = None,
+        raises: BaseException | None = None,
+    ) -> None:
+        self.music = _FakeMusic(
+            _SAMPLE_TRACKS if tracks is None else tracks, raises=raises
+        )
 
 
 @dataclass
