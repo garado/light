@@ -7,6 +7,7 @@ import sys
 
 from light_api.worker import LightConfig, LightThread
 
+from light_daemon.auth import generate_token
 from light_daemon.server import serve
 
 
@@ -55,11 +56,12 @@ def config_from_args(args: argparse.Namespace) -> LightConfig:
 
 def main(argv: list[str] | None = None) -> None:
     args = build_arg_parser().parse_args(argv)
+    token = generate_token()
 
     if args.fake:
         from light_daemon.testing import FakeLight, FakePw
 
-        serve(FakePw(FakeLight()), port=args.port)
+        serve(FakePw(FakeLight()), port=args.port, token=token)
         return
 
     worker = LightThread(config_from_args(args))
@@ -69,7 +71,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"light-daemon: could not start Light session: {e}", file=sys.stderr)
         raise SystemExit(1)
 
-    serve(worker, port=args.port)
+    serve(worker, port=args.port, token=token)
 
 
 if __name__ == "__main__":

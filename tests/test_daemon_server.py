@@ -1,20 +1,20 @@
-"""End-to-end slice: real gRPC server + real generated stub + fake session.
-
-Proves the wiring - proto -> servicer -> server -> socket -> stub - without
-needing Light credentials.
-"""
+"""End-to-end slice: real gRPC server + real generated stub + fake session."""
 
 import grpc
 import pytest
 
+from light_daemon.auth import bearer_metadata
 from light_daemon.server import build_server
 from light_daemon.testing import FakeLight, FakePw
 from light_daemon.v1 import music_pb2, music_pb2_grpc
 
+_TOKEN = "wiring-test-token"
+_MD = bearer_metadata(_TOKEN)
+
 
 @pytest.fixture
 def channel():
-    server, port = build_server(FakePw(FakeLight()))
+    server, port = build_server(FakePw(FakeLight()), token=_TOKEN)
     server.start()
     chan = grpc.insecure_channel(f"127.0.0.1:{port}")
     try:
@@ -26,7 +26,7 @@ def channel():
 
 def test_list_tracks_returns_the_fake_library(channel):
     stub = music_pb2_grpc.MusicServiceStub(channel)
-    resp = stub.ListTracks(music_pb2.ListTracksRequest())
+    resp = stub.ListTracks(music_pb2.ListTracksRequest(), metadata=_MD)
 
     assert [t.title for t in resp.tracks] == [
         "Playing God",
@@ -41,7 +41,7 @@ def test_list_tracks_returns_the_fake_library(channel):
 
 
 def test_server_gets_an_os_assigned_port():
-    server, port = build_server(FakePw(FakeLight()))
+    server, port = build_server(FakePw(FakeLight()), token=_TOKEN)
     try:
         assert port != 0
     finally:
@@ -55,5 +55,5 @@ def test_unknown_method_is_unimplemented(channel):
         response_deserializer=music_pb2.ListTracksResponse.FromString,
     )
     with pytest.raises(grpc.RpcError) as exc:
-        bogus(music_pb2.ListTracksRequest())
+        bogus(music_pb2.ListTracksRequest(), metadata=_MD)
     assert exc.value.code() == grpc.StatusCode.UNIMPLEMENTED
