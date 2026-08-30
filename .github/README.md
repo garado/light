@@ -1,15 +1,34 @@
 
-# Light API/CLI/TUI
+# light
 
-A community-maintained API and CLI/TUI for managing your Light Phone.
+A collection of community-maintained tools for managing your Light Phone - a Python API, a CLI, and a TUI.
+
+## Highlights
+- **Music**
+    - **Upload FLACs __without__ losing your metadata!**
+    - Bulk upload support: `light music upload ~/Music --recursive`
+    - Delete tracks (with regex filter support)
+    - Bulk-edit track metadata (with regex filter support)
+- **Notes**
+    - Create, rename, and update notes from the CLI
+    - Bulk download every note - text as `.txt`, audio as `.m4a`
+- **Podcasts**
+    - Subscribe to any podcast by RSS feed URL
+- **Contacts**
+    - Add, edit, and delete contacts, or bulk import/export as vCard (`.vcf`)
+- **Tools**
+    - Discover installable tools live from the API, then enable/disable them per device
+- **Scriptable**
+    - `--json`, `--yes`, and `--dry-run` on every mutating command
+- **TUI**
+    - Full-screen terminal UI with Vim binds for music and notes: `light tui`
+
+## Installation
 
 > [!CAUTION]
 > This is beta software and is **actively in development.** Bugs are expected, and bug reports are welcome!
-
-> [!WARNING]
-> Because this is an **unofficial** set of tools created through reverse-engineering, this could break at any time if Light decides to change the structure of their API.
-
-## Installation
+> 
+> This is also an **unofficial** set of tools created through reverse-engineering, so this could break at any time if Light decides to change the structure of their API.
 
 This repo bundles two separate packages `light-phone-api` and `light-phone-cli-tui`. Install whichever suits your needs.
 
@@ -42,31 +61,59 @@ Local response caching is also available (off by default) to speed up repeated c
 
 ## Getting started: CLI/TUI
 
-**Note:** As is the case with the official Light dashboard, any changes made through these tools may take a few moments to propagate to the device.
+Everything is under the `light` command, grouped by area:
+
+| Group | What it does |
+|---|---|
+| `light music` | upload, list, delete, sort, edit metadata, capacity, playlists |
+| `light notes` | list, get, add, update, rename, delete, download-all |
+| `light podcasts` | add (by RSS), list, delete |
+| `light contacts` | list, add, update, delete, import/export vCard |
+| `light tools` | catalog, list, add, remove device tools |
+| `light devices` | list registered devices |
+| `light settings` | device settings (e.g. developer mode) |
+| `light cache` | control the local response cache |
+| `light tui` | launch the full-screen terminal UI |
+
+Run `light`, `light <group>`, or `light <group> <command> --help` for full, always-current docs.
+
+Most mutating commands accept `--dry-run` (preview), `--yes` (skip confirmation), and `--json` (machine-readable output).
+
+**Note:** as with the official Light dashboard, changes may take a few moments to propagate to the device.
 
 ### Music
 
 #### Upload
 
 ```sh
-# Upload tracks
-# Files matching an existing track (by title+artist) are skipped by default
+# Upload a whole folder (recurse into subfolders)
+light music upload ~/Music/Library --recursive
+
+# Upload individual files. Tracks matching an existing one (title+artist) are skipped
 light music upload song1 song2 song3
 
-# Upload tracks
-# Delete-and-replace matching existing tracks instead of skipping them
+# Replace matching tracks instead of skipping them
 light music upload song1 song2 song3 --overwrite
 
-# Upload tracks
-# Allow uploading duplicate tracks
-light music upload --allow-duplicates song1 song2 song3
+# Keep duplicates instead of skipping
+light music upload song1 song2 song3 --allow-duplicates
 ```
 
 #### Delete
 
 ```sh
-# Delete tracks
+# Delete by fuzzy title match
 light music delete song
+
+# Delete by regex on title / artist / album (-t / -a / -b)
+light music delete --artist "^The Warning$"
+light music delete -t "remix" -a "boards of canada"
+
+# Delete specific tracks by ID (comma-separated for bulk)
+light music delete --id abc123,def456
+
+# Hand-pick from the matches before deleting
+light music delete --artist ".*" --interactive
 
 # Delete all tracks (multiple confirmation steps, don't worry)
 light music delete-all
@@ -87,6 +134,30 @@ light music sort artist --desc
 # (Track numbers not supported)
 light music sort artist-album --asc
 light music sort artist-album --desc
+
+# Show the device's current sort mode (no field given)
+light music sort
+```
+
+#### Edit metadata
+
+```sh
+# Select tracks by fuzzy search, regex, or ID, then edit interactively
+light music update "song title"
+light music update --artist ".*warning.*"
+light music update --id abc123,def456
+
+# Non-interactive: set new values directly with --new-*
+light music update --artist "The Warning" --new-artist "Las Wawas"
+light music update --artist "The Warning" --new-artist "Las Wawas" --yes      # skip confirmation
+light music update --artist "The Warning" --new-artist "Las Wawas" --dry-run  # preview only
+```
+
+#### Other
+
+```sh
+# Show audio storage capacity and usage on the device
+light music capacity
 ```
 
 ### Notes
@@ -96,20 +167,13 @@ light music sort artist-album --desc
 light notes list
 light notes list --content-preview
 
-# List notes with file IDs (needed for `watch` cmd)
-light notes list --id
-
 # Create a new text note
 light notes add "Shopping list" "eggs, milk, bread"
 light notes add "Meeting notes" --file notes.txt  # copy contents from notes.txt
 
 # Download all notes to a directory
 # Text notes saved as .txt, audio notes as .m4a
-light notes download ~/my-notes
-
-# Watch a note for changes (polls every 5s, prints when updated_at changes)
-# Useful for more advanced custom integrations (happy hacking!)
-light notes watch <note-id>
+light notes download-all ~/my-notes
 ```
 
 ### Podcasts
@@ -125,16 +189,65 @@ light podcasts list
 light podcasts delete "My Podcast"
 ```
 
-### Tools
-
-Available tools: `alarm album calculator calendar camera directions directory hotspot music notes podcasts timer`
+### Contacts
 
 ```sh
+# List contacts (add --id to also show each contact's UUID)
+light contacts list
+light contacts list --id
+
+# Add a contact
+light contacts add --first "John" --last "Doe" --num "+1 210 555 0100"
+
+# Update a contact by ID (only the fields you pass are changed)
+light contacts update 8e97022d-4cfb-44f3-9a40-2159ef4161da --num "+1 210 555 0199"
+
+# Delete one or more contacts by ID
+light contacts delete <id1> <id2>
+
+# Import/export as vCard (.vcf)
+light contacts import contacts.vcf
+light contacts export contacts.vcf
+```
+
+### Devices
+
+```sh
+# List all devices registered on this account
+light devices list
+```
+
+### Settings
+
+```sh
+# Show or toggle developer mode on the device
+light settings developer-mode
+light settings developer-mode on
+light settings developer-mode off
+```
+
+### Tools
+
+Tools are discovered live from the API. See what's available with `light tools catalog`.
+
+```sh
+# List every installable tool (live from the API)
+light tools catalog
+
+# List tools currently enabled on the device
 light tools list
 
 light tools add <tool>
 
 light tools remove <tool>
+```
+
+### Scripting
+
+Mutating commands take `--json`, `--yes`, and `--dry-run` for safe automation. To emit JSON Schema for every `--json`-enabled command's output:
+
+```sh
+light schema
 ```
 
 ### TUI
@@ -215,6 +328,7 @@ Turn it on persistently:
 light cache enable  # persists until you disable it
 light cache disable
 light cache status
+light cache clear   # drop all cached responses now
 ```
 
 Override the persistent setting for a single invocation with a flag, or for a shell session with an environment variable. Both take precedence over the persistent setting:

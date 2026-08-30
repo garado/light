@@ -47,7 +47,7 @@ click.rich_click.OPTION_GROUPS = {
     "light": [
         {
             "name": "Login",
-            "options": ["--email", "--email-file", "--password", "--password-file"],
+            "options": ["--email", "--email-file", "--password-file", "--ask"],
         },
         {
             "name": "Device Selection",
