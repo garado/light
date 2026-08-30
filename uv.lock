@@ -664,13 +664,15 @@ dependencies = [
     { name = "grpcio" },
     { name = "grpcio-reflection" },
     { name = "light-phone-api" },
+    { name = "protobuf" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "grpcio", specifier = ">=1.60" },
+    { name = "grpcio", specifier = ">=1.83.1" },
     { name = "grpcio-reflection", specifier = ">=1.60" },
     { name = "light-phone-api", editable = "light_api" },
+    { name = "protobuf", specifier = ">=7.35.1" },
 ]
 
 [[package]]
