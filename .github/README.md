@@ -252,7 +252,9 @@ light schema
 
 ### TUI
 
-The TUI offers an easier way of managing music and notes.
+<img width="2572" height="1011" alt="tui(1)" src="https://github.com/user-attachments/assets/8a36d6a2-8d0c-45ca-ad27-5ee5f15fb459" />
+
+The TUI offers an easy way of managing music and notes.
 
 ```sh
 # Launch
@@ -301,12 +303,6 @@ TUI-specific features:
 | `y` | Copy content to clipboard |
 | `p` | Play / stop audio note |
 | `r` | Refresh |
-
-#### Screenshots
-
-<img height="600" alt="image" src="https://github.com/user-attachments/assets/6a98a91c-63e7-4673-8e37-91c280774ef8" />
-
-<img height="600" alt="image" src="https://github.com/user-attachments/assets/10612e61-1dc3-4e4f-95d3-302d95f15bad" />
 
 ## Getting started: API
 
