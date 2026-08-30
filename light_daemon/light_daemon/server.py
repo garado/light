@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import signal
 import sys
 from concurrent import futures
 from typing import Any
@@ -14,6 +15,9 @@ from light_daemon.v1 import music_pb2_grpc
 
 # One worker since the Light session isn't threadsafe
 _MAX_WORKERS = 1
+
+# Seconds to let in-flight RPCs finish on shutdown
+_SHUTDOWN_GRACE_SECONDS = 5
 
 
 def build_server(pw: Any, *, token: str, port: int = 0) -> tuple[grpc.Server, int]:
@@ -54,9 +58,14 @@ def serve(pw: Any, *, token: str, port: int = 0) -> None:
     print(handshake_line(host, bound_port, token), flush=True)
     print(f"light-daemon listening on {host}:{bound_port}", file=sys.stderr, flush=True)
 
+    def _shutdown(signum, _frame):
+        # non-blocking: schedules a graceful stop, then wait_for_termination() returns
+        server.stop(_SHUTDOWN_GRACE_SECONDS)
+
+    signal.signal(signal.SIGINT, _shutdown)  # Ctrl+C
+    signal.signal(signal.SIGTERM, _shutdown)  # `kill`, systemd, etc.
+
     try:
         server.wait_for_termination()
-    except KeyboardInterrupt:
-        server.stop(grace=1)
     finally:
         pw.shutdown()
