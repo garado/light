@@ -1,9 +1,10 @@
 [tool.uv.workspace]
-members = ["light_api", "light_cli_tui"]
+members = ["light_api", "light_cli_tui", "light_daemon"]
 
 [tool.uv.sources]
 light_api = { workspace = true }
 light-phone-api = { workspace = true }
+light-phone-daemon = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -11,4 +12,5 @@ dev = [
     "pytest-cov",
     "respx",
     "jsonschema",
+    "grpcio-tools>=1.83.1",
 ]
