@@ -14,8 +14,8 @@ from light_daemon.auth import AuthInterceptor, handshake_line
 from light_daemon.servicers import MusicServicer
 from light_daemon.v1 import music_pb2, music_pb2_grpc
 
-# One worker since the Light session isn't threadsafe
-_MAX_WORKERS = 1
+# API work is serialized in LightThread
+_MAX_WORKERS = 8
 
 # Seconds to let in-flight RPCs finish on shutdown
 _SHUTDOWN_GRACE_SECONDS = 5

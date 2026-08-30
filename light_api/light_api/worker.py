@@ -1,10 +1,8 @@
 """Run a `Light` session on a dedicated background thread.
 
-`Light` is not thread-safe, so any consumer with multiple threads - a TUI event loop,
-a gRPC threadpool - must funnel every call through a single owner.
-
-`LightThread` is that owner: `submit(fn)` hands `fn(light)` to the worker thread and
-blocks for the result.
+`Light` is not thread-safe, so any consumer with multiple threads must funnel every
+call through a single owner. `LightThread` is that owner: `submit(fn)` hands `fn(light)`
+to the worker thread and blocks for the result.
 """
 
 from __future__ import annotations
