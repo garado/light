@@ -71,10 +71,6 @@ def serve(
     server, bound_port = build_server(
         pw, token=token, port=port, enable_reflection=enable_reflection
     )
-    server.start()
-    # one machine-readable line on stdout for a parent process to consume
-    print(handshake_line(host, bound_port, token), flush=True)
-    print(f"light-daemon listening on {host}:{bound_port}", file=sys.stderr, flush=True)
 
     def _shutdown(signum, _frame):
         # non-blocking: schedules a graceful stop, then wait_for_termination() returns
@@ -82,6 +78,11 @@ def serve(
 
     signal.signal(signal.SIGINT, _shutdown)  # Ctrl+C
     signal.signal(signal.SIGTERM, _shutdown)  # `kill`, systemd, etc.
+
+    server.start()
+
+    print(handshake_line(host, bound_port, token), flush=True)
+    print(f"light-daemon listening on {host}:{bound_port}", file=sys.stderr, flush=True)
 
     try:
         server.wait_for_termination()
