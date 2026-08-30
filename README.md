@@ -22,23 +22,18 @@ pip install light-phone-cli-tui
 
 ## Authentication
 
-This needs your Light email and password to authenticate into the Light dashboard. If your account has more than one device registered, you'll also need to specify which one to operate on via phone number or device ID (mutually exclusive).
-
-Please enter your phone number **without** the country code.
-
-Three options:
+This needs your Light email and password to authenticate into the Light dashboard. If your account has more than one device registered, you'll also need to specify which one to operate on via phone number or device ID (mutually exclusive). Please enter your phone number **without** the country code.
 
 ```sh
-# 1. Environment variable
-# Assuming LIGHT_EMAIL, LIGHT_PASSWORD, LIGHT_PHONE_NUMBER (or LIGHT_DEVICE_ID) are set (see .env.example)
+# 1. Pass credentials from file
+light --email-file=... --password-file=... --phone-number-file=... <command>
+
+# 2. Pass credentials through environment variables
+# Assumes LIGHT_EMAIL and LIGHT_PASSWORD are set, plus LIGHT_PHONE_NUMBER/LIGHT_DEVICE_ID if necessary. (See .env.example)
 light <command>
 
-# 2. Command line
-light --email=... --password=... --phone-number=... <command>
-light --email=... --password=... --device-id=... <command>
-
-# 3. File
-light --email-file=... --password-file=... --phone-number-file=... <command>
+# 3. Pass credentials through user prompt
+light --email=... --phone-number=... --ask <command>
 ```
 
 After the first login, your auth token will be cached. Tokens are good for 30 days. Log out with `light logout`.
@@ -212,7 +207,7 @@ Minimal API usage examples are in [`examples/`](https://github.com/garado/light/
 
 Local response caching is **off by default**. When enabled, read commands (`podcasts list`, `notes list`, `music list`, `devices list`, `tools list`, and note content fetched via `notes get`) may return a cached response instead of always hitting the API to improve performance. Mutating commands always invalidate the cache for whatever they change.
 
-Cached data is **encrypted at rest** with a key derived from your session token, and expires after 15 minutes regardless.
+Cached data expires after 15 minutes regardless. Each cache file is encrypted with a key derived (scrypt + per-file salt) from your current session token. This protects cache copies that get separated from your OS keyring - backups, synced folders - and means a cache written by an old session becomes unreadable once the token rotates. It is **not** a defense against a process running as your user, which can read the session token directly.
 
 Turn it on persistently:
 
@@ -244,3 +239,18 @@ python scripts/capture_fixture.py
 # Run tests
 uv run pytest
 ```
+
+### Live contract test
+
+`tests/test_live_contract.py` tests if the cloud API's response format changes. It validates each GET response against `light_api/openapi-spec.json`, failing if anything is missing from the expected response (and with `--strict-extra`, it fails if anything is added in the expected response). 
+It needs real credentials and a registered device, so it is skipped unless you pass `--live` (or set `LIGHT_LIVE_CONTRACT=1`). It currently never runs in CI.
+
+```sh
+nix develop
+LIGHT_EMAIL=you@example.com LIGHT_PASSWORD=... \
+    uv run pytest tests/test_live_contract.py --live -v
+
+# multi-device account: also set LIGHT_PHONE_NUMBER or LIGHT_DEVICE_ID
+```
+
+A failure means the API drifted from the spec.

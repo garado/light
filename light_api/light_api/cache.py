@@ -1,5 +1,12 @@
-"""Local disk cache for API data, encrypted at rest with a key derived from the
-current session's OAuth token.
+"""Local disk cache for API data.
+
+Each cache file is encrypted with a key derived (scrypt + per-file salt)
+from the current session token. This protects cache copies that get separated
+from your OS keyring - backups, synced folders, stray file permissions - and
+guarantees that a cache from an old session can't be read.
+
+It is NOT a defense against code running as your user, which can read the session
+token directly.
 
 - Cache is off by default. It can be enabled with a CLI command.
     - The cache setting for each command invocation is overridable at these priority levels:
@@ -15,6 +22,7 @@ import hashlib
 import json
 import logging
 import os
+import shutil
 import tempfile
 import time
 from dataclasses import dataclass
@@ -27,6 +35,13 @@ from cryptography.fernet import Fernet, InvalidToken
 log = logging.getLogger(f"light.{__name__}")
 
 CACHE_TTL_SECONDS = 15 * 60
+
+# scrypt cost parameters
+_SCRYPT_N = 2**14
+_SCRYPT_R = 8
+_SCRYPT_P = 1
+_SCRYPT_MAXMEM = 64 * 1024 * 1024
+_SALT_BYTES = 16
 
 
 class CacheModule(StrEnum):
@@ -44,6 +59,7 @@ class CacheEntry:
     """A module's cache file."""
 
     cached_at: float  # plaintext
+    salt: str  # plaintext, base64 - scrypt salt for encrypted_data's key
     encrypted_data: str  # fernet token
 
 
@@ -67,9 +83,17 @@ def _label(module: CacheModule, key: str | None) -> str:
     return f"{module!r}" if key is None else f"{module!r}/{key!r}"
 
 
-def _derive_key(token: str) -> bytes:
-    """Derive a Fernet key from the session token via SHA-256."""
-    digest = hashlib.sha256(token.encode()).digest()
+def _derive_key(token: str, salt: bytes) -> bytes:
+    """Derive a Fernet key from the session token + salt via scrypt."""
+    digest = hashlib.scrypt(
+        token.encode(),
+        salt=salt,
+        n=_SCRYPT_N,
+        r=_SCRYPT_R,
+        p=_SCRYPT_P,
+        maxmem=_SCRYPT_MAXMEM,
+        dklen=32,
+    )
     return base64.urlsafe_b64encode(digest)
 
 
@@ -92,9 +116,10 @@ def load(module: CacheModule, token: str, key: str | None = None) -> Any | None:
         return None
 
     try:
-        fernet = Fernet(_derive_key(token))
+        salt = base64.urlsafe_b64decode(entry.salt.encode())
+        fernet = Fernet(_derive_key(token, salt))
         plaintext = fernet.decrypt(entry.encrypted_data.encode())
-    except InvalidToken:
+    except (InvalidToken, ValueError):
         log.debug(f"Cache for {label} undecryptable (stale/rotated token)")
         return None
 
@@ -113,9 +138,14 @@ def save(module: CacheModule, token: str, data: Any, key: str | None = None) -> 
     path = _cache_path(module, key)
     cache_dir = os.path.dirname(path)
 
-    fernet = Fernet(_derive_key(token))
+    salt = os.urandom(_SALT_BYTES)
+    fernet = Fernet(_derive_key(token, salt))
     encrypted = fernet.encrypt(json.dumps(data).encode()).decode()
-    entry = CacheEntry(cached_at=time.time(), encrypted_data=encrypted)
+    entry = CacheEntry(
+        cached_at=time.time(),
+        salt=base64.urlsafe_b64encode(salt).decode(),
+        encrypted_data=encrypted,
+    )
     payload = json.dumps(dataclasses.asdict(entry))
 
     try:
@@ -150,3 +180,14 @@ def invalidate(module: CacheModule, key: str | None = None) -> None:
         pass
     except OSError as e:
         log.warning(f"Cache for {_label(module, key)} could not be invalidated: {e}")
+
+
+def clear() -> int:
+    """Delete the entire local response cache. Returns the number of files removed."""
+    root = _cache_dir()
+    if not os.path.isdir(root):
+        return 0
+    removed = sum(len(files) for _, _, files in os.walk(root))
+    shutil.rmtree(root, ignore_errors=True)
+    log.debug(f"Cleared {removed} cache file(s) from {root}")
+    return removed

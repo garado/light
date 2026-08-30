@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import sys
+import threading
 from pathlib import Path
 
 import rich_click as click
@@ -20,10 +21,11 @@ from rich.table import Table
 from light_api.client import Light
 from light_api.contacts import ContactsExportResult, ContactsImportResult
 from light_api.devices import DeveloperModeStatus
-from light_api.music import SortMode
+from light_api.music import LightMusic, SortMode, SortModeStatus
 from light_api.notes import NoteContentResult, NoteDownloadResult
 from light_api.podcast import PodcastAddResult
 from light_api.settings import CacheStatus, get_cache_enabled, set_cache_enabled
+from light_api import cache as api_cache
 from light_api import with_light
 from light_cli_tui.interactive import (
     confirm_selection_with_repick,
@@ -181,12 +183,19 @@ class JsonAwareGroup(click.RichGroup):
     help=_help("cli"),
 )
 @click.version_option(
-    None, "-v", "--version", package_name="light-phone-cli-tui", prog_name="light"
+    None, "--version", package_name="light-phone-cli-tui", prog_name="light"
 )
 @click.option("--email", default=None, help="Light account email address.")
 @click.option("--email-file", default=None, help="Path to file containing email.")
-@click.option("--password", default=None, help="Light account password.")
 @click.option("--password-file", default=None, help="Path to file containing password.")
+@click.option(
+    "--ask",
+    "ask_password",
+    is_flag=True,
+    default=False,
+    help="Prompt for the Light account password interactively."
+    "Ignored if --password-file or $LIGHT_PASSWORD is set.",
+)
 @click.option("--phone-number", default=None, help="Phone number.")
 @click.option(
     "--phone-number-file", default=None, help="Path to file containing phone number."
@@ -224,8 +233,8 @@ def cli(
     ctx,
     email,
     email_file,
-    password,
     password_file,
+    ask_password,
     phone_number,
     phone_number_file,
     device_id,
@@ -237,6 +246,12 @@ def cli(
     if (phone_number or phone_number_file) and (device_id or device_id_file):
         raise click.UsageError("--phone-number and --device-id are mutually exclusive.")
 
+    if json_output and ask_password:
+        raise click.UsageError(
+            "--ask is interactive and cannot be used with --json. "
+            "Provide the password via --password-file or $LIGHT_PASSWORD."
+        )
+
     logging.basicConfig(format="%(name)s %(levelname)s %(message)s")
     logging.getLogger("light").setLevel(log_level.upper())
 
@@ -245,8 +260,8 @@ def cli(
         {
             "email": email,
             "email_file": email_file,
-            "password": password,
             "password_file": password_file,
+            "ask_password": ask_password,
             "phone_number": phone_number,
             "phone_number_file": phone_number_file,
             "device_id": device_id,
@@ -544,6 +559,14 @@ def _render_file_list(files: list[str], verbose: bool) -> None:
     default=False,
     help="When SONGS includes a directory, also walk its subdirectories for audio files.",
 )
+@click.option(
+    "--parallel",
+    "-p",
+    type=click.IntRange(min=1),
+    default=LightMusic.DEFAULT_MAX_CONCURRENT_UPLOADS,
+    show_default=True,
+    help="Max number of files to upload at the same time.",
+)
 @mutative_options("Show what would be uploaded without uploading anything.")
 def music_upload(
     light: Light,
@@ -553,6 +576,7 @@ def music_upload(
     no_convert,
     verbose,
     recursive,
+    parallel,
     yes,
     dry_run,
 ):
@@ -606,33 +630,36 @@ def music_upload(
         TaskProgressColumn(),
         console=console,
     ) as progress:
-        task_id: TaskID | None = None
-        current_file: str | None = None
-        batch_position = ""
+        # track one progress bar task per filepath and guard shared dict w/ a lock
+        lock = threading.Lock()
+        task_ids: dict[str, TaskID] = {}
+        batch_positions: dict[str, str] = {}
 
         def on_file_start(index: int, total: int, file_path: str) -> None:
-            nonlocal batch_position
-            batch_position = f"[{index}/{total}] "
+            with lock:
+                batch_positions[file_path] = f"[{index}/{total}] "
 
-        def on_progress(filename: str, sent: int, total: int) -> None:
-            nonlocal task_id, current_file
-            if filename != current_file:
-                if task_id is not None:
-                    progress.remove_task(task_id)
-                current_file = filename
-                task_id = progress.add_task(f"{batch_position}uploading {filename}", total=100)
+        def on_progress(file_path: str, filename: str, sent: int, total: int) -> None:
+            with lock:
+                task_id = task_ids.get(file_path)
+                if task_id is None:
+                    prefix = batch_positions.get(file_path, "")
+                    task_id = progress.add_task(f"{prefix}uploading {filename}", total=100)
+                    task_ids[file_path] = task_id
             progress.update(task_id, completed=int(sent / total * 100))
 
         def on_convert(file_path: str) -> None:
+            prefix = batch_positions.get(file_path, "")
             filename = os.path.basename(file_path)
             mp3_name = os.path.splitext(filename)[0] + ".mp3"
-            console.print(f"[dim]{batch_position}Converting {filename} -> {mp3_name}[/dim]")
+            console.print(f"[dim]{prefix}Converting {filename} -> {mp3_name}[/dim]")
 
         results = light.music.upload_tracks(
             files,
             allow_duplicates=allow_duplicates,
             overwrite=overwrite,
             convert_flac=not no_convert,
+            max_concurrent=parallel,
             on_progress=on_progress,
             on_convert=on_convert,
             on_file_start=on_file_start,
@@ -653,14 +680,54 @@ def music_upload(
 
 @music.command("delete-all", help=_help("music_delete_all"))
 @with_light
-def music_delete_all(light: Light):
-    if not click.confirm("This will delete ALL tracks on the device. Proceed?"):
+@mutative_options("Show how many tracks would be deleted without deleting anything.")
+def music_delete_all(light: Light, yes: bool, dry_run: bool):
+    if yes and dry_run:
+        raise click.UsageError("--yes and --dry-run are mutually exclusive.")
+
+    tracks = light.music.get_tracks()
+    plan = {
+        "track_count": len(tracks),
+        "tracks": [
+            {
+                "audio_id": t.audio_id,
+                "artist": t.artist,
+                "album": t.album,
+                "title": t.title,
+            }
+            for t in tracks
+        ],
+    }
+
+    if not tracks:
+        render(plan, lambda: console.print("[yellow]No tracks on the device.[/yellow]"))
         return
 
-    if input('Type "yes i am sure" to confirm: ') != "yes i am sure":
+    if dry_run:
+        render(
+            plan,
+            lambda: console.print(
+                f"This will delete ALL {len(tracks)} track(s) on the device."
+            ),
+        )
         return
+
+    if is_json_mode() and not yes:
+        raise click.UsageError(
+            "--json requires --yes or --dry-run for mutative commands."
+        )
+
+    if not yes:
+        if not click.confirm(
+            f"This will delete ALL {len(tracks)} tracks on the device. Proceed?"
+        ):
+            return
+        if input('Type "yes i am sure" to confirm: ') != "yes i am sure":
+            console.print("[yellow]Aborted.[/yellow]")
+            return
 
     light.music.delete_all_tracks()
+    render(plan, lambda: console.print(f"[green]Deleted {len(tracks)} track(s).[/green]"))
 
 
 @music.command("delete", help=_help("music_delete"))
@@ -676,34 +743,61 @@ def music_delete_all(light: Light):
     "--album", "-b", "album_regex", help="Delete tracks whose album matches this regex pattern."
 )
 @click.option(
+    "--id",
+    "ids",
+    default=None,
+    help="Delete track(s) by exact audio ID (comma-separated for bulk deletes).",
+)
+@click.option(
     "--interactive",
     "-i",
     is_flag=True,
     default=False,
-    help="Immediately open interactive deletion menu."
+    help="Hand-pick which matched tracks to delete via a checkbox menu. Works with "
+    "fuzzy search and with --title/--artist/--album regex selection.",
 )
+@mutative_options("Show which tracks would be deleted without deleting anything.")
 def music_delete(
     light: Light,
     songs: tuple[str, ...],
     title_regex: str | None,
     artist_regex: str | None,
     album_regex: str | None,
+    ids: str | None,
     interactive: bool,
+    yes: bool,
+    dry_run: bool,
 ):
     songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
 
-    if songs and regex_given:
+    if ids:
+        id_list = [i.strip() for i in ids.split(",")]
+        if any(not i for i in id_list):
+            raise click.UsageError(f"Could not parse --id value: {ids!r}")
+        ids = tuple(id_list)
+    else:
+        ids = ()
+
+    modes_given = sum([bool(songs), bool(regex_given), bool(ids)])
+    if modes_given > 1:
         raise click.UsageError(
-            "Provide either song titles or --title/--artist/--album, not both."
+            "Provide song titles, --title/--artist/--album, or --id — not more than one."
+        )
+    if modes_given == 0:
+        raise click.UsageError(
+            "Provide song titles, --id, or one of --title/--artist/--album."
         )
 
-    if not songs and not regex_given:
-        raise click.UsageError("Provide song titles, or one of --title/--artist/--album.")
+    automated = yes or dry_run or is_json_mode()
+    if interactive and automated:
+        raise click.UsageError(
+            "--interactive cannot be combined with --yes, --dry-run, or --json."
+        )
 
     tracks = light.music.get_tracks()
 
-    def repick():
+    def fuzzy_repick():
         return fuzzy_pick_interactive(
             songs,
             tracks,
@@ -713,9 +807,46 @@ def music_delete(
             console=console,
         )
 
-    if regex_given:
-        to_delete = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+    # repick: hand-pick callback offered as [p] at the confirm prompt
+    repick = None
+
+    if ids:
+        by_id = {t.audio_id: t for t in tracks}
+        missing = [i for i in ids if i not in by_id]
+        if missing:
+            raise click.UsageError(f"No track(s) found with id: {', '.join(missing)}")
+        to_delete = [by_id[i] for i in ids]
+    elif regex_given:
+        candidates = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
+
+        def repick():
+            return pick_interactive(
+                candidates,
+                label=lambda t: f"{t.artist} — {t.album} — {t.title}",
+                id_key=lambda t: t.audio_id,
+                console=console,
+                message="Select tracks to delete:",
+            )
+
+        if candidates and interactive and not automated:
+            selected = repick()
+            if selected is None:
+                console.print("[yellow]Aborted.[/yellow]")
+                return
+            to_delete = list(selected.values())
+        else:
+            to_delete = candidates
+    elif automated:
+        selected = fuzzy_pick_best(
+            songs,
+            tracks,
+            fields=lambda t: (t.title, t.artist, t.album),
+            id_key=lambda t: t.audio_id,
+            console=console,
+        )
+        to_delete = list(selected.values()) if selected else []
     else:
+        repick = fuzzy_repick
         if interactive:
             selected = repick()
         else:
@@ -732,14 +863,23 @@ def music_delete(
         to_delete = list(selected.values())
 
     if not to_delete:
-        console.print("[yellow]No matching tracks.[/yellow]")
+        render([], lambda: console.print("[yellow]No matching tracks.[/yellow]"))
         return
 
-    if regex_given:
-        console.print(f"Tracks to delete ({len(to_delete)}):")
+    def render_preview():
         for t in to_delete:
-            console.print(f"  {t.artist} — {t.title}")
-        if not click.confirm("Proceed?"):
+            console.print(f"  {t.artist} — {t.album} — {t.title}")
+
+    if automated or repick is None:
+        proceed = resolve_mutative_action(
+            to_delete,
+            render_preview,
+            yes=yes,
+            dry_run=dry_run,
+            preview_header=f"Tracks to delete ({len(to_delete)}):",
+            confirm_message="Proceed?",
+        )
+        if not proceed:
             return
     else:
         result = confirm_selection_with_repick(
@@ -755,11 +895,20 @@ def music_delete(
 
     audio_ids = {t.audio_id for t in to_delete}
     light.music.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
+    render(
+        to_delete,
+        lambda: console.print(f"[green]Deleted {len(to_delete)} track(s).[/green]"),
+    )
 
 
 @music.command("sort", help=_help("music_sort"))
 @with_light
-@click.argument("field", type=click.Choice(["artist", "title", "artist-album", "none"]))
+@click.argument(
+    "field",
+    type=click.Choice(["artist", "title", "artist-album", "none"]),
+    required=False,
+    default=None,
+)
 @click.option(
     "--asc",
     "order",
@@ -769,22 +918,37 @@ def music_delete(
 )
 @click.option("--desc", "order", flag_value="descending", help="Sort descending.")
 def music_sort(light: Light, field, order):
+    if field is None:
+        mode = light.music.get_sort_mode()
+        status = SortModeStatus(sort_mode=mode.value)
+
+        def render_human_readable():
+            console.print(f"Sort mode: {mode.value}")
+            if mode == SortMode.RANK:
+                console.print(
+                    "[dim]Note: 'rank' also covers title/artist-album sorts, which are "
+                    "applied locally and can't be distinguished from an unsorted "
+                    "playlist by this check.[/dim]"
+                )
+
+        render(status, render_human_readable)
+        return
+
     descending = order == "descending"
 
     if field == "artist":
-        light.music.set_sort_mode(
-            SortMode.ARTIST_DESC if descending else SortMode.ARTIST_ASC
-        )
+        mode = SortMode.ARTIST_DESC if descending else SortMode.ARTIST_ASC
     elif field == "title":
-        light.music.set_sort_mode(
-            SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
-        )
+        mode = SortMode.TITLE_DESC if descending else SortMode.TITLE_ASC
     elif field == "artist-album":
-        light.music.set_sort_mode(
-            SortMode.ARTIST_ALBUM_DESC if descending else SortMode.ARTIST_ALBUM_ASC
-        )
-    elif field == "none":
-        light.music.set_sort_mode(SortMode.RANK)
+        mode = SortMode.ARTIST_ALBUM_DESC if descending else SortMode.ARTIST_ALBUM_ASC
+    else:  # field == "none"
+        mode = SortMode.RANK
+
+    light.music.set_sort_mode(mode)
+
+    status = SortModeStatus(sort_mode=mode.value)
+    render(status, lambda: console.print(f"Sort mode: {mode.value}"))
 
 
 @music.command("update", help=_help("music_update"))
@@ -816,6 +980,13 @@ def music_sort(light: Light, field, order):
     help="Skip the picker and batch/individual prompt. Requires --new-title/"
     "--new-artist/--new-album.",
 )
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show which tracks would be updated without changing anything. Requires "
+    "--new-title/--new-artist/--new-album.",
+)
 def music_update(
     light: Light,
     songs,
@@ -827,6 +998,7 @@ def music_update(
     new_artist,
     new_album,
     yes,
+    dry_run,
 ):
     songs = tuple(s for s in songs if s.strip())
     regex_given = title_regex or artist_regex or album_regex
@@ -854,6 +1026,14 @@ def music_update(
         raise click.UsageError(
             "--yes requires at least one of --new-title/--new-artist/--new-album."
         )
+    if dry_run and not flags_given:
+        raise click.UsageError(
+            "--dry-run requires at least one of --new-title/--new-artist/--new-album."
+        )
+    if is_json_mode() and not (flags_given and (yes or dry_run)):
+        raise click.UsageError(
+            "--json requires --new-title/--new-artist/--new-album, plus --yes or --dry-run."
+        )
 
     tracks = light.music.get_tracks()
 
@@ -878,7 +1058,7 @@ def music_update(
     elif regex_given:
         candidates = _filter_tracks_by_regex(tracks, title_regex, artist_regex, album_regex)
         if not candidates:
-            console.print("[yellow]No matching tracks.[/yellow]")
+            render([], lambda: console.print("[yellow]No matching tracks.[/yellow]"))
             return
         to_update = pick_from(candidates)
     else:
@@ -906,28 +1086,48 @@ def music_update(
         console.print("[yellow]Aborted.[/yellow]")
         return
     if not to_update:
-        console.print("[yellow]No matching tracks.[/yellow]")
+        render([], lambda: console.print("[yellow]No matching tracks.[/yellow]"))
         return
 
     if flags_given:
         batch_values = (new_title, new_artist, new_album)
-        if not yes:
-            console.print(f"[bold]This will update {len(to_update)} track(s):[/bold]")
+
+        changes = {"title": new_title, "artist": new_artist, "album": new_album}
+        plan = {
+            "tracks": [
+                {
+                    "audio_id": t.audio_id,
+                    "artist": t.artist,
+                    "album": t.album,
+                    "title": t.title,
+                }
+                for t in to_update
+            ],
+            "changes": changes,
+        }
+
+        def render_plan():
             for track in to_update:
                 console.print(f"  [dim]{track.artist} — {track.album} — {track.title}[/dim]")
-
-            changes = []
+            summary = []
             if new_title:
-                changes.append(f"Title -> [green]{new_title}[/green]")
+                summary.append(f"Title -> [green]{new_title}[/green]")
             if new_artist:
-                changes.append(f"Artist -> [green]{new_artist}[/green]")
+                summary.append(f"Artist -> [green]{new_artist}[/green]")
             if new_album:
-                changes.append(f"Album -> [green]{new_album}[/green]")
-            console.print("  " + ", ".join(changes))
+                summary.append(f"Album -> [green]{new_album}[/green]")
+            console.print("  " + ", ".join(summary))
 
-            if not click.confirm("Proceed?"):
-                console.print("[yellow]Aborted.[/yellow]")
-                return
+        proceed = resolve_mutative_action(
+            plan,
+            render_plan,
+            yes=yes,
+            dry_run=dry_run,
+            preview_header=f"This will update {len(to_update)} track(s):",
+            confirm_message="Proceed?",
+        )
+        if not proceed:
+            return
     elif len(to_update) > 1:
         choice = click.prompt(
             f"{len(to_update)} tracks selected. [b]atch edit (same values for all) "
@@ -949,6 +1149,7 @@ def music_update(
     else:
         batch_values = None
 
+    updated = []
     for track in to_update:
         if batch_values is not None:
             title, artist, album = batch_values
@@ -968,7 +1169,18 @@ def music_update(
                 continue
 
         light.music.update_track_metadata(track.audio_id, title=title, artist=artist, album=album)
-        console.print(f"[green]Updated:[/green] {track.artist} — {track.title}")
+        updated.append(
+            {
+                "audio_id": track.audio_id,
+                "title": title if title is not None else track.title,
+                "artist": artist if artist is not None else track.artist,
+                "album": album if album is not None else track.album,
+            }
+        )
+        if not is_json_mode():
+            console.print(f"[green]Updated:[/green] {track.artist} — {track.title}")
+
+    render(updated, lambda: None)
 
 
 @music.command("list", help=_help("music_list"))
@@ -2044,6 +2256,15 @@ def cache_status():
     render(CacheStatus(cache_enabled=enabled), render_human_readable)
 
 
+@cache.command("clear", help=_help("cache_clear"))
+def cache_clear():
+    removed = api_cache.clear()
+    render(
+        {"files_removed": removed},
+        lambda: console.print(f"[green]Cleared {removed} cache file(s).[/green]"),
+    )
+
+
 # -- Auth -----------------------------------------------------------------------
 
 
@@ -2054,7 +2275,6 @@ def logout(ctx):
     light = Light(
         email=obj.get("email"),
         email_file=obj.get("email_file"),
-        password=obj.get("password"),
         password_file=obj.get("password_file"),
         phone=obj.get("phone_number"),
         phone_file=obj.get("phone_number_file"),
@@ -2084,7 +2304,6 @@ def tui(ctx):
         LightConfig(
             email=obj.get("email"),
             email_file=obj.get("email_file"),
-            password=obj.get("password"),
             password_file=obj.get("password_file"),
             phone=obj.get("phone_number"),
             phone_file=obj.get("phone_number_file"),

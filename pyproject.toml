@@ -10,4 +10,5 @@ dev = [
     "pytest",
     "pytest-cov",
     "respx",
+    "jsonschema",
 ]

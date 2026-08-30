@@ -4,6 +4,12 @@ import httpx
 from .client import Light
 
 
+def _password_prompt():
+    """Hidden-input prompt used by --ask, invoked by login() only when a password
+    is actually required (no cached session, nothing in file/env)."""
+    return click.prompt("Light account password", hide_input=True)
+
+
 def with_light(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
@@ -12,7 +18,7 @@ def with_light(f):
             light = Light(
                 email=obj.get("email"),
                 email_file=obj.get("email_file"),
-                password=obj.get("password"),
+                password_prompt=_password_prompt if obj.get("ask_password") else None,
                 password_file=obj.get("password_file"),
                 phone=obj.get("phone_number"),
                 phone_file=obj.get("phone_number_file"),

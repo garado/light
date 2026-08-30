@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from enum import StrEnum
 from typing import Any, Callable, TYPE_CHECKING
 
@@ -106,12 +107,30 @@ class SortMode(StrEnum):
     ARTIST_ALBUM_DESC = "aa_desc"
 
 
+@dataclass
+class SortModeStatus:
+    sort_mode: str
+
+
+# Transcode every uploaded track such that it doesn't get re-transcoded
+# on Light's servers
+_LIGHT_MP3_PROFILE = [
+    "-c:a", "libmp3lame",
+    "-b:a", "128k",
+    "-ar", "44100",
+    "-ac", "2",
+    "-id3v2_version", "3",
+    "-vn",
+]
+
+
 def _flac_to_mp3(flac_path: str) -> str:
-    """Convert a FLAC file to MP3 in a tempfile, preserving metadata. Returns the temp path."""
+    """Convert a FLAC file to MP3 in a tempfile, matching Light's server-side
+    transcode profile so it is not re-encoded on upload. Returns the temp path."""
     tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     tmp.close()
     result = subprocess.run(
-        ["ffmpeg", "-y", "-i", flac_path, "-map_metadata", "0", "-ab", "320k", tmp.name],
+        ["ffmpeg", "-y", "-i", flac_path, "-map_metadata", "0", *_LIGHT_MP3_PROFILE, tmp.name],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -504,17 +523,20 @@ class LightMusic:
 
         return files
 
+    DEFAULT_MAX_CONCURRENT_UPLOADS = 5
+
     def upload_tracks(
         self,
         files: list[str],
         allow_duplicates: bool = False,
         overwrite: bool = False,
         convert_flac: bool = True,
-        on_progress: "Callable[[str, int, int], None] | None" = None,
+        max_concurrent: int = DEFAULT_MAX_CONCURRENT_UPLOADS,
+        on_progress: "Callable[[str, str, int, int], None] | None" = None,
         on_convert: "Callable[[str], None] | None" = None,
         on_file_start: "Callable[[int, int, str], None] | None" = None,
     ) -> list[UploadResult]:
-        """Upload tracks to device.
+        """Upload tracks to device, up to max_concurrent in parallel.
 
         Args:
             files: List of paths to audio files to upload.
@@ -523,16 +545,23 @@ class LightMusic:
             overwrite: If True, delete a file's matching existing track (if any) before
                        uploading it. If False (default), files matching an existing track
                        are skipped instead, leaving the existing track untouched.
+            max_concurrent: Max number of files to upload at the same time.
+            on_progress: Called with (file_path, filename, sent, total) as each file
+                         uploads. filename may differ from file_path's basename if the
+                         file was converted to MP3 first. May be called from multiple
+                         threads concurrently.
             on_convert: Called with a file's path right before it is converted to MP3.
-            on_file_start: Called with (index, total, file_path) - 1-based index into
-                            the files actually being uploaded - right before each file
-                            starts processing (before conversion, if any).
+            on_file_start:  Called with (index, total, file_path) right before a file starts
+                            uploading. May be called from multiple threads out of order.
 
         Returns:
-            A list of per-file results, one per file attempted.
+            A list of per-file results, one per file attempted, in the same order as
+            the (deduplicated/filtered) upload plan - not necessarily completion order.
         """
         if overwrite and allow_duplicates:
             raise ValueError("overwrite and allow_duplicates are mutually exclusive")
+        if max_concurrent < 1:
+            raise ValueError("max_concurrent must be at least 1")
 
         valid_files, invalid_files = self.filter_valid_tracks(files)
         for file_path in invalid_files:
@@ -547,89 +576,22 @@ class LightMusic:
             self.delete_tracks_predicate(lambda t: t.audio_id in audio_ids)
 
         total_files = len(to_upload)
-        results = []
-        for index, file_path in enumerate(to_upload, 1):
-            log.info(f"Uploading {file_path}")
-            if on_file_start:
-                on_file_start(index, total_files, file_path)
 
-            tmp_path = None
-            try:
-                if convert_flac and self.is_convertible(file_path):
-                    log.info(f"Converting {file_path} to MP3")
-                    if on_convert:
-                        on_convert(file_path)
-                    tmp_path = _flac_to_mp3(file_path)
-                    upload_path = tmp_path
-                    server_filename = os.path.splitext(os.path.basename(file_path))[0] + ".mp3"
-                    display_name = f"{server_filename} (converted)"
-                else:
-                    upload_path = file_path
-                    server_filename = os.path.basename(file_path)
-                    display_name = server_filename
-
-                create_resp = self._l.call_api(
-                    post_api_audios.sync_detailed,
-                    client=self._l._api_client,
-                    body=PostApiAudiosBody(
-                        data=PostApiAudiosBodyData(
-                            type_=PostApiAudiosBodyDataType.AUDIOS,
-                            attributes=PostApiAudiosBodyDataAttributes(
-                                filename=server_filename,
-                                device_tool_id=self._l._device_tool_ids["music"],
-                            ),
-                        )
-                    ),
+        with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
+            futures = [
+                executor.submit(
+                    self._upload_one,
+                    file_path,
+                    index,
+                    total_files,
+                    convert_flac,
+                    on_progress,
+                    on_convert,
+                    on_file_start,
                 )
-                created = self._l._ensure_ok(
-                    create_resp,
-                    f"Create audio record for {server_filename}",
-                    ok_codes=(200, 201),
-                    require_parsed=True,
-                )
-
-                presigned_url = next(
-                    item.attributes.presigned_url
-                    for item in created.included
-                    if item.type_ == "files"
-                )
-
-                content_type = mimetypes.guess_type(upload_path)[0] or "audio/mpeg"
-                total = os.path.getsize(upload_path)
-
-                def _chunks(path: str, total: int, filename: str):
-                    sent = 0
-                    with open(path, "rb") as f:
-                        while chunk := f.read(65536):
-                            sent += len(chunk)
-                            if on_progress:
-                                on_progress(filename, sent, total)
-                            yield chunk
-
-                put_resp = httpx.put(
-                    presigned_url,
-                    content=_chunks(upload_path, total, display_name),
-                    headers={"Content-Type": content_type, "Content-Length": str(total)},
-                    timeout=300,
-                )
-
-                if not put_resp.is_success:
-                    raise RuntimeError(
-                        f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
-                    )
-
-                results.append(
-                    UploadResult(
-                        file=file_path, audio_id=created.data.id, success=True, error=None
-                    )
-                )
-            except RuntimeError as e:
-                results.append(
-                    UploadResult(file=file_path, audio_id=None, success=False, error=str(e))
-                )
-            finally:
-                if tmp_path:
-                    os.unlink(tmp_path)
+                for index, file_path in enumerate(to_upload, 1)
+            ]
+            results = [f.result() for f in futures]
 
         log.info("All uploads complete")
 
@@ -637,6 +599,95 @@ class LightMusic:
             cache.invalidate(cache.CacheModule.MUSIC)
 
         return results
+
+    def _upload_one(
+        self,
+        file_path: str,
+        index: int,
+        total_files: int,
+        convert_flac: bool,
+        on_progress: "Callable[[str, str, int, int], None] | None",
+        on_convert: "Callable[[str], None] | None",
+        on_file_start: "Callable[[int, int, str], None] | None",
+    ) -> UploadResult:
+        """Upload a single file. Runs on a worker thread; safe to call concurrently."""
+        log.info(f"Uploading {file_path}")
+        if on_file_start:
+            on_file_start(index, total_files, file_path)
+
+        tmp_path = None
+        try:
+            if convert_flac and self.is_convertible(file_path):
+                log.info(f"Converting {file_path} to MP3")
+                if on_convert:
+                    on_convert(file_path)
+                tmp_path = _flac_to_mp3(file_path)
+                upload_path = tmp_path
+                server_filename = os.path.splitext(os.path.basename(file_path))[0] + ".mp3"
+                display_name = f"{server_filename} (converted)"
+            else:
+                upload_path = file_path
+                server_filename = os.path.basename(file_path)
+                display_name = server_filename
+
+            create_resp = self._l.call_api(
+                post_api_audios.sync_detailed,
+                client=self._l._api_client,
+                body=PostApiAudiosBody(
+                    data=PostApiAudiosBodyData(
+                        type_=PostApiAudiosBodyDataType.AUDIOS,
+                        attributes=PostApiAudiosBodyDataAttributes(
+                            filename=server_filename,
+                            device_tool_id=self._l._device_tool_ids["music"],
+                        ),
+                    )
+                ),
+            )
+            created = self._l._ensure_ok(
+                create_resp,
+                f"Create audio record for {server_filename}",
+                ok_codes=(200, 201),
+                require_parsed=True,
+            )
+
+            presigned_url = next(
+                item.attributes.presigned_url
+                for item in created.included
+                if item.type_ == "files"
+            )
+
+            content_type = mimetypes.guess_type(upload_path)[0] or "audio/mpeg"
+            total = os.path.getsize(upload_path)
+
+            def _chunks(path: str, total: int, filename: str):
+                sent = 0
+                with open(path, "rb") as f:
+                    while chunk := f.read(65536):
+                        sent += len(chunk)
+                        if on_progress:
+                            on_progress(file_path, filename, sent, total)
+                        yield chunk
+
+            put_resp = httpx.put(
+                presigned_url,
+                content=_chunks(upload_path, total, display_name),
+                headers={"Content-Type": content_type, "Content-Length": str(total)},
+                timeout=300,
+            )
+
+            if not put_resp.is_success:
+                raise RuntimeError(
+                    f"Upload {os.path.basename(upload_path)}: {put_resp.status_code} {put_resp.text}"
+                )
+
+            return UploadResult(
+                file=file_path, audio_id=created.data.id, success=True, error=None
+            )
+        except Exception as e:
+            return UploadResult(file=file_path, audio_id=None, success=False, error=str(e))
+        finally:
+            if tmp_path:
+                os.unlink(tmp_path)
 
     def update_track_metadata(
         self,
