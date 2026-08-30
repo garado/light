@@ -6,9 +6,10 @@ authors = [{ name = "Alexis Garado", email = "alexisgarado@proton.me" }]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "light-phone-api",
-    "grpcio>=1.60",
+    "light-phone-api>=0.6.0",
+    "grpcio>=1.83.1",
     "grpcio-reflection>=1.60",
+    "protobuf>=7.35.1",
 ]
 
 [project.scripts]
