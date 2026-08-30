@@ -11,7 +11,7 @@ members = [
 
 [manifest.dependency-groups]
 dev = [
-    { name = "grpcio-tools" },
+    { name = "grpcio-tools", specifier = ">=1.83.1" },
     { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -670,7 +670,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "grpcio", specifier = ">=1.83.1" },
-    { name = "grpcio-reflection", specifier = ">=1.60" },
+    { name = "grpcio-reflection", specifier = ">=1.83.1" },
     { name = "light-phone-api", editable = "light_api" },
     { name = "protobuf", specifier = ">=7.35.1" },
 ]

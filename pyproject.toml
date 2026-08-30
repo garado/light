@@ -12,5 +12,5 @@ dev = [
     "pytest-cov",
     "respx",
     "jsonschema",
-    "grpcio-tools",
+    "grpcio-tools>=1.83.1",
 ]
