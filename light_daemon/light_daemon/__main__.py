@@ -38,6 +38,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Serve an in-memory fake session; no credentials needed (dev only).",
     )
+    p.add_argument(
+        "--debug",
+        action="store_true",
+        help="Expose gRPC server reflection (still token-gated) for grpcurl etc.",
+    )
     return p
 
 
@@ -61,7 +66,12 @@ def main(argv: list[str] | None = None) -> None:
     if args.fake:
         from light_daemon.testing import FakeLight, FakePw
 
-        serve(FakePw(FakeLight()), port=args.port, token=token)
+        serve(
+            FakePw(FakeLight()),
+            port=args.port,
+            token=token,
+            enable_reflection=args.debug,
+        )
         return
 
     worker = LightThread(config_from_args(args))
@@ -71,7 +81,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"light-daemon: could not start Light session: {e}", file=sys.stderr)
         raise SystemExit(1)
 
-    serve(worker, port=args.port, token=token)
+    serve(worker, port=args.port, token=token, enable_reflection=args.debug)
 
 
 if __name__ == "__main__":

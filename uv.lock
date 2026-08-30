@@ -364,6 +364,19 @@ wheels = [
 ]
 
 [[package]]
+name = "grpcio-reflection"
+version = "1.83.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "grpcio" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/86/7a54dbb97ff190462831079d2d7e348bd417d5ffacbe93541511832b85b6/grpcio_reflection-1.83.1.tar.gz", hash = "sha256:c33953f2eae1313ab1d2c2b6a1cec6ddaebe6763da1b2631980792d9792e6233", size = 19204, upload-time = "2026-08-28T07:12:25.277Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/f1/397caeda1b4cfdd6873acf6a1603bc6f8774dfbba107d5fd788bcce18e14/grpcio_reflection-1.83.1-py3-none-any.whl", hash = "sha256:6f80bb2a8f8893545b5a1669fad48518a9e4783f8edd739a300be53e7d1ce0b2", size = 22909, upload-time = "2026-08-28T07:12:14.862Z" },
+]
+
+[[package]]
 name = "grpcio-tools"
 version = "1.83.1"
 source = { registry = "https://pypi.org/simple" }
@@ -649,12 +662,14 @@ version = "0.6.0"
 source = { editable = "light_daemon" }
 dependencies = [
     { name = "grpcio" },
+    { name = "grpcio-reflection" },
     { name = "light-phone-api" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "grpcio", specifier = ">=1.60" },
+    { name = "grpcio-reflection", specifier = ">=1.60" },
     { name = "light-phone-api", editable = "light_api" },
 ]
 
