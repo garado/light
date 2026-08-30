@@ -52,11 +52,14 @@ class LightThread:
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._ready = threading.Event()
         self._error: BaseException | None = None
+        self._lock = threading.Lock()
+        self._stopped = False
 
     def start(self) -> None:
-        """Start the thread and block until the session is authenticated.
+        """Start the thread and block until the session finishes its auth attempt.
 
-        Raises whatever the session setup raised (bad credentials, network, ...).
+        Raises:
+            Whatever the session setup raised (bad credentials, network, ...)
         """
         self._thread.start()
         self._ready.wait()
@@ -85,19 +88,47 @@ class LightThread:
                     func, future = item
                     try:
                         future.set_result(func(light))
-                    except Exception as e:
+                    except BaseException as e:
                         future.set_exception(e)
         except BaseException as e:
             self._error = e
             self._ready.set()
+        finally:
+            self._fail_pending()
 
-    def submit(self, func: Callable[[Light], Any]) -> Any:
-        """Run `func(light)` on the worker thread and return its result (blocking)."""
+    def _fail_pending(self) -> None:
+        """Empties queue (fails pending items) when worker is done to prevent callers from hanging."""
+        with self._lock:
+            self._stopped = True
+            while True:
+                try:
+                    item = self._queue.get_nowait()
+                except queue.Empty:
+                    break
+
+                if item is not None:
+                    _, future = item
+                    if not future.done():
+                        future.set_exception(
+                            RuntimeError("LightThread worker has stopped")
+                        )
+
+    def submit(self, func: Callable[[Light], Any], timeout: float | None = None) -> Any:
+        """Run `func(light)` on the worker thread and return its result (blocking).
+
+        Raises:
+            - RuntimeError if the worker is not running
+            - TimeoutError if `timeout` elapses first
+            - Or whatever `func` raised.
+        """
         future: Future[Any] = Future()
-        self._queue.put((func, future))
-        return future.result()
+        with self._lock:
+            if self._stopped:
+                raise RuntimeError("LightThread worker is not running")
+            self._queue.put((func, future))
+        return future.result(timeout)
 
-    def shutdown(self) -> None:
-        """Ask the worker to stop and wait for it to exit."""
+    def shutdown(self, timeout: float | None = 5.0) -> None:
+        """Ask the worker to stop and wait (up to `timeout` seconds) for it to exit."""
         self._queue.put(None)
-        self._thread.join()
+        self._thread.join(timeout)
