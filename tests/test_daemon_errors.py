@@ -29,16 +29,32 @@ def _list_tracks_with(raises):
 @pytest.mark.parametrize(
     "raises, expected",
     [
+        # transport
         (httpx.TimeoutException("slow"), grpc.StatusCode.DEADLINE_EXCEEDED),
         (httpx.ConnectError("refused"), grpc.StatusCode.UNAVAILABLE),
+        # _ensure_ok("<action>: <status>") - the trailing HTTP code drives it
+        (RuntimeError("Get tracks: 503"), grpc.StatusCode.UNAVAILABLE),
+        (RuntimeError("Get tracks: 500"), grpc.StatusCode.UNAVAILABLE),
+        (RuntimeError("Get tracks: 429"), grpc.StatusCode.UNAVAILABLE),
+        (RuntimeError("Update metadata: 404"), grpc.StatusCode.NOT_FOUND),
+        (RuntimeError("Delete track: 401"), grpc.StatusCode.UNAUTHENTICATED),
+        (RuntimeError("Patch item: 403"), grpc.StatusCode.PERMISSION_DENIED),
+        (RuntimeError("Post audio: 400"), grpc.StatusCode.INVALID_ARGUMENT),
+        (RuntimeError("Weird one: 418"), grpc.StatusCode.FAILED_PRECONDITION),
+        # keyword-sniffed cases
         (
             RuntimeError("No cached session and no credentials available."),
             grpc.StatusCode.UNAUTHENTICATED,
         ),
         (
+            RuntimeError("No tool found matching 'xyz'"),
+            grpc.StatusCode.NOT_FOUND,
+        ),
+        (
             RuntimeError("Multiple devices found - specify one via --device-id"),
             grpc.StatusCode.FAILED_PRECONDITION,
         ),
+        # non-RuntimeError
         (ValueError("something odd"), grpc.StatusCode.INTERNAL),
     ],
 )
