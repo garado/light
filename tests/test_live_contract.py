@@ -109,7 +109,9 @@ def _assert_matches(path_template: str, resp, strict: bool):
 def live():
     from light_api.client import Light
 
-    if not (os.environ.get("LIGHT_EMAIL") or os.environ.get("LIGHT_EMAIL_FILE")):
+    has_email = os.environ.get("LIGHT_EMAIL") or os.environ.get("LIGHT_EMAIL_FILE")
+    has_password = os.environ.get("LIGHT_PASSWORD") or os.environ.get("LIGHT_PASSWORD_FILE")
+    if not (has_email and has_password):
         pytest.skip(
             "set LIGHT_EMAIL / LIGHT_PASSWORD (+ LIGHT_PHONE_NUMBER or "
             "LIGHT_DEVICE_ID for multi-device accounts)"

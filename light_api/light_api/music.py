@@ -683,7 +683,7 @@ class LightMusic:
             return UploadResult(
                 file=file_path, audio_id=created.data.id, success=True, error=None
             )
-        except RuntimeError as e:
+        except Exception as e:
             return UploadResult(file=file_path, audio_id=None, success=False, error=str(e))
         finally:
             if tmp_path:
