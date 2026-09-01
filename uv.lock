@@ -482,7 +482,7 @@ wheels = [
 
 [[package]]
 name = "light-phone-api"
-version = "0.6.0"
+version = "0.6.1"
 source = { editable = "light_api" }
 dependencies = [
     { name = "attrs" },
@@ -507,7 +507,7 @@ requires-dist = [
 
 [[package]]
 name = "light-phone-cli-tui"
-version = "0.6.0"
+version = "0.6.1"
 source = { editable = "light_cli_tui" }
 dependencies = [
     { name = "click" },
