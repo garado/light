@@ -3,6 +3,8 @@
 
 A collection of community-maintained tools for managing your Light Phone - a Python API, a CLI, and a TUI.
 
+Made by reverse-engineering Light's cloud API. (With their permission!)
+
 ## Highlights
 - **Music**
     - **Upload FLACs __without__ losing your metadata!**
@@ -32,7 +34,7 @@ A collection of community-maintained tools for managing your Light Phone - a Pyt
 
 This repo bundles two separate packages `light-phone-api` and `light-phone-cli-tui`. Install whichever suits your needs.
 
-From PyPI:
+From PyPI (requires Python 3.11+):
 
 ```
 pip install light-phone-api
