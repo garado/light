@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import httpx
 import json
 import keyring
 import logging
@@ -27,6 +26,8 @@ from open_api_specification_client.api.default import (
 )
 from open_api_specification_client.client import AuthenticatedClient
 from open_api_specification_client.types import Unset
+
+from light_api.transport import http_request, httpx_args
 
 if TYPE_CHECKING:
     from light_api.contacts import LightContacts
@@ -157,7 +158,8 @@ class Light:
                 "Please provide your email and password. Run `light --help` to see login options."
             )
 
-        resp = httpx.post(
+        resp = http_request(
+            "POST",
             f"{API_BASE}/api/authorizations",
             json={"email": self.email, "password": self.password},
             headers={**API_HEADERS, "Content-Type": "application/vnd.api+json"},
@@ -186,6 +188,7 @@ class Light:
             token=self._api_token,
             headers=API_HEADERS,
             timeout=30,
+            httpx_args=httpx_args(),
         )
 
     def call_api(self, func: Callable[..., Any], **kwargs: Any) -> Any:
@@ -244,6 +247,7 @@ class Light:
             token=self._api_token,
             headers=API_HEADERS,
             timeout=30,
+            httpx_args=httpx_args(),
         )
 
         expected = {"music", "notes", "podcast"}
@@ -363,6 +367,7 @@ class Light:
             token=self._api_token,
             headers=API_HEADERS,
             timeout=30,
+            httpx_args=httpx_args(),
         )
         resp = get_api_users_current.sync_detailed(client=client)
         return resp.status_code == 200
