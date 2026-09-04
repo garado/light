@@ -1,7 +1,6 @@
 """Music management for Light devices."""
 
 import dataclasses
-import httpx
 import logging
 import mimetypes
 import os
@@ -16,6 +15,7 @@ from dataclasses import dataclass
 from mutagen._file import File
 
 from light_api import cache
+from light_api.transport import http_request
 from open_api_specification_client.api.default import (
     delete_api_audios_audio_id,
     get_api_audio_capacity,
@@ -668,7 +668,8 @@ class LightMusic:
                             on_progress(file_path, filename, sent, total)
                         yield chunk
 
-            put_resp = httpx.put(
+            put_resp = http_request(
+                "PUT",
                 presigned_url,
                 content=_chunks(upload_path, total, display_name),
                 headers={"Content-Type": content_type, "Content-Length": str(total)},

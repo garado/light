@@ -2,7 +2,6 @@
 
 import base64
 import dataclasses
-import httpx
 import logging
 import os
 from collections import Counter
@@ -10,6 +9,7 @@ from dataclasses import dataclass
 from typing import Callable, TYPE_CHECKING
 
 from light_api import cache
+from light_api.transport import http_request
 
 from open_api_specification_client.api.default import (
     delete_api_notes_note_id,
@@ -102,7 +102,7 @@ class LightNotes:
             resp, f"Presigned get URL for {note.id}", require_parsed=True
         )
 
-        content_resp = httpx.get(resp.parsed.presigned_get_url, timeout=30)
+        content_resp = http_request("GET", resp.parsed.presigned_get_url, timeout=30)
         if not content_resp.is_success:
             raise RuntimeError(f"Download note {note.id}: {content_resp.status_code}")
         content = content_resp.content
@@ -251,7 +251,7 @@ class LightNotes:
             _content = content
 
         body = _content.encode() if isinstance(_content, str) else _content
-        put_resp = httpx.put(presigned_url, content=body, timeout=30)
+        put_resp = http_request("PUT", presigned_url, content=body, timeout=30)
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
 
@@ -272,7 +272,9 @@ class LightNotes:
         self._l._ensure_ok(
             resp, f"Presigned put URL for {note.id}", require_parsed=True
         )
-        put_resp = httpx.put(resp.parsed.presigned_put_url, content=content, timeout=30)
+        put_resp = http_request(
+            "PUT", resp.parsed.presigned_put_url, content=content, timeout=30
+        )
         if not put_resp.is_success:
             raise RuntimeError(f"Upload note content: {put_resp.status_code}")
         log.info(f"Note {note.id} updated")

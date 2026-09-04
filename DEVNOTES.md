@@ -1,6 +1,6 @@
 
 ## New on dev
-- 
+- (feat) rate limiter + retry mechanism for api calls
 
 ## To do
 - no real support for multi-device accounts. this is a much larger lift
