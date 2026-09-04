@@ -33,6 +33,7 @@
         python-dateutil
         keyring
         mutagen
+        platformdirs
       ];
     };
 
@@ -79,6 +80,7 @@
           attrs
           inquirerpy
           rapidfuzz
+          platformdirs
         ]))
         uv
         pyright
