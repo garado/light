@@ -53,6 +53,11 @@ RETRY_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
 # Methods we consider safe to replay on any retryable status.
 IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "PUT", "DELETE", "OPTIONS"})
 
+# TransportErrors that can only happen before any request bytes reach the
+# server (still establishing/queued for the connection), so replaying them
+# is safe even for non-idempotent methods like POST.
+_PRE_SEND_SAFE_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout)
+
 BACKOFF_BASE_SECONDS = 0.5
 BACKOFF_MAX_SECONDS = 30.0
 
@@ -157,9 +162,17 @@ class RetryTransport(httpx.BaseTransport):
             try:
                 response = self._wrapped.handle_request(request)
             except httpx.TransportError as exc:
-                # No response means the server may never have seen a complete
-                # request, so replaying is safe for any method.
-                if last or not replayable:
+                # Pre-send errors (never reached the server) are safe to replay
+                # for any method. Other transport errors (read/write/protocol)
+                # can happen after a non-idempotent request was already
+                # processed server-side, so those only retry for idempotent
+                # methods to avoid duplicating a mutation.
+                pre_send_safe = isinstance(exc, _PRE_SEND_SAFE_ERRORS)
+                if (
+                    last
+                    or not replayable
+                    or (method not in IDEMPOTENT_METHODS and not pre_send_safe)
+                ):
                     raise
                 delay = _backoff_delay(attempt, None)
                 log.warning(
@@ -196,6 +209,12 @@ class RetryTransport(httpx.BaseTransport):
 
     def close(self) -> None:
         self._wrapped.close()
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        raise NotImplementedError(
+            "RetryTransport does not support async requests; light_api only "
+            "uses the synchronous client today."
+        )
 
 
 def httpx_args() -> dict[str, Any]:
