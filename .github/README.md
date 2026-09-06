@@ -8,6 +8,7 @@ Made by reverse-engineering Light's cloud API. (With their permission!)
 ## Highlights
 - **Music**
     - **Upload FLACs __without__ losing your metadata!**
+    - Mirror your local music library to your device. Add what's missing, delete what's stale: `light music mirror ~/Music --recursive`
     - Bulk upload support: `light music upload ~/Music --recursive`
     - Delete tracks (with regex filter support)
     - Bulk-edit track metadata (with regex filter support)
@@ -85,7 +86,18 @@ Most mutating commands accept `--dry-run` (preview), `--yes` (skip confirmation)
 
 ### Music
 
+#### Mirror
+
+Sync your local music library to your Light Phone. Tracks present in your library but missing from the device get added; tracks present on the device but not in your library get deleted.
+
+```sh
+light music mirror ~/Music/Library --recurse
+```
+
 #### Upload
+
+> [!INFO]
+> By default, FLAC files are pre-converted to MP3 before uploading to prevent server-side transcodes that strip tracks of their metadata.**[ffmpeg](https://github.com/ffmpeg/ffmpeg) is required for this conversion.**
 
 ```sh
 # Upload a whole folder (recurse into subfolders)
