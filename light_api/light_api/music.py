@@ -135,7 +135,7 @@ _LIGHT_MP3_PROFILE = [
 def _flac_to_mp3(flac_path: str) -> str:
     """Convert a FLAC file to MP3 in a tempfile, matching Light's server-side
     transcode profile so it is not re-encoded on upload. Returns the temp path."""
-    if shutil.which("ffmpeg") is None:
+    if not LightMusic.is_ffmpeg_available():
         raise RuntimeError(
             "ffmpeg is required to convert FLAC files but was not found on PATH. "
             "Install ffmpeg, or pass convert_flac=False (--no-convert in the CLI) "

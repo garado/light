@@ -662,6 +662,12 @@ def music_upload(
     skip_count = len(matches) if matches and not overwrite and not allow_duplicates else 0
     plan = _build_upload_plan(files, invalid_files, matches, skip_count, overwrite, no_convert, light)
 
+    if plan["to_convert"] and not LightMusic.is_ffmpeg_available():
+        raise click.UsageError(
+            "ffmpeg is required to convert FLAC files but was not found on PATH. "
+            "Install ffmpeg, or pass --no-convert to skip conversion."
+        )
+
     proceed = resolve_mutative_action(
         plan,
         lambda: _render_upload_plan(plan, verbose),
@@ -751,6 +757,12 @@ def music_mirror(
         ],
         "to_convert": convert_files,
     }
+
+    if convert_files and not LightMusic.is_ffmpeg_available():
+        raise click.UsageError(
+            "ffmpeg is required to convert FLAC files but was not found on PATH. "
+            "Install ffmpeg, or pass --no-convert to skip conversion."
+        )
 
     def render_plan():
         for file_path in invalid_files:
