@@ -1,9 +1,8 @@
-
-# light
-
-A collection of community-maintained tools for managing your Light Phone - a Python API, a CLI, and a TUI.
-
-Made by reverse-engineering Light's cloud API. (With their permission!)
+<div align="center">
+    <h1>light</h1>
+    <p>A collection of community-maintained tools for managing your Light Phone - a Python API, a CLI, and a TUI.</p>
+    <p>Made by reverse-engineering Light's cloud API. (With their permission!)</p>
+</div>
 
 ## Highlights
 - **Music**
@@ -96,8 +95,8 @@ light music mirror ~/Music/Library --recursive
 
 #### Upload
 
-> [!INFO]
-> By default, FLAC files are pre-converted to MP3 before uploading to prevent server-side transcodes that strip tracks of their metadata.**[ffmpeg](https://github.com/ffmpeg/ffmpeg) is required for this conversion.**
+> [!NOTE]
+> By default, FLAC files are pre-converted to MP3 before uploading to prevent server-side transcodes that strip tracks of their metadata. **[ffmpeg](https://github.com/ffmpeg/ffmpeg) is required for this conversion.**
 
 ```sh
 # Upload a whole folder (recurse into subfolders)
