@@ -91,7 +91,7 @@ Most mutating commands accept `--dry-run` (preview), `--yes` (skip confirmation)
 Sync your local music library to your Light Phone. Tracks present in your library but missing from the device get added; tracks present on the device but not in your library get deleted.
 
 ```sh
-light music mirror ~/Music/Library --recurse
+light music mirror ~/Music/Library --recursive
 ```
 
 #### Upload
