@@ -83,6 +83,13 @@ class UploadResult:
 
 
 @dataclass
+class MirrorPlan:
+    """Result of comparing a local directory's tracks against what's on the device."""
+    to_upload: list[str]
+    to_delete: list[LightTrack]
+
+
+@dataclass
 class AudioCapacity:
     """Device audio capacity information."""
     total_capacity: int
@@ -433,6 +440,35 @@ class LightMusic:
             if t.title == title and t.artist == artist:
                 return t
         return None
+
+    def compute_mirror_plan(self, files: list[str]) -> "MirrorPlan":
+        """Compare local audio files against device tracks to determine what mirroring
+        `files` onto the device would require.
+
+        Args:
+            files: Local audio file paths (already expanded/filtered to valid tracks).
+
+        Returns:
+            MirrorPlan with files to upload (present locally, absent on device) and
+            tracks to delete (present on device, absent locally).
+        """
+        self._init_tracks()
+
+        device_by_identity: dict[tuple[str, str], LightTrack] = {}
+        for t in self._tracks:
+            device_by_identity.setdefault((t.title, t.artist), t)
+
+        to_upload = []
+        local_identities = set()
+        for file_path in files:
+            identity = self._track_identity(file_path)
+            local_identities.add(identity)
+            if identity not in device_by_identity:
+                to_upload.append(file_path)
+
+        to_delete = [t for t in self._tracks if (t.title, t.artist) not in local_identities]
+
+        return MirrorPlan(to_upload=to_upload, to_delete=to_delete)
 
     def find_upload_matches(self, files: list[str]) -> dict[str, LightTrack]:
         """Given a list of local audio files, find those that already exist on the device and

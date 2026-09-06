@@ -524,6 +524,57 @@ def _render_file_list(files: list[str], verbose: bool) -> None:
             console.print(f"  {f}")
 
 
+def _upload_with_progress(
+    light: Light,
+    files: list[str],
+    allow_duplicates: bool,
+    overwrite: bool,
+    no_convert: bool,
+    parallel: int,
+) -> list:
+    """Upload `files` to the device, rendering a live progress bar as it goes."""
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        console=console,
+    ) as progress:
+        # track one progress bar task per filepath and guard shared dict w/ a lock
+        lock = threading.Lock()
+        task_ids: dict[str, TaskID] = {}
+        batch_positions: dict[str, str] = {}
+
+        def on_file_start(index: int, total: int, file_path: str) -> None:
+            with lock:
+                batch_positions[file_path] = f"[{index}/{total}] "
+
+        def on_progress(file_path: str, filename: str, sent: int, total: int) -> None:
+            with lock:
+                task_id = task_ids.get(file_path)
+                if task_id is None:
+                    prefix = batch_positions.get(file_path, "")
+                    task_id = progress.add_task(f"{prefix}uploading {filename}", total=100)
+                    task_ids[file_path] = task_id
+            progress.update(task_id, completed=int(sent / total * 100))
+
+        def on_convert(file_path: str) -> None:
+            prefix = batch_positions.get(file_path, "")
+            filename = os.path.basename(file_path)
+            mp3_name = os.path.splitext(filename)[0] + ".mp3"
+            console.print(f"[dim]{prefix}Converting {filename} -> {mp3_name}[/dim]")
+
+        return light.music.upload_tracks(
+            files,
+            allow_duplicates=allow_duplicates,
+            overwrite=overwrite,
+            convert_flac=not no_convert,
+            max_concurrent=parallel,
+            on_progress=on_progress,
+            on_convert=on_convert,
+            on_file_start=on_file_start,
+        )
+
+
 @music.command("upload", help=_help("music_upload"))
 @with_light
 @click.argument("songs", nargs=-1, required=True)
@@ -624,46 +675,140 @@ def music_upload(
 
     console.print()
 
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        console=console,
-    ) as progress:
-        # track one progress bar task per filepath and guard shared dict w/ a lock
-        lock = threading.Lock()
-        task_ids: dict[str, TaskID] = {}
-        batch_positions: dict[str, str] = {}
+    results = _upload_with_progress(light, files, allow_duplicates, overwrite, no_convert, parallel)
 
-        def on_file_start(index: int, total: int, file_path: str) -> None:
-            with lock:
-                batch_positions[file_path] = f"[{index}/{total}] "
+    def render_results():
+        for r in results:
+            if r.success:
+                console.print(f"[green]Uploaded:[/green] {os.path.basename(r.file)}")
+            else:
+                console.print(f"[red]Failed:[/red] {os.path.basename(r.file)} — {r.error}")
 
-        def on_progress(file_path: str, filename: str, sent: int, total: int) -> None:
-            with lock:
-                task_id = task_ids.get(file_path)
-                if task_id is None:
-                    prefix = batch_positions.get(file_path, "")
-                    task_id = progress.add_task(f"{prefix}uploading {filename}", total=100)
-                    task_ids[file_path] = task_id
-            progress.update(task_id, completed=int(sent / total * 100))
+    render(results, render_results)
 
-        def on_convert(file_path: str) -> None:
-            prefix = batch_positions.get(file_path, "")
-            filename = os.path.basename(file_path)
-            mp3_name = os.path.splitext(filename)[0] + ".mp3"
-            console.print(f"[dim]{prefix}Converting {filename} -> {mp3_name}[/dim]")
+    if any(not r.success for r in results):
+        sys.exit(1)
 
-        results = light.music.upload_tracks(
-            files,
-            allow_duplicates=allow_duplicates,
-            overwrite=overwrite,
-            convert_flac=not no_convert,
-            max_concurrent=parallel,
-            on_progress=on_progress,
-            on_convert=on_convert,
-            on_file_start=on_file_start,
-        )
+
+@music.command("mirror", help=_help("music_mirror"))
+@with_light
+@click.argument("directory", type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.option(
+    "--recursive",
+    "-r",
+    is_flag=True,
+    default=False,
+    help="Also walk DIRECTORY's subdirectories for audio files.",
+)
+@click.option(
+    "--no-convert",
+    is_flag=True,
+    default=False,
+    help="Skip pre-converting non-MP3 files. Light's servers do not correctly set "
+    "metadata on non-MP3 files when uploading; pre-converting to MP3 prevents "
+    "that from happening.",
+)
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Show the full list of affected tracks.",
+)
+@click.option(
+    "--parallel",
+    "-p",
+    type=click.IntRange(min=1),
+    default=LightMusic.DEFAULT_MAX_CONCURRENT_UPLOADS,
+    show_default=True,
+    help="Max number of files to upload at the same time.",
+)
+@mutative_options("Show what would be uploaded/deleted without changing anything.")
+def music_mirror(
+    light: Light,
+    directory: str,
+    recursive: bool,
+    no_convert: bool,
+    verbose: bool,
+    parallel: int,
+    yes: bool,
+    dry_run: bool,
+):
+    with console.status("Scanning library..."):
+        expanded = light.music.expand_music_paths([directory], recursive)
+        files, invalid_files = light.music.filter_valid_tracks(expanded)
+        mirror_plan = light.music.compute_mirror_plan(files)
+
+    to_upload = mirror_plan.to_upload
+    to_delete = mirror_plan.to_delete
+    convert_files = [f for f in to_upload if not no_convert and light.music.is_convertible(f)]
+
+    plan = {
+        "invalid_files": invalid_files,
+        "to_upload": to_upload,
+        "to_delete": [
+            {"audio_id": t.audio_id, "artist": t.artist, "title": t.title} for t in to_delete
+        ],
+        "to_convert": convert_files,
+    }
+
+    def render_plan():
+        for file_path in invalid_files:
+            console.print(f"[yellow]File not found, skipping: {file_path}[/yellow]")
+
+        upload_count = len(to_upload)
+        console.print(f"{upload_count} track{'s' if upload_count != 1 else ''} will be uploaded")
+        if to_upload:
+            _render_file_list(to_upload, verbose)
+
+        delete_count = len(to_delete)
+        console.print(f"{delete_count} track{'s' if delete_count != 1 else ''} will be deleted")
+        if to_delete:
+            if not verbose and delete_count > _VERBOSE_LIST_THRESHOLD:
+                console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+            else:
+                for t in to_delete:
+                    console.print(f"  {t.artist} — {t.title}")
+
+        if convert_files:
+            convert_count = len(convert_files)
+            console.print(
+                f"{convert_count} FLAC file{'s' if convert_count != 1 else ''} "
+                "will be pre-converted to MP3:"
+            )
+            if not verbose and convert_count > _VERBOSE_LIST_THRESHOLD:
+                console.print("[dim]Use --verbose/-v to show full list.[/dim]")
+            else:
+                for file_path in convert_files:
+                    base = os.path.splitext(os.path.basename(file_path))[0]
+                    console.print(f"  {os.path.basename(file_path)} -> {base}.mp3")
+
+    if not to_upload and not to_delete:
+        render(plan, lambda: console.print("[green]Device already matches directory.[/green]"))
+        return
+
+    proceed = resolve_mutative_action(
+        plan,
+        render_plan,
+        yes=yes,
+        dry_run=dry_run,
+        preview_header="",
+        confirm_message="Proceed?",
+    )
+    if not proceed:
+        return
+
+    console.print()
+
+    if to_delete:
+        delete_ids = {t.audio_id for t in to_delete}
+        light.music.delete_tracks_predicate(lambda t: t.audio_id in delete_ids)
+        for t in to_delete:
+            console.print(f"[green]Deleted:[/green] {t.artist} — {t.title}")
+
+    results = []
+    if to_upload:
+        results = _upload_with_progress(light, to_upload, False, False, no_convert, parallel)
 
     def render_results():
         for r in results:
