@@ -134,7 +134,7 @@ def _parse_retry_after(value: str | None) -> float | None:
 def _backoff_delay(attempt: int, retry_after: float | None) -> float:
     """Seconds to wait before the next attempt (0-indexed)."""
     if retry_after is not None:
-        return min(retry_after, BACKOFF_MAX_SECONDS)
+        return retry_after
     ceiling = min(BACKOFF_BASE_SECONDS * (2**attempt), BACKOFF_MAX_SECONDS)
     # Full jitter over the lower half..full window.
     return ceiling * (0.5 + random.random() / 2)
