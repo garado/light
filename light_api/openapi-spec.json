@@ -464,16 +464,7 @@
                                         "type": "string"
                                       }
                                     },
-                                    "required": [
-                                      "city",
-                                      "countryCode",
-                                      "countryName",
-                                      "county",
-                                      "label",
-                                      "postalCode",
-                                      "state",
-                                      "stateCode"
-                                    ]
+                                    "required": []
                                   },
                                   "latitude": {
                                     "type": "number"
