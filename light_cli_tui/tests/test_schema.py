@@ -3,7 +3,7 @@ from pathlib import Path
 
 from light_cli_tui.schema import schema_hash
 
-REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent
 CHECKED_IN_SCHEMA = REPO_ROOT / "schema.json"
 
 

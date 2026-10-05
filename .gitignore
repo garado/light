@@ -3,5 +3,5 @@ __pycache__
 _build
 .env
 .venv
-tests/fixtures/
+light_api/tests/fixtures/
 .coverage

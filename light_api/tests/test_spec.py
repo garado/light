@@ -10,7 +10,7 @@ from open_api_specification_client.models.get_api_devices_response_200 import (
     GetApiDevicesResponse200,
 )
 
-SPEC_PATH = Path(__file__).parent.parent / "light_api" / "openapi-spec.json"
+SPEC_PATH = Path(__file__).parent.parent / "openapi-spec.json"
 
 PATHS = {
     "device_tool_location.data": [

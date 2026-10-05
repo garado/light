@@ -12,3 +12,13 @@ dev = [
     "respx",
     "jsonschema",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["light_api/tests", "light_cli_tui/tests"]
+
+[tool.coverage.run]
+source = ["light_api/light_api", "light_cli_tui/light_cli_tui"]
+omit = ["*/open_api_specification_client/*"]
+
+[tool.coverage.report]
+show_missing = true

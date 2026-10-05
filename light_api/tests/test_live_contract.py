@@ -6,7 +6,7 @@ Run:
 
     nix develop
     LIGHT_EMAIL=you@example.com LIGHT_PASSWORD=... \\
-        uv run pytest tests/test_live_contract.py --live -v
+        uv run pytest light_api/tests/test_live_contract.py --live -v
 
 For a multi-device account also set LIGHT_PHONE_NUMBER or LIGHT_DEVICE_ID.
 Pass --strict-extra to also fail when a response carries fields the spec is missing
@@ -25,7 +25,7 @@ from jsonschema import Draft202012Validator
 pytestmark = pytest.mark.live
 
 SPEC = json.loads(
-    (Path(__file__).parent.parent / "light_api" / "openapi-spec.json").read_text()
+    (Path(__file__).parent.parent / "openapi-spec.json").read_text()
 )
 
 
