@@ -201,3 +201,11 @@ class LightTools:
         """Uninstall a tool from the device by name (e.g. 'calendar')."""
         tool = self.resolve_installed_tool(name)
         self.remove_tool_by_id(tool.device_tool_id)
+
+    def is_installed(self, name: str) -> bool:
+        """Return whether a tool matching `name` is installed."""
+        needle = name.lower()
+        return any(
+            needle in t.title.lower() or needle in t.namespace.lower()
+            for t in self.get_tools()
+        )
