@@ -24,10 +24,11 @@ def make_light(phone: str | None = None, device_id: str | None = None) -> Light:
     light = Light(email="test@example.com", password="test", phone=phone, device_id=device_id)
     light._api_token = "fake-token"
     light._api_client = AuthenticatedClient(base_url=API, token="fake-token")
-    light.music = LightMusic(light)
-    light.notes = LightNotes(light)
-    light.tools = LightTools(light)
-    light.podcast = LightPodcasts(light)
+    light._music = LightMusic(light)
+    light._notes = LightNotes(light)
+    light._tools = LightTools(light)
+    light._podcast = LightPodcasts(light)
+    light._playlist_id = "fake-playlist-id"
     return light
 
 
