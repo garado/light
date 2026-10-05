@@ -1,0 +1,441 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "admin": false,
+        "developer_mode": true,
+        "device_type": "lp3",
+        "imei": "999999999999999",
+        "light_os_version_name": "582-release-lp3",
+        "serial_number": "LP3AAAAAAAAAAAAA",
+        "sku": "TLP301"
+      },
+      "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+      "relationships": {
+        "device_third_party_tools": {
+          "data": [
+            {
+              "id": "2f2ebb9d-7717-4228-84a5-adae4cd82556",
+              "type": "device_third_party_tools"
+            }
+          ]
+        },
+        "device_tool_location": {
+          "data": {
+            "id": "5e03edf6-311c-484b-9203-40b46c3d690b",
+            "type": "device_tool_locations"
+          }
+        },
+        "device_tools": {
+          "data": [
+            {
+              "id": "188886a5-65b2-4a3b-91c3-d8cafb5c7b7c",
+              "type": "device_tools"
+            },
+            {
+              "id": "6e939503-61e4-4890-8cda-674720030d65",
+              "type": "device_tools"
+            },
+            {
+              "id": "bb60b0bd-b1c0-4e9e-b3e0-8ddf3ec99f1b",
+              "type": "device_tools"
+            },
+            {
+              "id": "c014db7b-63c6-4c6c-9249-ba40e5d65de0",
+              "type": "device_tools"
+            },
+            {
+              "id": "fca285e6-deaf-4fac-bfe1-6728d3355b09",
+              "type": "device_tools"
+            },
+            {
+              "id": "1e2c88b6-071f-4521-94f8-7af91f0eed71",
+              "type": "device_tools"
+            },
+            {
+              "id": "e02f2bcb-014c-4931-9f1f-097b0214b935",
+              "type": "device_tools"
+            },
+            {
+              "id": "99978b92-892c-48c8-818b-6a5547c7c740",
+              "type": "device_tools"
+            },
+            {
+              "id": "f8174f69-bb79-4f75-bfc5-5556195d2fb9",
+              "type": "device_tools"
+            },
+            {
+              "id": "22f3008d-99ae-4d7f-b60d-387d9e998623",
+              "type": "device_tools"
+            },
+            {
+              "id": "17c3d787-647b-4252-86ed-154aa52a37d6",
+              "type": "device_tools"
+            },
+            {
+              "id": "a6a576e3-ac19-4606-b316-e7771f63a639",
+              "type": "device_tools"
+            }
+          ]
+        },
+        "sim": {
+          "data": null
+        },
+        "user": {
+          "data": {
+            "id": "7af9181f-d2ed-4126-b176-a56ba34c9a84",
+            "type": "users"
+          }
+        }
+      },
+      "type": "devices"
+    }
+  ],
+  "included": [
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "17c3d787-647b-4252-86ed-154aa52a37d6",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "a0566c2f-b6bc-4883-885f-7e089f5f0715",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {
+          "awaiting_migration": false
+        },
+        "deleted_at": null
+      },
+      "id": "188886a5-65b2-4a3b-91c3-d8cafb5c7b7c",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "0618bd7a-6a0c-434a-b90e-e37f935d74dd",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "1e2c88b6-071f-4521-94f8-7af91f0eed71",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "78c8d31a-3550-48e0-9c27-792d3fe0cb11",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {
+          "device_tool_location_created": true
+        },
+        "deleted_at": null
+      },
+      "id": "22f3008d-99ae-4d7f-b60d-387d9e998623",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "a053d3e2-cb77-4922-92c8-9aa4e244e5ef",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null,
+        "installed": true,
+        "version_number": "6.0.0"
+      },
+      "id": "2f2ebb9d-7717-4228-84a5-adae4cd82556",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "4b314a88-fc7c-4600-9dfc-9777ab9a12eb",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_third_party_tools"
+    },
+    {
+      "attributes": {
+        "component": "third_party",
+        "is_core": true,
+        "min_apk_version": 582,
+        "namespace": "rideshare",
+        "status": "available",
+        "title": "Rideshare",
+        "tool_type": "third_party"
+      },
+      "id": "4b314a88-fc7c-4600-9dfc-9777ab9a12eb",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "config": {
+          "address": {
+            "city": "San Francisco",
+            "countryCode": "USA",
+            "countryName": "United States",
+            "county": "San Francisco",
+            "label": "San Francisco, CA, United States",
+            "postalCode": "94104",
+            "state": "California",
+            "stateCode": "CA"
+          },
+          "latitude": 37.7749,
+          "longitude": -122.4194
+        },
+        "device_id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+        "id": "5e03edf6-311c-484b-9203-40b46c3d690b",
+        "user_id": "7af9181f-d2ed-4126-b176-a56ba34c9a84"
+      },
+      "id": "5e03edf6-311c-484b-9203-40b46c3d690b",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "user": {
+          "data": {
+            "id": "7af9181f-d2ed-4126-b176-a56ba34c9a84",
+            "type": "users"
+          }
+        }
+      },
+      "type": "device_tool_locations"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "6e939503-61e4-4890-8cda-674720030d65",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "3ab34832-e415-4bea-bea5-3c6751972f07",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "99978b92-892c-48c8-818b-6a5547c7c740",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "9474b036-da42-4db1-b601-2e747d93dabb",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "a6a576e3-ac19-4606-b316-e7771f63a639",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "fe5cfb9b-011f-4dc2-96ce-fa4ed427986a",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "bb60b0bd-b1c0-4e9e-b3e0-8ddf3ec99f1b",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "3b35e791-ba6a-4cbf-af06-ef59779c72ca",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "c014db7b-63c6-4c6c-9249-ba40e5d65de0",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "513ea7ed-d7a0-4295-a43b-e8fa2d66763e",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "e02f2bcb-014c-4931-9f1f-097b0214b935",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "81144ddb-d9cf-4e26-8f51-fc37db871235",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "f8174f69-bb79-4f75-bfc5-5556195d2fb9",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "9be8f633-d769-43d7-ae4f-f428240063bd",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "fca285e6-deaf-4fac-bfe1-6728d3355b09",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "96d2d21d-8afb-4c4d-bec8-606ae44e05f3",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "6a994a56-add1-4af6-b190-d96fb7d31773",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  }
+}

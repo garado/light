@@ -1,0 +1,319 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "admin": false,
+        "developer_mode": true,
+        "device_type": "lp3",
+        "imei": "000000000000000",
+        "light_os_version_name": "582-release-lp3",
+        "serial_number": "LP3TESTaaaaaa",
+        "sku": "TLP301"
+      },
+      "id": "aaaaaaaa-0000-0000-0000-000000000001",
+      "relationships": {
+        "device_tool_location": {
+          "data": {
+            "id": "loc-aaaa",
+            "type": "device_tool_locations"
+          }
+        },
+        "device_tools": {
+          "data": [
+            {
+              "id": "dtA-notes",
+              "type": "device_tools"
+            },
+            {
+              "id": "dtA-music",
+              "type": "device_tools"
+            },
+            {
+              "id": "dtA-podcast",
+              "type": "device_tools"
+            }
+          ]
+        },
+        "sim": {
+          "data": {
+            "id": "sim-aaaa",
+            "type": "sims"
+          }
+        },
+        "user": {
+          "data": {
+            "id": "user-0000-0000-0000-000000000000",
+            "type": "users"
+          }
+        }
+      },
+      "type": "devices"
+    },
+    {
+      "attributes": {
+        "admin": false,
+        "developer_mode": true,
+        "device_type": "lp3",
+        "imei": "000000000000000",
+        "light_os_version_name": "582-release-lp3",
+        "serial_number": "LP3TESTbbbbbb",
+        "sku": "TLP301"
+      },
+      "id": "bbbbbbbb-0000-0000-0000-000000000002",
+      "relationships": {
+        "device_tool_location": {
+          "data": {
+            "id": "loc-bbbb",
+            "type": "device_tool_locations"
+          }
+        },
+        "device_tools": {
+          "data": [
+            {
+              "id": "dtB-notes",
+              "type": "device_tools"
+            },
+            {
+              "id": "dtB-music",
+              "type": "device_tools"
+            },
+            {
+              "id": "dtB-podcast",
+              "type": "device_tools"
+            }
+          ]
+        },
+        "sim": {
+          "data": {
+            "id": "sim-bbbb",
+            "type": "sims"
+          }
+        },
+        "user": {
+          "data": {
+            "id": "user-0000-0000-0000-000000000000",
+            "type": "users"
+          }
+        }
+      },
+      "type": "devices"
+    }
+  ],
+  "included": [
+    {
+      "attributes": {
+        "config": {},
+        "device_id": "aaaaaaaa-0000-0000-0000-000000000001",
+        "id": "loc-aaaa",
+        "user_id": "user-0000-0000-0000-000000000000"
+      },
+      "id": "loc-aaaa",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "aaaaaaaa-0000-0000-0000-000000000001",
+            "type": "devices"
+          }
+        },
+        "user": {
+          "data": {
+            "id": "user-0000-0000-0000-000000000000",
+            "type": "users"
+          }
+        }
+      },
+      "type": "device_tool_locations"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "device_id": "bbbbbbbb-0000-0000-0000-000000000002",
+        "id": "loc-bbbb",
+        "user_id": "user-0000-0000-0000-000000000000"
+      },
+      "id": "loc-bbbb",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "bbbbbbbb-0000-0000-0000-000000000002",
+            "type": "devices"
+          }
+        },
+        "user": {
+          "data": {
+            "id": "user-0000-0000-0000-000000000000",
+            "type": "users"
+          }
+        }
+      },
+      "type": "device_tool_locations"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "dtA-notes",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "aaaaaaaa-0000-0000-0000-000000000001",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "3b35e791-ba6a-4cbf-af06-ef59779c72ca",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "dtA-music",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "aaaaaaaa-0000-0000-0000-000000000001",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "6a994a56-add1-4af6-b190-d96fb7d31773",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "dtA-podcast",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "aaaaaaaa-0000-0000-0000-000000000001",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "513ea7ed-d7a0-4295-a43b-e8fa2d66763e",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "dtB-notes",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "bbbbbbbb-0000-0000-0000-000000000002",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "3b35e791-ba6a-4cbf-af06-ef59779c72ca",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "dtB-music",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "bbbbbbbb-0000-0000-0000-000000000002",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "6a994a56-add1-4af6-b190-d96fb7d31773",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "config": {},
+        "deleted_at": null
+      },
+      "id": "dtB-podcast",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "bbbbbbbb-0000-0000-0000-000000000002",
+            "type": "devices"
+          }
+        },
+        "tool": {
+          "data": {
+            "id": "513ea7ed-d7a0-4295-a43b-e8fa2d66763e",
+            "type": "tools"
+          }
+        }
+      },
+      "type": "device_tools"
+    },
+    {
+      "attributes": {
+        "iccid": "sim-aaaa",
+        "phone_number": "+15555550100"
+      },
+      "id": "sim-aaaa",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "aaaaaaaa-0000-0000-0000-000000000001",
+            "type": "devices"
+          }
+        }
+      },
+      "type": "sims"
+    },
+    {
+      "attributes": {
+        "iccid": "sim-bbbb",
+        "phone_number": "+15125550199"
+      },
+      "id": "sim-bbbb",
+      "relationships": {
+        "device": {
+          "data": {
+            "id": "bbbbbbbb-0000-0000-0000-000000000002",
+            "type": "devices"
+          }
+        }
+      },
+      "type": "sims"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  }
+}

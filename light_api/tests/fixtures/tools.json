@@ -1,0 +1,202 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "component": "Alarm",
+        "is_core": false,
+        "min_apk_version": 63,
+        "namespace": "alarm",
+        "status": "available",
+        "title": "Alarm",
+        "tool_type": "core"
+      },
+      "id": "81144ddb-d9cf-4e26-8f51-fc37db871235",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Album",
+        "is_core": false,
+        "min_apk_version": 441,
+        "namespace": "album",
+        "status": "available",
+        "title": "Album",
+        "tool_type": "core"
+      },
+      "id": "9be8f633-d769-43d7-ae4f-f428240063bd",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Calculator",
+        "is_core": false,
+        "min_apk_version": 63,
+        "namespace": "calculator",
+        "status": "available",
+        "title": "Calculator",
+        "tool_type": "core"
+      },
+      "id": "78c8d31a-3550-48e0-9c27-792d3fe0cb11",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Calendar",
+        "is_core": false,
+        "min_apk_version": 356,
+        "namespace": "calendar",
+        "status": "available",
+        "title": "Calendar",
+        "tool_type": "core"
+      },
+      "id": "0618bd7a-6a0c-434a-b90e-e37f935d74dd",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Camera",
+        "is_core": false,
+        "min_apk_version": 442,
+        "namespace": "camera",
+        "status": "available",
+        "title": "Camera",
+        "tool_type": "core"
+      },
+      "id": "a0566c2f-b6bc-4883-885f-7e089f5f0715",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Directions",
+        "is_core": false,
+        "min_apk_version": 250,
+        "namespace": "directions",
+        "status": "available",
+        "title": "Directions",
+        "tool_type": "core"
+      },
+      "id": "a053d3e2-cb77-4922-92c8-9aa4e244e5ef",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Directory",
+        "is_core": false,
+        "min_apk_version": 437,
+        "namespace": "directory",
+        "status": "available",
+        "title": "Directory",
+        "tool_type": "core"
+      },
+      "id": "3ab34832-e415-4bea-bea5-3c6751972f07",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Hotspot",
+        "is_core": false,
+        "min_apk_version": 297,
+        "namespace": "hotspot",
+        "status": "available",
+        "title": "Hotspot",
+        "tool_type": "core"
+      },
+      "id": "fe5cfb9b-011f-4dc2-96ce-fa4ed427986a",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Music",
+        "is_core": false,
+        "min_apk_version": 114,
+        "namespace": "music",
+        "status": "available",
+        "title": "Music",
+        "tool_type": "core"
+      },
+      "id": "6a994a56-add1-4af6-b190-d96fb7d31773",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Notes",
+        "is_core": false,
+        "min_apk_version": 338,
+        "namespace": "notes",
+        "status": "available",
+        "title": "Notes",
+        "tool_type": "core"
+      },
+      "id": "3b35e791-ba6a-4cbf-af06-ef59779c72ca",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Podcasts",
+        "is_core": false,
+        "min_apk_version": 87,
+        "namespace": "podcasts",
+        "status": "available",
+        "title": "Podcasts",
+        "tool_type": "core"
+      },
+      "id": "513ea7ed-d7a0-4295-a43b-e8fa2d66763e",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "Timer",
+        "is_core": false,
+        "min_apk_version": 429,
+        "namespace": "timer",
+        "status": "available",
+        "title": "Timer",
+        "tool_type": "core"
+      },
+      "id": "9474b036-da42-4db1-b601-2e747d93dabb",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "third_party",
+        "is_core": true,
+        "min_apk_version": 568,
+        "namespace": "authenticator",
+        "status": "available",
+        "title": "Authenticator",
+        "tool_type": "third_party"
+      },
+      "id": "e0e89172-b270-42f4-bedd-3a2bdb131d00",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "third_party",
+        "is_core": true,
+        "min_apk_version": 582,
+        "namespace": "rideshare",
+        "status": "available",
+        "title": "Rideshare",
+        "tool_type": "third_party"
+      },
+      "id": "4b314a88-fc7c-4600-9dfc-9777ab9a12eb",
+      "type": "tools"
+    },
+    {
+      "attributes": {
+        "component": "third_party",
+        "is_core": true,
+        "min_apk_version": 568,
+        "namespace": "weather",
+        "status": "available",
+        "title": "Weather",
+        "tool_type": "third_party"
+      },
+      "id": "c54529b5-0b82-4616-a671-b9fafce27bf8",
+      "type": "tools"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  }
+}

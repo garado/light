@@ -3,6 +3,5 @@ __pycache__
 _build
 .env
 .venv
-light_api/tests/fixtures/
 .coverage
 htmlcov/

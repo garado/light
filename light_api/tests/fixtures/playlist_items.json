@@ -1,0 +1,4779 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "audio_id": "8b4fc6bb-18c2-4eb6-837a-5b5cbd563c6f",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 0
+      },
+      "id": "24a86539-bdd7-4c42-8300-2a282335d0ce",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "8b4fc6bb-18c2-4eb6-837a-5b5cbd563c6f",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "fd3b687b-9955-4989-8242-faee63fd5290",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 1
+      },
+      "id": "95ef50a6-3413-4844-8ce1-5a25128a99d6",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "fd3b687b-9955-4989-8242-faee63fd5290",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "3e03a27a-37f3-4fe7-b8b1-3ebef31a40e3",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 2
+      },
+      "id": "65dccd69-1c19-4309-8bb3-266da0047791",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "3e03a27a-37f3-4fe7-b8b1-3ebef31a40e3",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "47b4bfab-1684-423f-9112-72a4bbd5921e",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 3
+      },
+      "id": "b91faf41-63f6-4c9e-bd15-555395658584",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "47b4bfab-1684-423f-9112-72a4bbd5921e",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "0c122162-cd9b-465f-b57d-7fd7d0702fff",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 4
+      },
+      "id": "be2a3667-05a5-477c-8698-c5aca25af8fa",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "0c122162-cd9b-465f-b57d-7fd7d0702fff",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "3e85eccf-c8fe-4e98-b7ec-95ab1e95ba58",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 5
+      },
+      "id": "4b4b12c7-340b-4a4b-a773-a437004a91b2",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "3e85eccf-c8fe-4e98-b7ec-95ab1e95ba58",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "11b7bf03-b39e-4e6c-b583-a61da4cb6b3c",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 6
+      },
+      "id": "f3324673-9365-44d9-a55e-154925977c4e",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "11b7bf03-b39e-4e6c-b583-a61da4cb6b3c",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "bf552daf-dd68-4711-8767-155c3f52063c",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 7
+      },
+      "id": "55698e3f-0e2d-469d-a775-a36d226d73ae",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "bf552daf-dd68-4711-8767-155c3f52063c",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "8f7588b3-fcfa-4b23-999a-bac7af4c3f8d",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 8
+      },
+      "id": "1d94d25f-ed1c-4737-a649-4273cd20e3b7",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "8f7588b3-fcfa-4b23-999a-bac7af4c3f8d",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "a36a28fd-dd10-4261-8c8b-32b46151c47a",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 9
+      },
+      "id": "ce592a79-c069-43f2-b92f-caaa7c7e7a24",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "a36a28fd-dd10-4261-8c8b-32b46151c47a",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "41451e3b-9df2-4b0b-a6c3-6785370d5405",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 10
+      },
+      "id": "176429f0-1069-4122-8641-f3f0fe18a0fb",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "41451e3b-9df2-4b0b-a6c3-6785370d5405",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "729807e1-291c-40b0-913e-7192c430e08b",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 11
+      },
+      "id": "39a2f990-4200-42a4-b9c9-606f06d69055",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "729807e1-291c-40b0-913e-7192c430e08b",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "d802ed98-6b2a-4fa7-9654-ee04e1b8f9c0",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 12
+      },
+      "id": "ac8c5508-cd3b-48c8-8451-d9dc8078f9ca",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "d802ed98-6b2a-4fa7-9654-ee04e1b8f9c0",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "0aaf5e50-5c5e-4734-bc08-69ccfbc0956e",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 13
+      },
+      "id": "0b54fa88-4a15-4c56-9428-7b3a46e14e92",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "0aaf5e50-5c5e-4734-bc08-69ccfbc0956e",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "9512dc70-c0c1-4d07-a7e5-7f20791363af",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 14
+      },
+      "id": "5b0e0891-88dd-4dec-849d-35b93fbcb483",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "9512dc70-c0c1-4d07-a7e5-7f20791363af",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "ff466c27-7fab-4d81-9609-0469194d7844",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 15
+      },
+      "id": "12a5c241-ec54-4d96-877f-cf52605e68d5",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "ff466c27-7fab-4d81-9609-0469194d7844",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "f991e8c4-d3a3-4dea-a35c-a7612346c6a8",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 16
+      },
+      "id": "6467dfdd-4d5e-44af-a9d0-2cb6db08f6bf",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "f991e8c4-d3a3-4dea-a35c-a7612346c6a8",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "24e887a9-03c2-4ea1-b7f6-fd9c5008390d",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 17
+      },
+      "id": "7d504670-ce0c-48dd-8c4d-8db0764d3d1b",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "24e887a9-03c2-4ea1-b7f6-fd9c5008390d",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "32e5ea3c-626b-4c99-8b33-2d0f154c13f6",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 18
+      },
+      "id": "bce332ab-efea-4678-b330-39b9a72d86d6",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "32e5ea3c-626b-4c99-8b33-2d0f154c13f6",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "73058ec5-b730-4f9a-9bc0-3b0bd88ab4a6",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 19
+      },
+      "id": "373d71ea-a9c9-460a-9bef-e9818ce0c712",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "73058ec5-b730-4f9a-9bc0-3b0bd88ab4a6",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "696fef2c-3e57-43ad-9dbc-9a14ab84b9a0",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 20
+      },
+      "id": "5ae6dbf2-a1a1-46e1-8cf7-aef2f29dfb9d",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "696fef2c-3e57-43ad-9dbc-9a14ab84b9a0",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "02ddbb0e-6d1e-41f6-9162-6e5ca637e952",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 21
+      },
+      "id": "9ff39fc5-f5e4-40e4-bf28-e16adc79692d",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "02ddbb0e-6d1e-41f6-9162-6e5ca637e952",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "78101657-9312-44e3-a9e8-12bd6385b817",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 22
+      },
+      "id": "db939561-28a1-4b15-ba7e-053ef2d1a453",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "78101657-9312-44e3-a9e8-12bd6385b817",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "2575492a-f07e-41fb-ba4d-be7556e4caf2",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 23
+      },
+      "id": "8b2ab0f2-ac25-458a-bd6a-492ea2fa58fc",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "2575492a-f07e-41fb-ba4d-be7556e4caf2",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "9b7f5477-d191-48ce-8ca6-f4b2b8438765",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 24
+      },
+      "id": "0fd2a010-6e7a-41d6-9ff0-4e304d20ec8a",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "9b7f5477-d191-48ce-8ca6-f4b2b8438765",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "d049098c-569d-46b4-ae35-3916faf2f50b",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 25
+      },
+      "id": "a1bc6144-8cbe-478c-a3ae-d91e48978993",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "d049098c-569d-46b4-ae35-3916faf2f50b",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "0cca617e-d802-496f-b518-40339034c1b2",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 26
+      },
+      "id": "5ea417df-1195-4d26-8f0a-ea292fdc1094",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "0cca617e-d802-496f-b518-40339034c1b2",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "1903b2dd-56dc-4568-9e1c-9129031beb3d",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 27
+      },
+      "id": "c0501f71-3b32-4459-ad6f-c8e381d4ad87",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "1903b2dd-56dc-4568-9e1c-9129031beb3d",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "8122520c-05c1-4b24-b5a1-413a4fbec1db",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 28
+      },
+      "id": "56e151a4-7ef8-4086-92b0-67984d11d642",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "8122520c-05c1-4b24-b5a1-413a4fbec1db",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "36c3747c-a9ab-40f1-881f-2e31b3d50540",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 29
+      },
+      "id": "2595a5fd-91c4-430d-91c9-3c5fe045ea8c",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "36c3747c-a9ab-40f1-881f-2e31b3d50540",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "63402e75-6775-4914-8aba-6680cc52d9ed",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 30
+      },
+      "id": "ee04a38b-c2c6-4de0-81b4-59d4ece72558",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "63402e75-6775-4914-8aba-6680cc52d9ed",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "8960234b-b06a-46bd-baef-b9b239474b24",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 31
+      },
+      "id": "cc73969e-91be-4dd6-b6a9-5c37573e848f",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "8960234b-b06a-46bd-baef-b9b239474b24",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "8f373fac-6f64-40fb-b266-538397caa073",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 32
+      },
+      "id": "7f8dee88-0f12-45f7-bad2-ba42f9ba2e58",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "8f373fac-6f64-40fb-b266-538397caa073",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "79646b7d-8ed6-47ed-a6a0-428f90c0c677",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 33
+      },
+      "id": "6d934992-579d-4565-905f-2cf9aa65a1b9",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "79646b7d-8ed6-47ed-a6a0-428f90c0c677",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "0b64373b-5667-4366-a86a-3c875ee294bf",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 34
+      },
+      "id": "22f4e1b6-21b1-414f-ab01-31f1b58d5857",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "0b64373b-5667-4366-a86a-3c875ee294bf",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "55835f32-1e89-4704-b2fc-67772d7ee21d",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 35
+      },
+      "id": "dc8ec60b-852f-4dd5-84fd-c89142528b4c",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "55835f32-1e89-4704-b2fc-67772d7ee21d",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "0bf1b8bb-c3c4-48eb-8517-d974a4640e0a",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 36
+      },
+      "id": "8048f44c-0733-444f-8c08-60ab9124f060",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "0bf1b8bb-c3c4-48eb-8517-d974a4640e0a",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "a5b40ed3-7509-4761-a696-550cb744a1c2",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 37
+      },
+      "id": "8a33d2b0-48c2-43fa-8c9d-a9c968fa0923",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "a5b40ed3-7509-4761-a696-550cb744a1c2",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "7084c52b-0e2c-4c9d-a832-424cd200a970",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 38
+      },
+      "id": "76414840-480d-4f6d-afb6-cb03d9873051",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "7084c52b-0e2c-4c9d-a832-424cd200a970",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "d3da0e66-0bc0-4c02-a3e6-11cd84c168ce",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 39
+      },
+      "id": "7b98c220-2bab-4833-b88f-2f668ce15b89",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "d3da0e66-0bc0-4c02-a3e6-11cd84c168ce",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "e01a5d69-a8a6-4a1c-9052-fb87668c8f15",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 40
+      },
+      "id": "3fa47eaa-badf-42b7-a147-788ae3f8d282",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "e01a5d69-a8a6-4a1c-9052-fb87668c8f15",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "6a47116e-505c-407a-b643-1ccf082bc4e2",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 41
+      },
+      "id": "752792d6-28f0-4007-9cca-bdfe30514f60",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "6a47116e-505c-407a-b643-1ccf082bc4e2",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "2ac90f90-e2ae-45b1-8e8e-779723b34f50",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 42
+      },
+      "id": "7283da22-46ae-4db9-9553-50ca44d1b418",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "2ac90f90-e2ae-45b1-8e8e-779723b34f50",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "28aee09c-e9c2-4cb6-be36-0690f4371558",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 43
+      },
+      "id": "11f51327-dd68-4698-968a-5a864a272f01",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "28aee09c-e9c2-4cb6-be36-0690f4371558",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "0075a39a-a12a-47d0-a4e6-a398142d9314",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 44
+      },
+      "id": "3fd6bf53-f3a8-4c12-8e56-303f05d0baca",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "0075a39a-a12a-47d0-a4e6-a398142d9314",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "1f00df42-da98-41fc-bc08-5d12f71a4baa",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 45
+      },
+      "id": "5550968c-7d60-4515-92db-e344ea7ec6f1",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "1f00df42-da98-41fc-bc08-5d12f71a4baa",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "22991380-5c38-4400-8574-d7cdbb9e7741",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 46
+      },
+      "id": "0aa14f7e-c04a-4f9c-a6b0-8d8679f5fd79",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "22991380-5c38-4400-8574-d7cdbb9e7741",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "1113d7d4-20a4-4a07-9a1d-d2f8c0628016",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 47
+      },
+      "id": "333e6b2f-9281-4710-abb6-38c54b12ad83",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "1113d7d4-20a4-4a07-9a1d-d2f8c0628016",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "b36c4a50-deff-4a5f-9317-ce7faa60b6af",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 48
+      },
+      "id": "806dc0f9-bb91-4660-be1f-a98527f4a7f1",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "b36c4a50-deff-4a5f-9317-ce7faa60b6af",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "2fe6bb94-ce38-4014-9520-728b6c04c32a",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 49
+      },
+      "id": "b0d3f184-7b7d-4cae-92af-189ea25d5881",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "2fe6bb94-ce38-4014-9520-728b6c04c32a",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "e4bc2fef-f1a9-46cd-91a3-975ea8757098",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 50
+      },
+      "id": "52cb7a00-7823-4d42-9a76-cdae9477347b",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "e4bc2fef-f1a9-46cd-91a3-975ea8757098",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "6cd9d4a1-6f3e-49d3-8427-f9835a69099e",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 51
+      },
+      "id": "02ce5435-9df8-46b7-98f5-0b951f344d66",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "6cd9d4a1-6f3e-49d3-8427-f9835a69099e",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "9aae74c3-f629-4167-a2c8-75871979f242",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 52
+      },
+      "id": "bfb42d58-9857-4afd-918c-825571c157db",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "9aae74c3-f629-4167-a2c8-75871979f242",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "ffd067d6-5afc-4dec-837f-7c0300617442",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 53
+      },
+      "id": "5ea6b8cd-cd5d-4b1e-beaa-28d694c57158",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "ffd067d6-5afc-4dec-837f-7c0300617442",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "4f81f6cd-2b4f-49eb-a79a-072615225b3d",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 54
+      },
+      "id": "91ab112f-f866-4957-9081-58e6a3795c97",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "4f81f6cd-2b4f-49eb-a79a-072615225b3d",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "98d5051a-0299-4f7c-ad7e-03d1f425c679",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 55
+      },
+      "id": "2ceb01e5-2c58-4d4b-92eb-51f50f0cd8a0",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "98d5051a-0299-4f7c-ad7e-03d1f425c679",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "f2ce6dbd-3f85-42c4-863a-0bf32e60649b",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 56
+      },
+      "id": "ebef3340-19b9-4119-8d76-520e4bb2ad2d",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "f2ce6dbd-3f85-42c4-863a-0bf32e60649b",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "eb649fff-fc42-4b5a-993f-3b9bf4f9e4ca",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 57
+      },
+      "id": "f30b8569-c2aa-44f8-8d9c-60599a273a7f",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "eb649fff-fc42-4b5a-993f-3b9bf4f9e4ca",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "14540d17-1d49-4617-bb8a-2f2b8622db26",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 58
+      },
+      "id": "5811bc10-2100-440c-ba36-3e4b352226a9",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "14540d17-1d49-4617-bb8a-2f2b8622db26",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "ba2d36a1-d24c-499d-a18b-d80994030aa6",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 59
+      },
+      "id": "a4518883-a0ae-4e2c-9309-124c6b44e0cd",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "ba2d36a1-d24c-499d-a18b-d80994030aa6",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "ee6fbb75-5220-4cc9-9e0b-6bba747aeb18",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 60
+      },
+      "id": "ec5171f8-4645-4742-8c7a-e74213ab2293",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "ee6fbb75-5220-4cc9-9e0b-6bba747aeb18",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "d8b187d7-34c8-413c-ab5b-99e4e3c81658",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 61
+      },
+      "id": "b5809686-0a91-4c2b-b0c5-e2a3fb72202c",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "d8b187d7-34c8-413c-ab5b-99e4e3c81658",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "915bd357-3fdf-45ee-8fba-4b6a5adfeb12",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 62
+      },
+      "id": "4374e6f4-d2b0-4090-9ab8-6409c8cca802",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "915bd357-3fdf-45ee-8fba-4b6a5adfeb12",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "5a5731c4-675f-4bf8-8d14-34333ab486b5",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 63
+      },
+      "id": "963f7dae-21d5-4afb-9204-2bf7c5cbc03a",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "5a5731c4-675f-4bf8-8d14-34333ab486b5",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "303a5561-66c6-4297-be39-904b7cdc1e9d",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 64
+      },
+      "id": "f0497bfb-3626-4de4-ae54-40f1b87fe4b6",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "303a5561-66c6-4297-be39-904b7cdc1e9d",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "3a701486-eb32-4f19-a048-5eed2846cbd8",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 65
+      },
+      "id": "da0d3e92-f802-445c-b4c7-c0e5b7e97f20",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "3a701486-eb32-4f19-a048-5eed2846cbd8",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "cac24ad9-de11-4e40-92e8-9a35ff28a48b",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 66
+      },
+      "id": "aa013cab-bf3c-4c2a-97bb-7ec9726b168a",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "cac24ad9-de11-4e40-92e8-9a35ff28a48b",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "d06adf59-beee-4504-bb58-d9e5f3f5f589",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 67
+      },
+      "id": "c548cdb4-2a85-4075-a9eb-6f643e038c94",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "d06adf59-beee-4504-bb58-d9e5f3f5f589",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "7f864e9c-20e3-4706-afb7-580b786111c5",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 68
+      },
+      "id": "22791a4a-62b7-40fc-95c9-f14b49efb073",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "7f864e9c-20e3-4706-afb7-580b786111c5",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "749f2a50-d373-4fe3-8ca7-9f780201d2df",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 69
+      },
+      "id": "e746624b-fb64-45fa-8757-d24aad3a4dd6",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "749f2a50-d373-4fe3-8ca7-9f780201d2df",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "690c4a37-ae74-458e-aed3-4cf7ccaedf49",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 70
+      },
+      "id": "a29bdd4a-af61-4cb4-82af-8882afe3278f",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "690c4a37-ae74-458e-aed3-4cf7ccaedf49",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "53b69d84-96fa-4858-8e41-4ec3830b261b",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 71
+      },
+      "id": "73879901-eb57-49c1-8270-46d1ad2cffb7",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "53b69d84-96fa-4858-8e41-4ec3830b261b",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "30a795ac-97e2-40ee-b883-0788113727d2",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 72
+      },
+      "id": "c4f902cd-d379-4f4f-b9f0-4e5205acd5db",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "30a795ac-97e2-40ee-b883-0788113727d2",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "cbd6a12c-f888-414d-be9c-49499db16c49",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 73
+      },
+      "id": "ca2ac91b-7f32-4a58-a00d-87e14036e411",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "cbd6a12c-f888-414d-be9c-49499db16c49",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "87fb3844-c13e-444e-943a-8f4ea02302d2",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 74
+      },
+      "id": "1920eee7-8d08-462f-9830-aa5831e2ac57",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "87fb3844-c13e-444e-943a-8f4ea02302d2",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "384b0fc2-e769-4a62-a43c-b38d00eef0b1",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 75
+      },
+      "id": "a613329b-527b-438a-a6bc-5dbdffb8f6d4",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "384b0fc2-e769-4a62-a43c-b38d00eef0b1",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "5cff184d-e677-4fd5-8d5a-365f6cc68620",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 76
+      },
+      "id": "1dcbf2fc-6c96-46a6-9a3e-d335d20c820a",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "5cff184d-e677-4fd5-8d5a-365f6cc68620",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "de95a18c-b780-49db-b8b4-ff1a58de6a85",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 77
+      },
+      "id": "dd14dd27-1a57-44c9-b1a0-7f09ba1fc36c",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "de95a18c-b780-49db-b8b4-ff1a58de6a85",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "cf589877-02ca-4122-952a-f0f1ede03333",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 78
+      },
+      "id": "eca5ceb9-24d4-4e54-8efb-19acc2d52d5f",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "cf589877-02ca-4122-952a-f0f1ede03333",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "764c755c-b74f-47ff-a7fb-3865341dc8a0",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 79
+      },
+      "id": "e03bc840-a541-4bdb-bc72-3814bc7ccd09",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "764c755c-b74f-47ff-a7fb-3865341dc8a0",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "18f47d7a-cf91-4f04-b979-a838dea6c39a",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 80
+      },
+      "id": "be667cb8-854d-4bc6-a1bf-ba36a966cb4f",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "18f47d7a-cf91-4f04-b979-a838dea6c39a",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "9ba611fc-fb2e-4c70-90b9-938db054b3ca",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 81
+      },
+      "id": "071a54fe-4f06-4490-b864-a133a345081d",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "9ba611fc-fb2e-4c70-90b9-938db054b3ca",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "640f16cb-7c76-4f1f-8b54-c968342f0637",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 82
+      },
+      "id": "6e4503e5-3278-433d-8490-3f5b9837409d",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "640f16cb-7c76-4f1f-8b54-c968342f0637",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "1b4114c2-a99f-44a2-8006-5365220bad69",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 83
+      },
+      "id": "0d1bc69b-c9da-4d1c-aa3b-0fb89123cbdf",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "1b4114c2-a99f-44a2-8006-5365220bad69",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "5c862967-9c94-44a6-989c-f19c1a440797",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 84
+      },
+      "id": "11d1ce56-480f-4947-8a11-ebd1745cea3d",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "5c862967-9c94-44a6-989c-f19c1a440797",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "d4230c24-83b5-4c3c-a26b-a50312c511ef",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 85
+      },
+      "id": "af34e503-b2c2-446c-8b5f-c39db7be1685",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "d4230c24-83b5-4c3c-a26b-a50312c511ef",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "5dc5d507-3284-4348-b404-d72953771a2f",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 86
+      },
+      "id": "90fc8e97-bfcd-47ee-a87a-10176293130e",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "5dc5d507-3284-4348-b404-d72953771a2f",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "127f8b94-c86b-4499-bb81-cd76c3231fac",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 87
+      },
+      "id": "1f003d09-7037-4015-b9f0-860e89d3ab4c",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "127f8b94-c86b-4499-bb81-cd76c3231fac",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "dbc6254c-0243-47e2-9daa-3a8b9f57e1a4",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 88
+      },
+      "id": "d7241a9a-5ccc-4691-808e-686e7f56ced5",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "dbc6254c-0243-47e2-9daa-3a8b9f57e1a4",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    },
+    {
+      "attributes": {
+        "audio_id": "8e6c99d1-6292-4ce5-b057-3aa5e8c96762",
+        "playlist_id": "d47118c1-12d8-4fb1-83bd-28cd93b27b52",
+        "position": 89
+      },
+      "id": "d48d2a9f-3e34-42c3-be12-132dc2ddd078",
+      "relationships": {
+        "audio": {
+          "data": {
+            "id": "8e6c99d1-6292-4ce5-b057-3aa5e8c96762",
+            "type": "audios"
+          }
+        }
+      },
+      "type": "playlist_items"
+    }
+  ],
+  "included": [
+    {
+      "attributes": {
+        "album": "Steal This Album!",
+        "artist": "System Of A Down",
+        "duration": 134949,
+        "title": "Boom!"
+      },
+      "id": "640f16cb-7c76-4f1f-8b54-c968342f0637",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "80b38b1d-bad1-429f-aeb8-2956821d3870",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "80b38b1d-bad1-429f-aeb8-2956821d3870",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The 1975 (Deluxe Version)",
+        "artist": "The 1975",
+        "duration": 74762,
+        "title": "An Encounter"
+      },
+      "id": "0b64373b-5667-4366-a86a-3c875ee294bf",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "1d38232f-53a7-4c80-b18c-67ae0193fe51",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "1d38232f-53a7-4c80-b18c-67ae0193fe51",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Swimming",
+        "artist": "Mac Miller",
+        "duration": 348029,
+        "title": "2009"
+      },
+      "id": "bf552daf-dd68-4711-8767-155c3f52063c",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "03f6b1a6-c876-4684-a820-4013136d5f43",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "03f6b1a6-c876-4684-a820-4013136d5f43",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Everything's Falling (Instrumental Version)",
+        "artist": "The Warning",
+        "duration": 198936,
+        "title": "Bloodsport"
+      },
+      "id": "87fb3844-c13e-444e-943a-8f4ea02302d2",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "828d1a17-7207-447c-9ded-446069c5db9f",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "182abe2e-7a52-4163-b29a-f6938e916741",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Alligator Bites Never Heal",
+        "artist": "Doechii",
+        "duration": 218671,
+        "title": "BEVERLY HILLS"
+      },
+      "id": "d8b187d7-34c8-413c-ab5b-99e4e3c81658",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "b659f76a-126e-407d-882c-242db53c0ac7",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "b659f76a-126e-407d-882c-242db53c0ac7",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Remember That You Will Die",
+        "artist": "Polyphia/Chino Moreno",
+        "duration": 231001,
+        "title": "Bloodbath (feat. Chino Moreno)"
+      },
+      "id": "cbd6a12c-f888-414d-be9c-49499db16c49",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "736b7fc6-b522-4074-afd8-56b1f16db4e0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "736b7fc6-b522-4074-afd8-56b1f16db4e0",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Steal This Album!",
+        "artist": "System Of A Down",
+        "duration": 197355,
+        "title": "A.D.D. (American Dream Denial)"
+      },
+      "id": "73058ec5-b730-4f9a-9bc0-3b0bd88ab4a6",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "fd8a3168-9267-45fb-b530-dfe440b09e34",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "fd8a3168-9267-45fb-b530-dfe440b09e34",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Blueberry Faygo",
+        "artist": "Lil Mosey",
+        "duration": 162717,
+        "title": "Blueberry Faygo"
+      },
+      "id": "cf589877-02ca-4122-952a-f0f1ede03333",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "ee7ba95d-bc63-40f2-b846-1f7fc9263550",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "ee7ba95d-bc63-40f2-b846-1f7fc9263550",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Remnants of the Vessel",
+        "artist": "Faetooth",
+        "duration": 41770,
+        "title": "(i) naissance"
+      },
+      "id": "fd3b687b-9955-4989-8242-faee63fd5290",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "804fd424-205c-46c7-9cdf-dc7db311bed2",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "a787e3f9-a8f9-4125-bfe5-d946d59c958c",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Brand New Eyes",
+        "artist": "Paramore",
+        "duration": 225829,
+        "title": "All I Wanted"
+      },
+      "id": "36c3747c-a9ab-40f1-881f-2e31b3d50540",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "da380da2-7dae-4690-8c60-e81a6d5e34de",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "da380da2-7dae-4690-8c60-e81a6d5e34de",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Everything's Falling (Instrumental Version)",
+        "artist": "The Warning",
+        "duration": 199344,
+        "title": "Bite My Tongue"
+      },
+      "id": "3a701486-eb32-4f19-a048-5eed2846cbd8",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "67e85276-0b07-4c17-9677-65d0b564eec2",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "3e9e4c2e-c30f-40c4-8a27-168baf6ec132",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Take Me Back To Eden",
+        "artist": "Sleep Token",
+        "duration": 236069,
+        "title": "Aqua Regia"
+      },
+      "id": "28aee09c-e9c2-4cb6-be36-0690f4371558",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "2f1296ce-d74a-4eaa-8469-2d0e47b2a3ec",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "2f1296ce-d74a-4eaa-8469-2d0e47b2a3ec",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The Beautiful Game",
+        "artist": "Vulfpeck",
+        "duration": 190851,
+        "title": "Animal Spirits"
+      },
+      "id": "0bf1b8bb-c3c4-48eb-8517-d974a4640e0a",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "7eab5549-0481-4f3f-9699-1694286a6221",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "7eab5549-0481-4f3f-9699-1694286a6221",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Brand New Moves",
+        "artist": "Hey Violet",
+        "duration": 228519,
+        "title": "Brand New Moves"
+      },
+      "id": "127f8b94-c86b-4499-bb81-cd76c3231fac",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "d3d5d25a-17ec-487c-a8af-89db9212ea96",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "d3d5d25a-17ec-487c-a8af-89db9212ea96",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Atavista",
+        "artist": "Childish Gambino",
+        "duration": 181708,
+        "title": "Atavista"
+      },
+      "id": "1113d7d4-20a4-4a07-9a1d-d2f8c0628016",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "0de5bdad-6e59-4dc6-95af-fd9bde9478f0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "c788cf64-db75-4565-8f1b-4d5978c68ef8",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Steal This Album!",
+        "artist": "System Of A Down",
+        "duration": 46367,
+        "title": "36"
+      },
+      "id": "a36a28fd-dd10-4261-8c8b-32b46151c47a",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "69787e85-6ec0-4f07-8831-b809542f9730",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "69787e85-6ec0-4f07-8831-b809542f9730",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "POST HUMAN: NeX GEn",
+        "artist": "Bring Me The Horizon",
+        "duration": 114260,
+        "title": "[ost] (spi)ritual"
+      },
+      "id": "729807e1-291c-40b0-913e-7192c430e08b",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "f55f8ec8-6e1f-4bd6-9526-a85a22b11a50",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "f55f8ec8-6e1f-4bd6-9526-a85a22b11a50",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Keep Me Fed",
+        "artist": "The Warning",
+        "duration": 219376,
+        "title": "Apologize"
+      },
+      "id": "6a47116e-505c-407a-b643-1ccf082bc4e2",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "8f6d7e91-a489-4eba-b120-950f732c19c4",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "8f6d7e91-a489-4eba-b120-950f732c19c4",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Climb",
+        "artist": "Hollis Lomax",
+        "duration": 187167,
+        "title": "Bannister"
+      },
+      "id": "14540d17-1d49-4617-bb8a-2f2b8622db26",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "2fa7858b-4c19-429b-bff4-b1548f7cd51f",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "2fa7858b-4c19-429b-bff4-b1548f7cd51f",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Remember That You Will Die",
+        "artist": "Polyphia",
+        "duration": 79726,
+        "title": "All Falls Apart"
+      },
+      "id": "8122520c-05c1-4b24-b5a1-413a4fbec1db",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "0f91791f-5119-44d2-a382-aad5d420e964",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "0f91791f-5119-44d2-a382-aad5d420e964",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Toxicity",
+        "artist": "System Of A Down",
+        "duration": 114260,
+        "title": "Bounce"
+      },
+      "id": "5c862967-9c94-44a6-989c-f19c1a440797",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "1fce4889-3829-4237-8003-c8fd3b8596d0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "1fce4889-3829-4237-8003-c8fd3b8596d0",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "130 Mood : TRBL",
+        "artist": "DEAN",
+        "duration": 224653,
+        "title": "Bonnie & Clyde"
+      },
+      "id": "18f47d7a-cf91-4f04-b979-a838dea6c39a",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "f37fec6f-887d-4170-886d-a6c64a64043b",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "f37fec6f-887d-4170-886d-a6c64a64043b",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Never for Ever (2018 Remaster)",
+        "artist": "Kate Bush",
+        "duration": 200856,
+        "title": "Babooshka - 2018 Remaster"
+      },
+      "id": "ffd067d6-5afc-4dec-837f-7c0300617442",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "b8f01ae8-ae01-4ece-b021-1a5e9b2f14ce",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "b8f01ae8-ae01-4ece-b021-1a5e9b2f14ce",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "CHROMAKOPIA",
+        "artist": "Tyler, The Creator/Doechii",
+        "duration": 154305,
+        "title": "Balloon (feat. Doechii)"
+      },
+      "id": "eb649fff-fc42-4b5a-993f-3b9bf4f9e4ca",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "62c39556-88bb-44b2-a1f9-d3acdf048718",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "62c39556-88bb-44b2-a1f9-d3acdf048718",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "2014 Forest Hills Drive",
+        "artist": "J. Cole",
+        "duration": 269767,
+        "title": "A Tale Of 2 Citiez"
+      },
+      "id": "32e5ea3c-626b-4c99-8b33-2d0f154c13f6",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "732901a3-c471-4d75-99bb-b67cda908237",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "732901a3-c471-4d75-99bb-b67cda908237",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "three demos",
+        "artist": "PISS",
+        "duration": 37016,
+        "title": "a little girl's horse craze betrays her"
+      },
+      "id": "f991e8c4-d3a3-4dea-a35c-a7612346c6a8",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "38ab5cb3-423e-4feb-a6e4-4751ea343295",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "a29c0a4b-da84-4208-9536-c1e5d21fc3a6",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "GO:OD AM",
+        "artist": "Mac Miller",
+        "duration": 302184,
+        "title": "Brand Name"
+      },
+      "id": "5dc5d507-3284-4348-b404-d72953771a2f",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "bf051caa-54b0-4d08-9f43-806d364d1891",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "bf051caa-54b0-4d08-9f43-806d364d1891",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The Bedroom Tour Playlist",
+        "artist": "Niykee Heaton/Migos/OG Parker",
+        "duration": 245760,
+        "title": "Bad Intentions"
+      },
+      "id": "98d5051a-0299-4f7c-ad7e-03d1f425c679",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "57f0d801-1ec4-4296-9193-a0386e1471da",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "57f0d801-1ec4-4296-9193-a0386e1471da",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Sempiternal (Expanded Edition)",
+        "artist": "Bring Me The Horizon",
+        "duration": 193672,
+        "title": "Antivist"
+      },
+      "id": "e01a5d69-a8a6-4a1c-9052-fb87668c8f15",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "2fcd24f9-f950-49e2-b61a-2ff217bca697",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "2fcd24f9-f950-49e2-b61a-2ff217bca697",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "POST HUMAN: NeX GEn",
+        "artist": "Bring Me The Horizon/Lil Uzi Vert/Daryl Palumbo/Glassjaw",
+        "duration": 189597,
+        "title": "AmEN! (feat. Lil Uzi Vert and Daryl Palumbo of Glassjaw)"
+      },
+      "id": "79646b7d-8ed6-47ed-a6a0-428f90c0c677",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "4052e89e-3787-426c-9a3a-4ca090b5659c",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "4052e89e-3787-426c-9a3a-4ca090b5659c",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "AUGUST",
+        "artist": "Lewis Del Mar",
+        "duration": 229590,
+        "title": "Border (CH. III)"
+      },
+      "id": "1b4114c2-a99f-44a2-8006-5365220bad69",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "2acb7e37-7a25-4ffb-a69e-de90207dedc3",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "2acb7e37-7a25-4ffb-a69e-de90207dedc3",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Tsunami Sea",
+        "artist": "Spiritbox",
+        "duration": 331703,
+        "title": "A Haven With Two Faces"
+      },
+      "id": "ff466c27-7fab-4d81-9609-0469194d7844",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "dd257744-641e-45ec-8fa8-0e26a2667913",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "8c43abf2-5043-44d6-95f6-1a5f9e775bcd",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "That's The Spirit",
+        "artist": "Bring Me The Horizon",
+        "duration": 275043,
+        "title": "Blasphemy"
+      },
+      "id": "30a795ac-97e2-40ee-b883-0788113727d2",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "0ef223ee-029d-4454-8cf6-bca39b283c13",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "0ef223ee-029d-4454-8cf6-bca39b283c13",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Amber Eyes",
+        "artist": "Daevar",
+        "duration": 241633,
+        "title": "Amber Eyes"
+      },
+      "id": "8f373fac-6f64-40fb-b266-538397caa073",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "484455f4-a397-49ce-9ecf-dba49b10c097",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "484455f4-a397-49ce-9ecf-dba49b10c097",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Alligator Bites Never Heal",
+        "artist": "Doechii",
+        "duration": 130351,
+        "title": "BOOM BAP"
+      },
+      "id": "9ba611fc-fb2e-4c70-90b9-938db054b3ca",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "1636cbc0-b503-4dfe-8a73-f91220e6f1bc",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "1636cbc0-b503-4dfe-8a73-f91220e6f1bc",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "HIT ME HARD AND SOFT",
+        "artist": "Billie Eilish",
+        "duration": 211096,
+        "title": "Birds Of A Feather"
+      },
+      "id": "303a5561-66c6-4297-be39-904b7cdc1e9d",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "238d7b53-bbfb-48b1-9b8e-c4b35054d330",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "238d7b53-bbfb-48b1-9b8e-c4b35054d330",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Lazers Not Included",
+        "artist": "Wilkinson/Becky Hill",
+        "duration": 225202,
+        "title": "Afterglow"
+      },
+      "id": "0cca617e-d802-496f-b518-40339034c1b2",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "1ada5c4c-33bf-4348-b18a-c098707fcba7",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "1ada5c4c-33bf-4348-b18a-c098707fcba7",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Future Nostalgia",
+        "artist": "Dua Lipa",
+        "duration": 166296,
+        "title": "Boys Will Be Boys"
+      },
+      "id": "d4230c24-83b5-4c3c-a26b-a50312c511ef",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "57d4e5cf-9768-486a-b9d0-8e9e97651bb0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "57d4e5cf-9768-486a-b9d0-8e9e97651bb0",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Sempiternal (Expanded Edition)",
+        "artist": "Bring Me The Horizon",
+        "duration": 301976,
+        "title": "And the Snakes Start to Sing"
+      },
+      "id": "55835f32-1e89-4704-b2fc-67772d7ee21d",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "c3295b0b-81f7-4b8d-9560-7215518ead9c",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "c3295b0b-81f7-4b8d-9560-7215518ead9c",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Toxicity",
+        "artist": "System Of A Down",
+        "duration": 235102,
+        "title": "Aerials"
+      },
+      "id": "2575492a-f07e-41fb-ba4d-be7556e4caf2",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "eb9d6d8b-e905-4f8a-bc1f-2dbf0a26cda0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "eb9d6d8b-e905-4f8a-bc1f-2dbf0a26cda0",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The Rise and Fall of a Midwest Princess",
+        "artist": "Chappell Roan",
+        "duration": 204904,
+        "title": "After Midnight"
+      },
+      "id": "d049098c-569d-46b4-ae35-3916faf2f50b",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "67d3dcfc-3f61-43e1-b19e-3e74b2e4dae9",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "67d3dcfc-3f61-43e1-b19e-3e74b2e4dae9",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "POST HUMAN: NeX GEn",
+        "artist": "Bring Me The Horizon/Underoath",
+        "duration": 260676,
+        "title": "a bulleT w/ my namE On (feat. Underoath)"
+      },
+      "id": "9512dc70-c0c1-4d07-a7e5-7f20791363af",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "81fb431c-a94b-404e-9e93-47d1c83afcd6",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "81fb431c-a94b-404e-9e93-47d1c83afcd6",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Black Sheep (Brie Larson Vocal Version)",
+        "artist": "Metric/Brie Larson",
+        "duration": 291683,
+        "title": "Black Sheep - Brie Larson Vocal Version"
+      },
+      "id": "690c4a37-ae74-458e-aed3-4cf7ccaedf49",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "021275ef-e533-4794-94ff-208125d576cd",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "021275ef-e533-4794-94ff-208125d576cd",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Remnants of the Vessel",
+        "artist": "Faetooth",
+        "duration": 60029,
+        "title": "(iii) moribund"
+      },
+      "id": "47b4bfab-1684-423f-9112-72a4bbd5921e",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "b316807e-bb89-4118-8108-6bb93f208d1d",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "38a890fd-7ddd-4d35-bd4e-59966e8a7976",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Alligator Bites Never Heal",
+        "artist": "Doechii",
+        "duration": 175125,
+        "title": "ALLIGATOR BITES NEVER HEAL"
+      },
+      "id": "8960234b-b06a-46bd-baef-b9b239474b24",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "4c382181-ae9c-474e-ad72-6e8ede289784",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "4c382181-ae9c-474e-ad72-6e8ede289784",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "POST HUMAN: NeX GEn",
+        "artist": "Bring Me The Horizon",
+        "duration": 169143,
+        "title": "[ost] p.u.s.s.-e"
+      },
+      "id": "0aaf5e50-5c5e-4734-bc08-69ccfbc0956e",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "97871a9e-8c6b-4a1f-96af-698977f00aaf",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "97871a9e-8c6b-4a1f-96af-698977f00aaf",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "POST HUMAN: NeX GEn",
+        "artist": "Bring Me The Horizon",
+        "duration": 19304,
+        "title": "[ost] dreamseeker"
+      },
+      "id": "d802ed98-6b2a-4fa7-9654-ee04e1b8f9c0",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "10cc631b-f610-4b3b-a115-3312f9a41096",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "10cc631b-f610-4b3b-a115-3312f9a41096",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "This Place Will Become Your Tomb",
+        "artist": "Sleep Token",
+        "duration": 214152,
+        "title": "Alkaline"
+      },
+      "id": "1903b2dd-56dc-4568-9e1c-9129031beb3d",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "81ba4a2c-5b5d-409e-a595-8f2db5db8e8e",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "81ba4a2c-5b5d-409e-a595-8f2db5db8e8e",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Dfd",
+        "artist": "Dumbfoundead",
+        "duration": 223791,
+        "title": "Are We There Yet"
+      },
+      "id": "0075a39a-a12a-47d0-a4e6-a398142d9314",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "a2fc1827-64e8-43f3-aa37-ebae6027c776",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "a2fc1827-64e8-43f3-aa37-ebae6027c776",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "GO:OD AM",
+        "artist": "Mac Miller",
+        "duration": 292493,
+        "title": "Ascension"
+      },
+      "id": "22991380-5c38-4400-8574-d7cdbb9e7741",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "3fd0c16f-f50f-4583-86ab-ea5d5d2fcf8c",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "3fd0c16f-f50f-4583-86ab-ea5d5d2fcf8c",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Circles",
+        "artist": "Mac Miller",
+        "duration": 209476,
+        "title": "Blue World"
+      },
+      "id": "de95a18c-b780-49db-b8b4-ff1a58de6a85",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "0b3b59db-0626-4c6a-8d87-bf676384c259",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "0b3b59db-0626-4c6a-8d87-bf676384c259",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Herstory in the Making",
+        "artist": "Young M.A",
+        "duration": 225959,
+        "title": "BIG"
+      },
+      "id": "915bd357-3fdf-45ee-8fba-4b6a5adfeb12",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "f2e7fbd6-48c8-444b-93a6-e6ca9b8600d1",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "f2e7fbd6-48c8-444b-93a6-e6ca9b8600d1",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Alligator Bites Never Heal",
+        "artist": "Doechii",
+        "duration": 121861,
+        "title": "BOILED PEANUTS"
+      },
+      "id": "764c755c-b74f-47ff-a7fb-3865341dc8a0",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "d5950354-4430-45e2-910d-f82197e9a66b",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "d5950354-4430-45e2-910d-f82197e9a66b",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Hypnotize",
+        "artist": "System Of A Down",
+        "duration": 186514,
+        "title": "Attack"
+      },
+      "id": "b36c4a50-deff-4a5f-9317-ce7faa60b6af",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "36d85b2b-ad59-4c57-ab94-2057d55c5380",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "36d85b2b-ad59-4c57-ab94-2057d55c5380",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "HIT ME HARD AND SOFT",
+        "artist": "Billie Eilish",
+        "duration": 298501,
+        "title": "Bittersuite"
+      },
+      "id": "d06adf59-beee-4504-bb58-d9e5f3f5f589",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "c69948a8-914e-4d36-b747-11db13aece5a",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "c69948a8-914e-4d36-b747-11db13aece5a",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Future Nostalgia",
+        "artist": "Dua Lipa",
+        "duration": 221858,
+        "title": "Break My Heart"
+      },
+      "id": "8e6c99d1-6292-4ce5-b057-3aa5e8c96762",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "787aafb4-ebbb-4311-a57a-0dc06f8fa4bc",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "787aafb4-ebbb-4311-a57a-0dc06f8fa4bc",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Live from Auditorio Nacional, CDMX",
+        "artist": "The Warning",
+        "duration": 226560,
+        "title": "Apologize - Live from Auditorio Nacional, CDMX"
+      },
+      "id": "2ac90f90-e2ae-45b1-8e8e-779723b34f50",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "da779594-e2cb-46db-8ff4-db4aac951dbf",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "da779594-e2cb-46db-8ff4-db4aac951dbf",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The 1975 (Deluxe Version)",
+        "artist": "The 1975",
+        "duration": 113607,
+        "title": "Anobrain"
+      },
+      "id": "7084c52b-0e2c-4c9d-a832-424cd200a970",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "16c91e46-ba8c-42a9-8fae-89f1ec5c1e27",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "16c91e46-ba8c-42a9-8fae-89f1ec5c1e27",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Sir Woman",
+        "artist": "Sir Woman",
+        "duration": 203180,
+        "title": "Blame It on the Water"
+      },
+      "id": "53b69d84-96fa-4858-8e41-4ec3830b261b",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "f6eea375-8dcd-460e-b7ea-14633cce6aef",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "f6eea375-8dcd-460e-b7ea-14633cce6aef",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Happier Than Ever",
+        "artist": "Billie Eilish",
+        "duration": 196885,
+        "title": "Billie Bossa Nova"
+      },
+      "id": "5a5731c4-675f-4bf8-8d14-34333ab486b5",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "9a612d71-1f59-402d-b911-1df5253d77dd",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "9a612d71-1f59-402d-b911-1df5253d77dd",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The 1975 (Deluxe Version)",
+        "artist": "The 1975",
+        "duration": 289280,
+        "title": "Antichrist"
+      },
+      "id": "d3da0e66-0bc0-4c02-a3e6-11cd84c168ce",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "b70616ac-09c1-4855-94ca-3ea9e62aa55b",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "b70616ac-09c1-4855-94ca-3ea9e62aa55b",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "The 1975 (Deluxe Version)",
+        "artist": "The 1975",
+        "duration": 79595,
+        "title": "12"
+      },
+      "id": "3e85eccf-c8fe-4e98-b7ec-95ab1e95ba58",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "d02de0c9-7324-4496-a081-5af09e4ba427",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "d02de0c9-7324-4496-a081-5af09e4ba427",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Keep Me Fed",
+        "artist": "The Warning",
+        "duration": 190903,
+        "title": "Automatic Sun"
+      },
+      "id": "e4bc2fef-f1a9-46cd-91a3-975ea8757098",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "e07f6caa-0f70-461c-9753-4cb2cad63957",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "e07f6caa-0f70-461c-9753-4cb2cad63957",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Wiped Out!",
+        "artist": "The Neighbourhood",
+        "duration": 30041,
+        "title": "A Moment of Silence"
+      },
+      "id": "24e887a9-03c2-4ea1-b7f6-fd9c5008390d",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "1623988b-da83-455e-aa12-2a31231f22bc",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "1623988b-da83-455e-aa12-2a31231f22bc",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Mezmerize",
+        "artist": "System Of A Down",
+        "duration": 255504,
+        "title": "B.Y.O.B."
+      },
+      "id": "9aae74c3-f629-4167-a2c8-75871979f242",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "4636018c-edc7-406a-a653-a92fba1a9cdc",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "4636018c-edc7-406a-a653-a92fba1a9cdc",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "130 Mood : TRBL",
+        "artist": "DEAN",
+        "duration": 207177,
+        "title": "21"
+      },
+      "id": "8f7588b3-fcfa-4b23-999a-bac7af4c3f8d",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "d68c9ba1-755e-4844-983f-7f8da16d9772",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "d68c9ba1-755e-4844-983f-7f8da16d9772",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Everything's Falling (Instrumental Version)",
+        "artist": "The Warning",
+        "duration": 192528,
+        "title": "Break"
+      },
+      "id": "dbc6254c-0243-47e2-9daa-3a8b9f57e1a4",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "5ae0543f-e7d3-4158-832e-be2f3cf6a4e4",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "61583ecf-9e91-49a9-a016-00f808c1cf65",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Warm on a Cold Night (Deluxe)",
+        "artist": "HONNE",
+        "duration": 222851,
+        "title": "All in the Value"
+      },
+      "id": "63402e75-6775-4914-8aba-6680cc52d9ed",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "0f45f934-8b06-4434-bf49-020a21a9598b",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "0f45f934-8b06-4434-bf49-020a21a9598b",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Toxicity",
+        "artist": "System Of A Down",
+        "duration": 176248,
+        "title": "ATWA"
+      },
+      "id": "2fe6bb94-ce38-4014-9520-728b6c04c32a",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "98687005-60b6-4042-85f4-82c67dcbc975",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "98687005-60b6-4042-85f4-82c67dcbc975",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Remember That You Will Die",
+        "artist": "Polyphia/Sophia Black",
+        "duration": 152398,
+        "title": "ABC (feat. Sophia Black)"
+      },
+      "id": "696fef2c-3e57-43ad-9dbc-9a14ab84b9a0",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "9517829c-9438-4ca3-8f8c-05688793cf49",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "9517829c-9438-4ca3-8f8c-05688793cf49",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Remnants of the Vessel",
+        "artist": "Faetooth",
+        "duration": 188970,
+        "title": "(ii) limbo"
+      },
+      "id": "3e03a27a-37f3-4fe7-b8b1-3ebef31a40e3",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "1dd09313-e0b6-43c1-bad8-2fe90b996a8b",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "3b7f5c1b-e1cf-44f5-9f80-c2c9420420f9",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Aquarius",
+        "artist": "Tinashe/ScHoolboy Q",
+        "duration": 230426,
+        "title": "2 On (feat. ScHoolboy Q)"
+      },
+      "id": "11b7bf03-b39e-4e6c-b583-a61da4cb6b3c",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "d0f83ad4-6142-45ad-8c10-c00ddcc2b8d3",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "d0f83ad4-6142-45ad-8c10-c00ddcc2b8d3",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "HIT ME HARD AND SOFT",
+        "artist": "Billie Eilish",
+        "duration": 343406,
+        "title": "Blue"
+      },
+      "id": "5cff184d-e677-4fd5-8d5a-365f6cc68620",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "7b624c1a-9c2f-4335-ab27-abcbe22136b4",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "7b624c1a-9c2f-4335-ab27-abcbe22136b4",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Going To Hell (Deluxe Edition)",
+        "artist": "The Pretty Reckless",
+        "duration": 274103,
+        "title": "Absolution"
+      },
+      "id": "02ddbb0e-6d1e-41f6-9162-6e5ca637e952",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "49023a7f-78ec-4764-9b67-3aa2628452f7",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "49023a7f-78ec-4764-9b67-3aa2628452f7",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Tsunami Sea",
+        "artist": "Spiritbox",
+        "duration": 204904,
+        "title": "Black Rainbow"
+      },
+      "id": "749f2a50-d373-4fe3-8ca7-9f780201d2df",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "fbc6bdb2-9ec2-45c1-b8de-fcee7b3438d8",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "1f2b36f1-9952-40d4-a5c2-50cd6ffb8ee5",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Alligator Bites Never Heal",
+        "artist": "Doechii",
+        "duration": 133355,
+        "title": "BLOOM"
+      },
+      "id": "384b0fc2-e769-4a62-a43c-b38d00eef0b1",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "c192dbc8-f894-4946-a4fd-25a2c3e8ffd1",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "c192dbc8-f894-4946-a4fd-25a2c3e8ffd1",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "More Life",
+        "artist": "Drake/Sampha",
+        "duration": 186331,
+        "title": "4422"
+      },
+      "id": "41451e3b-9df2-4b0b-a6c3-6785370d5405",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "4e31873e-346f-419a-be2e-feba1f27c0c0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "4e31873e-346f-419a-be2e-feba1f27c0c0",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Fine Line",
+        "artist": "Harry Styles",
+        "duration": 207177,
+        "title": "Adore You"
+      },
+      "id": "78101657-9312-44e3-a9e8-12bd6385b817",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "c72b10e6-aa60-4cec-9efc-f03f6bd10080",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "c72b10e6-aa60-4cec-9efc-f03f6bd10080",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Around the Fur",
+        "artist": "Deftones",
+        "duration": 299912,
+        "title": "Be Quiet and Drive (Far Away)"
+      },
+      "id": "ee6fbb75-5220-4cc9-9e0b-6bba747aeb18",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "ddf18def-8a6f-43b1-b032-d5292b2be636",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "ddf18def-8a6f-43b1-b032-d5292b2be636",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Currents",
+        "artist": "Tame Impala",
+        "duration": 242024,
+        "title": "'Cause I'm A Man"
+      },
+      "id": "8b4fc6bb-18c2-4eb6-837a-5b5cbd563c6f",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "637b824c-6919-4567-a0ef-23cabe8b9f84",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "637b824c-6919-4567-a0ef-23cabe8b9f84",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Something Lite EP",
+        "artist": "Steven Jame$",
+        "duration": 171442,
+        "title": "Barracuda"
+      },
+      "id": "ba2d36a1-d24c-499d-a18b-d80994030aa6",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "3ea506d9-c7a1-4b54-9e15-2541307922f9",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "3ea506d9-c7a1-4b54-9e15-2541307922f9",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "GO:OD AM",
+        "artist": "Mac Miller",
+        "duration": 278544,
+        "title": "100 Grandkids"
+      },
+      "id": "0c122162-cd9b-465f-b57d-7fd7d0702fff",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "bb849a00-6881-4958-8f70-290b5aeacf54",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "bb849a00-6881-4958-8f70-290b5aeacf54",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Live from Auditorio Nacional, CDMX",
+        "artist": "The Warning",
+        "duration": 232620,
+        "title": "Automatic Sun - Live from Auditorio Nacional, CDMX"
+      },
+      "id": "6cd9d4a1-6f3e-49d3-8427-f9835a69099e",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "c18eacaa-4e52-493b-bf8c-d95f207a87cf",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "c18eacaa-4e52-493b-bf8c-d95f207a87cf",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Badlands",
+        "artist": "Mia Carucci",
+        "duration": 174576,
+        "title": "Badlands"
+      },
+      "id": "f2ce6dbd-3f85-42c4-863a-0bf32e60649b",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "4e058611-83c9-406c-9337-6b543b1416ae",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "4e058611-83c9-406c-9337-6b543b1416ae",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Toxicity",
+        "artist": "System Of A Down",
+        "duration": 133616,
+        "title": "Arto"
+      },
+      "id": "1f00df42-da98-41fc-bc08-5d12f71a4baa",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "22ba5f01-5096-49fe-a39c-1987f491bf69",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "22ba5f01-5096-49fe-a39c-1987f491bf69",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Oh The Places You'll Go",
+        "artist": "Doechii",
+        "duration": 220500,
+        "title": "Black Girl Memoir"
+      },
+      "id": "7f864e9c-20e3-4706-afb7-580b786111c5",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "39faa7cc-4ad8-4599-a8d0-dcd8f5e163e0",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "39faa7cc-4ad8-4599-a8d0-dcd8f5e163e0",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "An Evening With Silk Sonic",
+        "artist": "Bruno Mars/Anderson .Paak/Silk Sonic/Thundercat/Bootsy Collins",
+        "duration": 249496,
+        "title": "After Last Night (with Thundercat & Bootsy Collins)"
+      },
+      "id": "9b7f5477-d191-48ce-8ca6-f4b2b8438765",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "05a8c33c-a5bb-4bb9-8ab8-a20160a72772",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "05a8c33c-a5bb-4bb9-8ab8-a20160a72772",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "THE S(EX) TAPES",
+        "artist": "FLETCHER",
+        "duration": 192914,
+        "title": "Bitter"
+      },
+      "id": "cac24ad9-de11-4e40-92e8-9a35ff28a48b",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "86e12824-a96b-4ff9-8385-f24232462dd3",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "86e12824-a96b-4ff9-8385-f24232462dd3",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Paramore (Deluxe Edition)",
+        "artist": "Paramore",
+        "duration": 137979,
+        "title": "Anklebiters"
+      },
+      "id": "a5b40ed3-7509-4761-a696-550cb744a1c2",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "8fa738b1-af17-4e51-8c32-2dfba53ea16b",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "8fa738b1-af17-4e51-8c32-2dfba53ea16b",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "album": "Warm on a Cold Night (Deluxe)",
+        "artist": "HONNE",
+        "duration": 228911,
+        "title": "Baby You're Bad"
+      },
+      "id": "4f81f6cd-2b4f-49eb-a79a-072615225b3d",
+      "relationships": {
+        "processed_file": {
+          "data": {
+            "id": "3740373b-9feb-46d1-b5c6-babac8a0c7bc",
+            "type": "files"
+          }
+        },
+        "raw_file": {
+          "data": {
+            "id": "3740373b-9feb-46d1-b5c6-babac8a0c7bc",
+            "type": "files"
+          }
+        }
+      },
+      "type": "audios"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/c3295b0b-81f7-4b8d-9560-7215518ead9c/07 And the Snakes Start to Sing.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:39Z"
+      },
+      "id": "c3295b0b-81f7-4b8d-9560-7215518ead9c",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/a29c0a4b-da84-4208-9536-c1e5d21fc3a6/PISS - three demos - 02 a little girl's horse craze betrays her-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-23T01:21:43Z"
+      },
+      "id": "38ab5cb3-423e-4feb-a6e4-4751ea343295",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/8fa738b1-af17-4e51-8c32-2dfba53ea16b/10 Anklebiters.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:39:19Z"
+      },
+      "id": "8fa738b1-af17-4e51-8c32-2dfba53ea16b",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/c72b10e6-aa60-4cec-9efc-f03f6bd10080/03 Adore You.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:39:59Z"
+      },
+      "id": "c72b10e6-aa60-4cec-9efc-f03f6bd10080",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/4e058611-83c9-406c-9337-6b543b1416ae/01 Badlands.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:38:02Z"
+      },
+      "id": "4e058611-83c9-406c-9337-6b543b1416ae",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/2fa7858b-4c19-429b-bff4-b1548f7cd51f/02 Bannister.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:33:10Z"
+      },
+      "id": "2fa7858b-4c19-429b-bff4-b1548f7cd51f",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/1fce4889-3829-4237-8003-c8fd3b8596d0/07 Bounce.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:23Z"
+      },
+      "id": "1fce4889-3829-4237-8003-c8fd3b8596d0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/a787e3f9-a8f9-4125-bfe5-d946d59c958c/01 (i) naissance-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:25:41Z"
+      },
+      "id": "804fd424-205c-46c7-9cdf-dc7db311bed2",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/bb849a00-6881-4958-8f70-290b5aeacf54/05 100 Grandkids.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:40:44Z"
+      },
+      "id": "bb849a00-6881-4958-8f70-290b5aeacf54",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/d5950354-4430-45e2-910d-f82197e9a66b/05 BOILED PEANUTS.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:08Z"
+      },
+      "id": "d5950354-4430-45e2-910d-f82197e9a66b",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/38a890fd-7ddd-4d35-bd4e-59966e8a7976/09 (iii) moribund-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:26:16Z"
+      },
+      "id": "b316807e-bb89-4118-8108-6bb93f208d1d",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/8c43abf2-5043-44d6-95f6-1a5f9e775bcd/07 A Haven With Two Faces-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-26T04:34:26Z"
+      },
+      "id": "dd257744-641e-45ec-8fa8-0e26a2667913",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/c18eacaa-4e52-493b-bf8c-d95f207a87cf/25 Automatic Sun - Live from Auditorio Nacional, CDMX.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:45:36Z"
+      },
+      "id": "c18eacaa-4e52-493b-bf8c-d95f207a87cf",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/da380da2-7dae-4690-8c60-e81a6d5e34de/11 All I Wanted.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:39:19Z"
+      },
+      "id": "da380da2-7dae-4690-8c60-e81a6d5e34de",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/7b624c1a-9c2f-4335-ab27-abcbe22136b4/10 Blue.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:06:01Z"
+      },
+      "id": "7b624c1a-9c2f-4335-ab27-abcbe22136b4",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/3ea506d9-c7a1-4b54-9e15-2541307922f9/01 Barracuda.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:43:36Z"
+      },
+      "id": "3ea506d9-c7a1-4b54-9e15-2541307922f9",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/787aafb4-ebbb-4311-a57a-0dc06f8fa4bc/09 Break My Heart.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:33:39Z"
+      },
+      "id": "787aafb4-ebbb-4311-a57a-0dc06f8fa4bc",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/fd8a3168-9267-45fb-b530-dfe440b09e34/06 A.D.D. (American Dream Denial).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:01Z"
+      },
+      "id": "fd8a3168-9267-45fb-b530-dfe440b09e34",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/736b7fc6-b522-4074-afd8-56b1f16db4e0/11 Bloodbath (feat. Chino Moreno).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-11T18:23:53Z"
+      },
+      "id": "736b7fc6-b522-4074-afd8-56b1f16db4e0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/c788cf64-db75-4565-8f1b-4d5978c68ef8/01 Atavista-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:34:43Z"
+      },
+      "id": "0de5bdad-6e59-4dc6-95af-fd9bde9478f0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/e07f6caa-0f70-461c-9753-4cb2cad63957/12 Automatic Sun.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-19T11:27:19Z"
+      },
+      "id": "e07f6caa-0f70-461c-9753-4cb2cad63957",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/81ba4a2c-5b5d-409e-a595-8f2db5db8e8e/07 Alkaline.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:42:03Z"
+      },
+      "id": "81ba4a2c-5b5d-409e-a595-8f2db5db8e8e",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/f37fec6f-887d-4170-886d-a6c64a64043b/03 Bonnie & Clyde.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:33:16Z"
+      },
+      "id": "f37fec6f-887d-4170-886d-a6c64a64043b",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/81fb431c-a94b-404e-9e93-47d1c83afcd6/07 a bulleT w my namE On (feat. Underoath).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:20Z"
+      },
+      "id": "81fb431c-a94b-404e-9e93-47d1c83afcd6",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/d02de0c9-7324-4496-a081-5af09e4ba427/12 12.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:43:20Z"
+      },
+      "id": "d02de0c9-7324-4496-a081-5af09e4ba427",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/3740373b-9feb-46d1-b5c6-babac8a0c7bc/14 Baby You're Bad.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:33:11Z"
+      },
+      "id": "3740373b-9feb-46d1-b5c6-babac8a0c7bc",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/f55f8ec8-6e1f-4bd6-9526-a85a22b11a50/08 [ost] (spi)ritual.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:20Z"
+      },
+      "id": "f55f8ec8-6e1f-4bd6-9526-a85a22b11a50",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/1623988b-da83-455e-aa12-2a31231f22bc/01 A Moment of Silence.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:43:36Z"
+      },
+      "id": "1623988b-da83-455e-aa12-2a31231f22bc",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/4e31873e-346f-419a-be2e-feba1f27c0c0/08 4422.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:25:01Z"
+      },
+      "id": "4e31873e-346f-419a-be2e-feba1f27c0c0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/10cc631b-f610-4b3b-a115-3312f9a41096/01 [ost] dreamseeker.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:11Z"
+      },
+      "id": "10cc631b-f610-4b3b-a115-3312f9a41096",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/0ef223ee-029d-4454-8cf6-bca39b283c13/10 Blasphemy.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:34:15Z"
+      },
+      "id": "0ef223ee-029d-4454-8cf6-bca39b283c13",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/4636018c-edc7-406a-a653-a92fba1a9cdc/02 B.Y.O.B..mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:00Z"
+      },
+      "id": "4636018c-edc7-406a-a653-a92fba1a9cdc",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/ee7ba95d-bc63-40f2-b846-1f7fc9263550/01 Blueberry Faygo.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:35:38Z"
+      },
+      "id": "ee7ba95d-bc63-40f2-b846-1f7fc9263550",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/3fd0c16f-f50f-4583-86ab-ea5d5d2fcf8c/15 Ascension.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:40:44Z"
+      },
+      "id": "3fd0c16f-f50f-4583-86ab-ea5d5d2fcf8c",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/05a8c33c-a5bb-4bb9-8ab8-a20160a72772/04 After Last Night (with Thundercat & Bootsy Collins).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-16T02:25:53Z"
+      },
+      "id": "05a8c33c-a5bb-4bb9-8ab8-a20160a72772",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/4c382181-ae9c-474e-ad72-6e8ede289784/01 ALLIGATOR BITES NEVER HEAL.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:07Z"
+      },
+      "id": "4c382181-ae9c-474e-ad72-6e8ede289784",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/f2e7fbd6-48c8-444b-93a6-e6ca9b8600d1/03 BIG.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:57Z"
+      },
+      "id": "f2e7fbd6-48c8-444b-93a6-e6ca9b8600d1",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/2acb7e37-7a25-4ffb-a69e-de90207dedc3/10 Border (CH. III).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:35:38Z"
+      },
+      "id": "2acb7e37-7a25-4ffb-a69e-de90207dedc3",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/238d7b53-bbfb-48b1-9b8e-c4b35054d330/04 Birds Of A Feather.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:20:46Z"
+      },
+      "id": "238d7b53-bbfb-48b1-9b8e-c4b35054d330",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/03f6b1a6-c876-4684-a820-4013136d5f43/12 2009.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:42:16Z"
+      },
+      "id": "03f6b1a6-c876-4684-a820-4013136d5f43",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/0b3b59db-0626-4c6a-8d87-bf676384c259/03 Blue World.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:40:43Z"
+      },
+      "id": "0b3b59db-0626-4c6a-8d87-bf676384c259",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/16c91e46-ba8c-42a9-8fae-89f1ec5c1e27/25 Anobrain.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:43:35Z"
+      },
+      "id": "16c91e46-ba8c-42a9-8fae-89f1ec5c1e27",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/484455f4-a397-49ce-9ecf-dba49b10c097/04 Amber Eyes.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:33:39Z"
+      },
+      "id": "484455f4-a397-49ce-9ecf-dba49b10c097",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/97871a9e-8c6b-4a1f-96af-698977f00aaf/14 [ost] p.u.s.s.-e.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:20Z"
+      },
+      "id": "97871a9e-8c6b-4a1f-96af-698977f00aaf",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/021275ef-e533-4794-94ff-208125d576cd/01 Black Sheep (Brie Larson Vocal Version).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:38:01Z"
+      },
+      "id": "021275ef-e533-4794-94ff-208125d576cd",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/d0f83ad4-6142-45ad-8c10-c00ddcc2b8d3/05 2 On (feat. ScHoolboy Q).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:44:57Z"
+      },
+      "id": "d0f83ad4-6142-45ad-8c10-c00ddcc2b8d3",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/ddf18def-8a6f-43b1-b032-d5292b2be636/06 Be Quiet and Drive (Far Away).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:22:32Z"
+      },
+      "id": "ddf18def-8a6f-43b1-b032-d5292b2be636",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/b70616ac-09c1-4855-94ca-3ea9e62aa55b/19 Antichrist.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:43:21Z"
+      },
+      "id": "b70616ac-09c1-4855-94ca-3ea9e62aa55b",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/c192dbc8-f894-4946-a4fd-25a2c3e8ffd1/09 BLOOM.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:33Z"
+      },
+      "id": "c192dbc8-f894-4946-a4fd-25a2c3e8ffd1",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/0f91791f-5119-44d2-a382-aad5d420e964/08 All Falls Apart.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-11T18:23:53Z"
+      },
+      "id": "0f91791f-5119-44d2-a382-aad5d420e964",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/9a612d71-1f59-402d-b911-1df5253d77dd/03 Billie Bossa Nova.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:20:28Z"
+      },
+      "id": "9a612d71-1f59-402d-b911-1df5253d77dd",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/61583ecf-9e91-49a9-a016-00f808c1cf65/09-break-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-09-01T14:13:12Z"
+      },
+      "id": "5ae0543f-e7d3-4158-832e-be2f3cf6a4e4",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/a2fc1827-64e8-43f3-aa37-ebae6027c776/13 Are We There Yet.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:25:15Z"
+      },
+      "id": "a2fc1827-64e8-43f3-aa37-ebae6027c776",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/9517829c-9438-4ca3-8f8c-05688793cf49/05 ABC (feat. Sophia Black).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-11T18:23:53Z"
+      },
+      "id": "9517829c-9438-4ca3-8f8c-05688793cf49",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/182abe2e-7a52-4163-b29a-f6938e916741/08-bloodsport-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-09-01T14:12:59Z"
+      },
+      "id": "828d1a17-7207-447c-9ded-446069c5db9f",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/1ada5c4c-33bf-4348-b18a-c098707fcba7/03 Afterglow.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:48:16Z"
+      },
+      "id": "1ada5c4c-33bf-4348-b18a-c098707fcba7",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/1636cbc0-b503-4dfe-8a73-f91220e6f1bc/10 BOOM BAP.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:33Z"
+      },
+      "id": "1636cbc0-b503-4dfe-8a73-f91220e6f1bc",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/22ba5f01-5096-49fe-a39c-1987f491bf69/15 Arto.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:24Z"
+      },
+      "id": "22ba5f01-5096-49fe-a39c-1987f491bf69",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/67d3dcfc-3f61-43e1-b19e-3e74b2e4dae9/03 After Midnight.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:42:16Z"
+      },
+      "id": "67d3dcfc-3f61-43e1-b19e-3e74b2e4dae9",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/d3d5d25a-17ec-487c-a8af-89db9212ea96/01 Brand New Moves.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:33:10Z"
+      },
+      "id": "d3d5d25a-17ec-487c-a8af-89db9212ea96",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/732901a3-c471-4d75-99bb-b67cda908237/05 A Tale Of 2 Citiez.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:33:11Z"
+      },
+      "id": "732901a3-c471-4d75-99bb-b67cda908237",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/62c39556-88bb-44b2-a1f9-d3acdf048718/13 Balloon (feat. Doechii).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:47:49Z"
+      },
+      "id": "62c39556-88bb-44b2-a1f9-d3acdf048718",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/39faa7cc-4ad8-4599-a8d0-dcd8f5e163e0/03 Black Girl Memoir.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:34Z"
+      },
+      "id": "39faa7cc-4ad8-4599-a8d0-dcd8f5e163e0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/2fcd24f9-f950-49e2-b61a-2ff217bca697/09 Antivist.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:40Z"
+      },
+      "id": "2fcd24f9-f950-49e2-b61a-2ff217bca697",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/1f2b36f1-9952-40d4-a5c2-50cd6ffb8ee5/02 Black Rainbow-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-26T04:34:16Z"
+      },
+      "id": "fbc6bdb2-9ec2-45c1-b8de-fcee7b3438d8",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/4052e89e-3787-426c-9a3a-4ca090b5659c/13 AmEN! (feat. Lil Uzi Vert and Daryl Palumbo of Glassjaw).mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-06-19T16:15:20Z"
+      },
+      "id": "4052e89e-3787-426c-9a3a-4ca090b5659c",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/86e12824-a96b-4ff9-8385-f24232462dd3/03 Bitter.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:29:36Z"
+      },
+      "id": "86e12824-a96b-4ff9-8385-f24232462dd3",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/1d38232f-53a7-4c80-b18c-67ae0193fe51/07 An Encounter.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:42:39Z"
+      },
+      "id": "1d38232f-53a7-4c80-b18c-67ae0193fe51",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/0f45f934-8b06-4434-bf49-020a21a9598b/04 All in the Value.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:33:10Z"
+      },
+      "id": "0f45f934-8b06-4434-bf49-020a21a9598b",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/2f1296ce-d74a-4eaa-8469-2d0e47b2a3ec/04 Aqua Regia.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:42:03Z"
+      },
+      "id": "2f1296ce-d74a-4eaa-8469-2d0e47b2a3ec",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/57d4e5cf-9768-486a-b9d0-8e9e97651bb0/11 Boys Will Be Boys.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:33:39Z"
+      },
+      "id": "57d4e5cf-9768-486a-b9d0-8e9e97651bb0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/8f6d7e91-a489-4eba-b120-950f732c19c4/03 Apologize.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-19T11:27:19Z"
+      },
+      "id": "8f6d7e91-a489-4eba-b120-950f732c19c4",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/d68c9ba1-755e-4844-983f-7f8da16d9772/07 21.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:33:39Z"
+      },
+      "id": "d68c9ba1-755e-4844-983f-7f8da16d9772",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/3b7f5c1b-e1cf-44f5-9f80-c2c9420420f9/05 (ii) limbo-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:26:11Z"
+      },
+      "id": "1dd09313-e0b6-43c1-bad8-2fe90b996a8b",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/57f0d801-1ec4-4296-9193-a0386e1471da/02 Bad Intentions.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:32:33Z"
+      },
+      "id": "57f0d801-1ec4-4296-9193-a0386e1471da",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/98687005-60b6-4042-85f4-82c67dcbc975/09 ATWA.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:23Z"
+      },
+      "id": "98687005-60b6-4042-85f4-82c67dcbc975",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/b8f01ae8-ae01-4ece-b021-1a5e9b2f14ce/01 Babooshka - 2018 Remaster.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:35:21Z"
+      },
+      "id": "b8f01ae8-ae01-4ece-b021-1a5e9b2f14ce",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/bf051caa-54b0-4d08-9f43-806d364d1891/02 Brand Name.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:40:44Z"
+      },
+      "id": "bf051caa-54b0-4d08-9f43-806d364d1891",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/da779594-e2cb-46db-8ff4-db4aac951dbf/09 Apologize - Live from Auditorio Nacional, CDMX.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:44:57Z"
+      },
+      "id": "da779594-e2cb-46db-8ff4-db4aac951dbf",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/36d85b2b-ad59-4c57-ab94-2057d55c5380/01 Attack.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:00Z"
+      },
+      "id": "36d85b2b-ad59-4c57-ab94-2057d55c5380",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mp3",
+        "key": "files/3e9e4c2e-c30f-40c4-8a27-168baf6ec132/05-bite-my-tongue-processed-256.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-09-01T14:13:00Z"
+      },
+      "id": "67e85276-0b07-4c17-9677-65d0b564eec2",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/f6eea375-8dcd-460e-b7ea-14633cce6aef/03 Blame It on the Water.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:42:03Z"
+      },
+      "id": "f6eea375-8dcd-460e-b7ea-14633cce6aef",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/637b824c-6919-4567-a0ef-23cabe8b9f84/10 'Cause I'm A Man.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-26T04:18:43Z"
+      },
+      "id": "637b824c-6919-4567-a0ef-23cabe8b9f84",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/49023a7f-78ec-4764-9b67-3aa2628452f7/07 Absolution.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:44:55Z"
+      },
+      "id": "49023a7f-78ec-4764-9b67-3aa2628452f7",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/80b38b1d-bad1-429f-aeb8-2956821d3870/04 Boom!.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:01Z"
+      },
+      "id": "80b38b1d-bad1-429f-aeb8-2956821d3870",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/69787e85-6ec0-4f07-8831-b809542f9730/09 36.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:01Z"
+      },
+      "id": "69787e85-6ec0-4f07-8831-b809542f9730",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/b659f76a-126e-407d-882c-242db53c0ac7/19 BEVERLY HILLS.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-22T08:31:34Z"
+      },
+      "id": "b659f76a-126e-407d-882c-242db53c0ac7",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/eb9d6d8b-e905-4f8a-bc1f-2dbf0a26cda0/14 Aerials.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:08:24Z"
+      },
+      "id": "eb9d6d8b-e905-4f8a-bc1f-2dbf0a26cda0",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/c69948a8-914e-4d36-b747-11db13aece5a/09 Bittersuite.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-08-17T06:06:01Z"
+      },
+      "id": "c69948a8-914e-4d36-b747-11db13aece5a",
+      "type": "files"
+    },
+    {
+      "attributes": {
+        "bucket": "light-two-api-production",
+        "content_type": "audio/mpeg",
+        "key": "files/7eab5549-0481-4f3f-9699-1694286a6221/02 Animal Spirits.mp3",
+        "presigned_url": "ABCDEFG",
+        "secret": null,
+        "uploaded_at": "2026-05-21T06:48:16Z"
+      },
+      "id": "7eab5549-0481-4f3f-9699-1694286a6221",
+      "type": "files"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  }
+}
