@@ -4,11 +4,20 @@ import pytest
 import respx
 import httpx
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from light_api.client import Light
 
 from helpers import API, make_light, fake_resp
+
+
+def make_bare_light(**kwargs) -> Light:
+    """A Light instance with nothing bypassed - no token, no api client, no modules.
+
+    Unlike make_light(), this is for testing methods (login, __enter__, the lazy
+    module properties, etc.) that run their real setup logic.
+    """
+    return Light(email="test@example.com", password="test", **kwargs)
 
 
 class TestEnsureOk:
@@ -292,3 +301,418 @@ class TestFetchDeviceToolIdsMultiDevice:
         }
         for val in light._device_tool_ids.values():
             assert val not in other_device_tool_ids
+
+
+class TestInit:
+    def test_phone_and_device_id_are_mutually_exclusive(self):
+        with pytest.raises(RuntimeError, match="mutually exclusive"):
+            Light(email="a@b.com", password="x", phone="555", device_id="dev-1")
+
+
+class TestResolve:
+    def test_reads_from_file_when_given(self, tmp_path):
+        f = tmp_path / "email.txt"
+        f.write_text("a@b.com\n")
+        assert Light._resolve(str(f), "LIGHT_EMAIL") == "a@b.com"
+
+    def test_raises_runtime_error_on_unreadable_file(self):
+        with pytest.raises(RuntimeError, match="Could not read"):
+            Light._resolve("/nonexistent/path/email.txt", "LIGHT_EMAIL")
+
+    def test_falls_back_to_env_when_no_filepath(self, monkeypatch):
+        monkeypatch.setenv("LIGHT_EMAIL", "env@b.com")
+        assert Light._resolve(None, "LIGHT_EMAIL") == "env@b.com"
+
+    def test_returns_none_when_neither_filepath_nor_env(self, monkeypatch):
+        monkeypatch.delenv("LIGHT_EMAIL", raising=False)
+        assert Light._resolve(None, "LIGHT_EMAIL") is None
+
+
+class TestFormatPhone:
+    def test_formats_as_plus1_grouped(self):
+        assert Light._format_phone("5125550199") == "+1 512 555 0199"
+
+    def test_strips_non_digits_first(self):
+        assert Light._format_phone("(512) 555-0199") == "+1 512 555 0199"
+
+
+class TestLogin:
+    def test_returns_immediately_if_already_authenticated(self):
+        light = make_bare_light()
+        light._api_token = "already-set"
+        light.login()  # should not raise or make any HTTP call
+        assert light._api_token == "already-set"
+
+    def test_prompts_for_password_when_missing_and_prompt_given(self):
+        light = make_bare_light()
+        light.password = None
+        light._password_prompt = lambda: "prompted-password"
+
+        @respx.mock
+        def run():
+            respx.post(f"{API}/api/authorizations").mock(
+                return_value=httpx.Response(200, json={
+                    "included": [{"attributes": {"token": "tok"}}]
+                })
+            )
+            light.login()
+
+        run()
+        assert light.password == "prompted-password"
+        assert light._api_token == "tok"
+
+    def test_raises_when_no_credentials_available(self):
+        light = make_bare_light()
+        light.email = None
+        light.password = None
+        with pytest.raises(RuntimeError, match="No cached session"):
+            light.login()
+
+    @respx.mock
+    def test_raises_on_failed_response(self):
+        light = make_bare_light()
+        respx.post(f"{API}/api/authorizations").mock(return_value=httpx.Response(401, json={}))
+        with pytest.raises(RuntimeError, match="Login failed: 401"):
+            light.login()
+
+    @respx.mock
+    def test_raises_when_token_missing_in_response(self):
+        light = make_bare_light()
+        respx.post(f"{API}/api/authorizations").mock(
+            return_value=httpx.Response(200, json={
+                "included": [{"attributes": {"token": None}}]
+            })
+        )
+        with pytest.raises(RuntimeError, match="no token found"):
+            light.login()
+
+    @respx.mock
+    def test_sets_api_token_on_success(self):
+        light = make_bare_light()
+        respx.post(f"{API}/api/authorizations").mock(
+            return_value=httpx.Response(200, json={
+                "included": [{"attributes": {"token": "fresh-token"}}]
+            })
+        )
+        light.login()
+        assert light._api_token == "fresh-token"
+
+
+class TestReauth:
+    @respx.mock
+    def test_logs_in_again_and_rebuilds_api_client(self):
+        light = make_bare_light()
+        light._api_token = "stale-token"
+        respx.post(f"{API}/api/authorizations").mock(
+            return_value=httpx.Response(200, json={
+                "included": [{"attributes": {"token": "new-token"}}]
+            })
+        )
+        with patch.object(light, "_save_auth_cache") as mock_save:
+            light.reauth()
+
+        assert light._api_token == "new-token"
+        assert light._api_client is not None
+        mock_save.assert_called_once()
+
+
+class TestCallApi:
+    def test_returns_response_unchanged_when_not_401(self):
+        light = make_light()
+        func = MagicMock(return_value=fake_resp(200))
+        result = light.call_api(func)
+        assert result.status_code == 200
+        func.assert_called_once()
+
+    def test_reauths_and_retries_once_on_401(self):
+        light = make_light()
+        func = MagicMock(side_effect=[fake_resp(401), fake_resp(200)])
+        with patch.object(light, "reauth") as mock_reauth:
+            result = light.call_api(func)
+
+        mock_reauth.assert_called_once()
+        assert result.status_code == 200
+        assert func.call_count == 2
+
+
+class TestEnter:
+    def _light_with_mocked_collaborators(self, **overrides):
+        light = make_bare_light()
+        defaults = dict(
+            _load_auth_cache=MagicMock(return_value=False),
+            _validated_recently=MagicMock(return_value=False),
+            _validate_auth_cache=MagicMock(return_value=False),
+            login=MagicMock(),
+            _save_auth_cache=MagicMock(),
+            _fetch_device_tool_ids=MagicMock(),
+        )
+        defaults.update(overrides)
+        for name, mock in defaults.items():
+            setattr(light, name, mock)
+        return light, defaults
+
+    def test_uses_recent_cache_without_revalidating(self):
+        light, mocks = self._light_with_mocked_collaborators(
+            _load_auth_cache=MagicMock(return_value=True),
+            _validated_recently=MagicMock(return_value=True),
+        )
+        light._device_tool_ids = {"notes": "x"}  # already populated
+
+        light.__enter__()
+
+        mocks["login"].assert_not_called()
+        mocks["_validate_auth_cache"].assert_not_called()
+        mocks["_fetch_device_tool_ids"].assert_not_called()
+
+    def test_revalidates_stale_cache_via_api(self):
+        light, mocks = self._light_with_mocked_collaborators(
+            _load_auth_cache=MagicMock(return_value=True),
+            _validated_recently=MagicMock(return_value=False),
+            _validate_auth_cache=MagicMock(return_value=True),
+        )
+        light._device_tool_ids = {"notes": "x"}
+
+        light.__enter__()
+
+        mocks["login"].assert_not_called()
+        mocks["_validate_auth_cache"].assert_called_once()
+        assert light._validated_at is not None
+        mocks["_save_auth_cache"].assert_called_once()
+
+    def test_falls_back_to_login_when_no_cache(self):
+        light, mocks = self._light_with_mocked_collaborators(
+            _load_auth_cache=MagicMock(return_value=False),
+        )
+        light._device_tool_ids = {"notes": "x"}
+
+        light.__enter__()
+
+        mocks["login"].assert_called_once()
+
+    def test_falls_back_to_login_when_cache_fails_validation(self):
+        light, mocks = self._light_with_mocked_collaborators(
+            _load_auth_cache=MagicMock(return_value=True),
+            _validated_recently=MagicMock(return_value=False),
+            _validate_auth_cache=MagicMock(return_value=False),
+        )
+        light._device_tool_ids = {"notes": "x"}
+
+        light.__enter__()
+
+        mocks["login"].assert_called_once()
+
+    def test_fetches_device_tool_ids_when_empty(self):
+        light, mocks = self._light_with_mocked_collaborators(
+            _load_auth_cache=MagicMock(return_value=True),
+            _validated_recently=MagicMock(return_value=True),
+        )
+        light._device_tool_ids = {}
+
+        light.__enter__()
+
+        mocks["_fetch_device_tool_ids"].assert_called_once()
+
+    def test_returns_self(self):
+        light, _ = self._light_with_mocked_collaborators(
+            _load_auth_cache=MagicMock(return_value=True),
+            _validated_recently=MagicMock(return_value=True),
+        )
+        light._device_tool_ids = {"notes": "x"}
+        assert light.__enter__() is light
+
+
+class TestExit:
+    def test_is_a_no_op(self):
+        light = make_light()
+        assert light.__exit__(None, None, None) is None
+
+
+class TestLazyProperties:
+    def test_notes_property_is_memoized(self):
+        light = make_bare_light()
+        light._api_client = object()
+        from light_api.notes import LightNotes
+
+        first = light.notes
+        assert isinstance(first, LightNotes)
+        assert light.notes is first
+
+    def test_podcast_property_is_memoized(self):
+        light = make_bare_light()
+        light._api_client = object()
+        from light_api.podcast import LightPodcasts
+
+        first = light.podcast
+        assert isinstance(first, LightPodcasts)
+        assert light.podcast is first
+
+    def test_contacts_property_is_memoized(self):
+        light = make_bare_light()
+        light._api_client = object()
+        from light_api.contacts import LightContacts
+
+        first = light.contacts
+        assert isinstance(first, LightContacts)
+        assert light.contacts is first
+
+    def test_devices_property_is_memoized(self):
+        light = make_bare_light()
+        light._api_client = object()
+        from light_api.devices import LightDevices
+
+        first = light.devices
+        assert isinstance(first, LightDevices)
+        assert light.devices is first
+
+    def test_tools_property_is_memoized(self):
+        light = make_bare_light()
+        light._api_client = object()
+        from light_api.tools import LightTools
+
+        first = light.tools
+        assert isinstance(first, LightTools)
+        assert light.tools is first
+
+    def test_music_property_fetches_playlist_id_then_memoizes(self):
+        light = make_bare_light()
+        light._api_client = object()
+        light._device_tool_ids = {"music": "music-dtid"}
+        from light_api.music import LightMusic
+
+        with patch.object(light, "_fetch_playlist_id") as mock_fetch:
+            def fake_fetch():
+                light._playlist_id = "pl-1"
+            mock_fetch.side_effect = fake_fetch
+
+            first = light.music
+
+        assert isinstance(first, LightMusic)
+        mock_fetch.assert_called_once()
+        assert light.music is first  # memoized, no second fetch
+
+
+class TestLoadAuthCache:
+    def test_returns_false_when_nothing_cached(self):
+        light = make_bare_light()
+        with patch("light_api.client.keyring.get_password", return_value=None):
+            assert light._load_auth_cache() is False
+
+    def test_populates_fields_and_returns_true_on_valid_entry(self):
+        import json
+
+        light = make_bare_light()
+        raw = json.dumps({
+            "api_token": "tok",
+            "device_tool_ids": {"notes": "n1"},
+            "playlist_id": "pl-1",
+            "validated_at": 123.0,
+        })
+        with patch("light_api.client.keyring.get_password", return_value=raw):
+            assert light._load_auth_cache() is True
+
+        assert light._api_token == "tok"
+        assert light._device_tool_ids == {"notes": "n1"}
+        assert light._playlist_id == "pl-1"
+        assert light._validated_at == 123.0
+
+    def test_returns_false_on_malformed_json(self):
+        light = make_bare_light()
+        with patch("light_api.client.keyring.get_password", return_value="not json"):
+            assert light._load_auth_cache() is False
+
+    def test_returns_false_on_missing_key(self):
+        import json
+
+        light = make_bare_light()
+        raw = json.dumps({"api_token": "tok"})  # missing device_tool_ids etc.
+        with patch("light_api.client.keyring.get_password", return_value=raw):
+            assert light._load_auth_cache() is False
+
+    def test_returns_false_on_keyring_error(self):
+        import keyring.errors
+
+        light = make_bare_light()
+        with patch(
+            "light_api.client.keyring.get_password",
+            side_effect=keyring.errors.NoKeyringError,
+        ):
+            assert light._load_auth_cache() is False
+
+
+class TestValidatedRecently:
+    def test_false_when_never_validated(self):
+        light = make_light()
+        light._validated_at = None
+        assert light._validated_recently() is False
+
+    def test_true_within_ttl(self):
+        import time
+
+        light = make_light()
+        light._validated_at = time.time()
+        assert light._validated_recently() is True
+
+    def test_false_after_ttl(self, monkeypatch):
+        import time
+        import light_api.client as client_mod
+
+        light = make_light()
+        light._validated_at = time.time()
+        monkeypatch.setattr(
+            client_mod.time, "time",
+            lambda: light._validated_at + client_mod.AUTH_VALIDATION_TTL_SECONDS + 1,
+        )
+        assert light._validated_recently() is False
+
+
+class TestValidateAuthCache:
+    def test_true_on_200(self):
+        light = make_light()
+        light._api_token = "tok"
+        with patch(
+            "light_api.client.get_api_users_current.sync_detailed",
+            return_value=fake_resp(200),
+        ):
+            assert light._validate_auth_cache() is True
+
+    def test_false_on_non_200(self):
+        light = make_light()
+        light._api_token = "tok"
+        with patch(
+            "light_api.client.get_api_users_current.sync_detailed",
+            return_value=fake_resp(401),
+        ):
+            assert light._validate_auth_cache() is False
+
+
+class TestFetchPlaylistId:
+    def test_raises_when_no_music_device_tool_id(self):
+        light = make_light()
+        light._device_tool_ids = {}
+        with pytest.raises(RuntimeError, match="Could not find music device_tool_id"):
+            light._fetch_playlist_id()
+
+    def test_sets_playlist_id_from_first_playlist(self):
+        light = make_light()
+        light._device_tool_ids = {"music": "music-dtid"}
+        parsed = SimpleNamespace(data=[SimpleNamespace(id="pl-1")])
+        with patch(
+            "light_api.client.get_api_playlists.sync_detailed",
+            return_value=fake_resp(200, parsed),
+        ):
+            light._fetch_playlist_id()
+        assert light._playlist_id == "pl-1"
+
+
+class TestCurrentDeviceId:
+    def test_resolves_and_memoizes(self, f_devices):
+        light = make_light()
+        with patch.object(light, "call_api", return_value=fake_resp(200, SimpleNamespace(
+            data=[SimpleNamespace(id="dev-1")],
+        ))) as mock_call_api:
+            first = light.current_device_id
+            second = light.current_device_id
+
+        assert first == "dev-1"
+        assert second == "dev-1"
+        mock_call_api.assert_called_once()  # memoized after first resolution
