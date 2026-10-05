@@ -19,14 +19,14 @@ T = TypeVar("T", bound="GetApiDevicesResponse200DataItemRelationshipsDeviceToolL
 class GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocation:
     """
     Attributes:
-        data (GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocationData):
+        data (GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocationData | None):
     """
 
-    data: GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocationData
+    data: GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocationData | None
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        data = self.data.to_dict()
+        data = self.data.to_dict() if self.data is not None else None
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -45,7 +45,12 @@ class GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocation:
         )
 
         d = dict(src_dict)
-        data = GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocationData.from_dict(d.pop("data"))
+        _data = d.pop("data")
+        data = (
+            GetApiDevicesResponse200DataItemRelationshipsDeviceToolLocationData.from_dict(_data)
+            if _data is not None
+            else None
+        )
 
         get_api_devices_response_200_data_item_relationships_device_tool_location = cls(
             data=data,
