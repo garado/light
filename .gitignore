@@ -5,3 +5,4 @@ _build
 .venv
 light_api/tests/fixtures/
 .coverage
+htmlcov/
