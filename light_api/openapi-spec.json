@@ -318,6 +318,7 @@
                                 "properties": {
                                   "data": {
                                     "type": "object",
+                                    "nullable": true,
                                     "properties": {
                                       "id": {
                                         "type": "string"
