@@ -3,6 +3,8 @@
 - `light music mirror`
 - raise if ffmpeg not installed
 - (feat) rate limiter + retry mechanism for api calls
+- (fix) lazily initialize modules
+- (feat) light.tools helper to check if tool is installed
 
 ## To do
 - no real support for multi-device accounts. this is a much larger lift
