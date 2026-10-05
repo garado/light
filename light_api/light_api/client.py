@@ -137,12 +137,13 @@ class Light:
         self._cache_enabled: bool = cache_enabled
         self._current_device_id: DeviceId | None = None
 
-        self.music: LightMusic
-        self.podcast: LightPodcasts
-        self.notes: LightNotes
-        self.tools: LightTools
-        self.devices: LightDevices
-        self.contacts: LightContacts
+        # lazily-initialized modules
+        self._music: LightMusic | None = None
+        self._podcast: LightPodcasts | None = None
+        self._notes: LightNotes | None = None
+        self._contacts: LightContacts | None = None
+        self._tools: LightTools | None = None
+        self._devices: LightDevices | None = None
 
     def login(self) -> None:
         """Authenticate via the authorizations API and store the bearer token."""
@@ -228,8 +229,9 @@ class Light:
 
     def __enter__(self) -> Light:
         """Sets up API session."""
-        log.info("Authenticating")
+        log.info("Authenticating...")
 
+        # try to load cached session
         cache_loaded = self._load_auth_cache()
         if cache_loaded and self._validated_recently():
             log.info("Using cached session (recently validated)")
@@ -250,31 +252,65 @@ class Light:
             httpx_args=httpx_args(),
         )
 
-        expected = {"music", "notes", "podcast"}
-        if not expected.issubset(self._device_tool_ids) or not self._playlist_id:
+        if not self._device_tool_ids:
             self._fetch_device_tool_ids()
-            self._fetch_playlist_id()
             self._save_auth_cache()
-
-        from light_api.contacts import LightContacts
-        from light_api.devices import LightDevices
-        from light_api.music import LightMusic
-        from light_api.podcast import LightPodcasts
-        from light_api.notes import LightNotes
-        from light_api.tools import LightTools
-
-        self.music = LightMusic(self)
-        self.podcast = LightPodcasts(self)
-        self.notes = LightNotes(self)
-        self.tools = LightTools(self)
-        self.devices = LightDevices(self)
-        self.contacts = LightContacts(self)
 
         log.info("Authentication complete")
         return self
 
     def __exit__(self, *_: object) -> None:
         pass
+
+    @property
+    def music(self) -> LightMusic:
+        if self._playlist_id is None:
+            self._fetch_playlist_id()
+        if self._music is None:
+            from light_api.music import LightMusic
+
+            self._music = LightMusic(self)
+        return self._music
+
+    @property
+    def notes(self) -> LightNotes:
+        if self._notes is None:
+            from light_api.notes import LightNotes
+
+            self._notes = LightNotes(self)
+        return self._notes
+
+    @property
+    def podcast(self) -> LightPodcasts:
+        if self._podcast is None:
+            from light_api.podcast import LightPodcasts
+
+            self._podcast = LightPodcasts(self)
+        return self._podcast
+
+    @property
+    def contacts(self) -> LightContacts:
+        if self._contacts is None:
+            from light_api.contacts import LightContacts
+
+            self._contacts = LightContacts(self)
+        return self._contacts
+
+    @property
+    def devices(self) -> LightDevices:
+        if self._devices is None:
+            from light_api.devices import LightDevices
+
+            self._devices = LightDevices(self)
+        return self._devices
+
+    @property
+    def tools(self) -> LightTools:
+        if self._tools is None:
+            from light_api.tools import LightTools
+
+            self._tools = LightTools(self)
+        return self._tools
 
     def _load_auth_cache(self) -> bool:
         """Load cached data from keyring."""
