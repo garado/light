@@ -72,7 +72,7 @@ class Light:
         self._device_tool_ids: dict[str, str] = {}
         self._playlist_id: str | None = None
 
-        self.music: LightMusic
+        self._music: LightMusic | None = None
         self.podcast: LightPodcasts
         self.notes: LightNotes
         self.tools: LightTools
@@ -170,18 +170,15 @@ class Light:
         )
 
         expected = {"music", "notes", "podcast"}
-        if not expected.issubset(self._device_tool_ids) or not self._playlist_id:
+        if not expected.issubset(self._device_tool_ids):
             self._fetch_device_tool_ids()
-            self._fetch_playlist_id()
             self._save_cache()
 
         from light_api.devices import LightDevices
-        from light_api.music import LightMusic
         from light_api.podcast import LightPodcasts
         from light_api.notes import LightNotes
         from light_api.tools import LightTools
 
-        self.music = LightMusic(self)
         self.podcast = LightPodcasts(self)
         self.notes = LightNotes(self)
         self.tools = LightTools(self)
@@ -192,6 +189,18 @@ class Light:
 
     def __exit__(self, *_: object) -> None:
         pass
+
+    @property
+    def music(self) -> LightMusic:
+        if self._music is None:
+            if self._playlist_id is None:
+                self._fetch_playlist_id()
+                self._save_cache()
+
+            from light_api.music import LightMusic
+
+            self._music = LightMusic(self)
+        return self._music
 
     def _load_cache(self) -> bool:
         """Load cached data from keyring."""
